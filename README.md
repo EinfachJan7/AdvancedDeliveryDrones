@@ -47,6 +47,7 @@ mvn package
 | Command | Beschreibung | Permission |
 |---|---|---|
 | `/drone send <Spieler>` | Öffnet das Paket-Inventar & schickt eine Drohne | `drone.send` |
+| `/drone preview <id>` | Zeigt den Inhalt einer eingehenden Drohne (read-only Vorschau) | `drone.use` |
 | `/drone toggle` | Drohnen-Empfang an/ausschalten | `drone.use` |
 | `/drone decline` | Alle eingehenden Drohnen ablehnen & zurückschicken | `drone.use` |
 | `/drone list` | Alle aktiven Drohnen auflisten (Admin) | `drone.admin` |

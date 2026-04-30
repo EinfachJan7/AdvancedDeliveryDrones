@@ -20,7 +20,9 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -45,18 +47,19 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length == 0) {
-            player.sendMessage("/drone <send|toggle|reload|list|decline>");
+            player.sendMessage("/drone <send|preview|toggle|reload|list|decline>");
             return true;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
         return switch (sub) {
             case "send" -> executeSend(player, args);
+            case "preview" -> executePreview(player, args);
             case "toggle" -> executeToggle(player);
             case "reload" -> executeReload(player);
             case "list" -> executeList(player);
             case "decline" -> executeDecline(player);
             default -> {
-                player.sendMessage("/drone <send|toggle|reload|list|decline>");
+                player.sendMessage("/drone <send|preview|toggle|reload|list|decline>");
                 yield true;
             }
         };
@@ -192,9 +195,47 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         deliveryInventory.setContents(inv.getContents());
         inv.clear();
 
-        if (droneManager.spawnDrone(sender, receiver, deliveryInventory) != null) {
+        de.cb.drones.drone.DeliveryDrone drone = droneManager.spawnDrone(sender, receiver, deliveryInventory);
+        if (drone != null) {
             sender.sendMessage(droneManager.message("sent-success", "<player>", receiver.getName()));
+            Component incoming = MINI_MESSAGE.deserialize(
+                    droneManager.message("incoming-drone", "<player>", sender.getName())
+                            + " <click:run_command:'/drone preview " + drone.droneId() + "'>"
+                            + "<green><bold>[Vorschau]</bold></green></click>"
+            );
+            receiver.sendMessage(incoming);
         }
+    }
+
+    private boolean executePreview(Player player, String[] args) {
+        if (!player.hasPermission("drone.use")) {
+            player.sendMessage(droneManager.message("no-permission", null, null));
+            return true;
+        }
+        if (args.length < 2) {
+            player.sendMessage("/drone preview <id>");
+            return true;
+        }
+        UUID droneId;
+        try {
+            droneId = UUID.fromString(args[1]);
+        } catch (IllegalArgumentException ex) {
+            player.sendMessage(droneManager.message("preview-unavailable", null, null));
+            return true;
+        }
+        de.cb.drones.drone.DeliveryDrone drone = droneManager.findByDroneId(droneId);
+        if (drone == null || !drone.receiverId().equals(player.getUniqueId())) {
+            player.sendMessage(droneManager.message("preview-unavailable", null, null));
+            return true;
+        }
+        Inventory preview = Bukkit.createInventory(
+                new PreviewInventoryHolder(drone.droneId(), player.getUniqueId()),
+                drone.inventory().getSize(),
+                Component.text("Drone Vorschau")
+        );
+        preview.setContents(drone.inventory().getContents());
+        player.openInventory(preview);
+        return true;
     }
 
     private boolean isInventoryEmpty(Inventory inv) {
@@ -209,7 +250,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return List.of("send", "toggle", "reload", "list", "decline");
+            return List.of("send", "preview", "toggle", "reload", "list", "decline");
         }
         if (args.length == 2 && "send".equalsIgnoreCase(args[0])) {
             List<String> results = new ArrayList<>();
@@ -223,6 +264,20 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         return Collections.emptyList();
     }
 
+    @EventHandler
+    public void onPreviewClick(InventoryClickEvent event) {
+        if (event.getView().getTopInventory().getHolder() instanceof PreviewInventoryHolder) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onPreviewDrag(InventoryDragEvent event) {
+        if (event.getView().getTopInventory().getHolder() instanceof PreviewInventoryHolder) {
+            event.setCancelled(true);
+        }
+    }
+
     private record ComposeInventoryHolder(UUID senderId, UUID receiverId) implements InventoryHolder {
         @Override
         public Inventory getInventory() {
@@ -231,6 +286,13 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private record DroneInventoryHolder(UUID senderId, UUID receiverId) implements InventoryHolder {
+        @Override
+        public Inventory getInventory() {
+            return null;
+        }
+    }
+
+    private record PreviewInventoryHolder(UUID droneId, UUID receiverId) implements InventoryHolder {
         @Override
         public Inventory getInventory() {
             return null;

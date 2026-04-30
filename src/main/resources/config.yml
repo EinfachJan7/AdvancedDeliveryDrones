@@ -48,3 +48,5 @@ messages:
   toggle-off: "<red>Du hast den Drohnen-Empfang deaktiviert.</red>"
   reload: "<green>Config erfolgreich neu geladen.</green>"
   open-inventory: "<gold>Öffne Paket für <white><player></white> ...</gold>"
+  incoming-drone: "<gold><white><player></white> hat dir eine Drohne geschickt.</gold>"
+  preview-unavailable: "<red>Für diese Drohne ist keine Vorschau verfügbar.</red>"

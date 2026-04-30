@@ -100,6 +100,10 @@ public final class DroneManager {
         return byEntityUuid.get(entityId);
     }
 
+    public DeliveryDrone findByDroneId(UUID droneId) {
+        return activeDrones.get(droneId);
+    }
+
     public void openDroneInventory(Player player, DeliveryDrone drone) {
         if (!drone.wasOpenedByReceiver()) {
             drone.onReceiverOpened();
