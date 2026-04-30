@@ -14,7 +14,9 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.HeightMap;
 import org.bukkit.inventory.Inventory;
@@ -32,12 +34,14 @@ public final class DeliveryDrone {
     private final Location startLocation;
     private final long flightStartTick;
     private final Inventory inventory;
+    private final List<UUID> attachedAnimalIds;
     private final ArmorStand stand;
     private final Deque<Location> particleTrail = new LinkedList<>();
     private ArmorStand hologramStand;
 
     private DroneSettings settings;
     private boolean landed;
+    private boolean landingNotified;
     private Location pendingLanding;
     private Location landedLocation;
     private boolean openedByReceiver;
@@ -53,6 +57,7 @@ public final class DeliveryDrone {
             String receiverName,
             Location fixedTarget,
             Inventory inventory,
+            List<UUID> attachedAnimalIds,
             DroneSettings settings,
             ArmorStand stand,
             long createdTick
@@ -65,6 +70,7 @@ public final class DeliveryDrone {
         this.startLocation = stand.getLocation().clone();
         this.flightStartTick = createdTick;
         this.inventory = inventory;
+        this.attachedAnimalIds = attachedAnimalIds == null ? List.of() : List.copyOf(attachedAnimalIds);
         this.settings = settings;
         this.stand = stand;
         this.lastInteractionTick = createdTick;
@@ -136,6 +142,34 @@ public final class DeliveryDrone {
         this.openedByReceiver = true;
     }
 
+    public void attachLeashedAnimal() {
+        for (LivingEntity animal : attachedAnimals()) {
+            if (animal.isDead()) {
+                continue;
+            }
+            if (!animal.getWorld().equals(stand.getWorld())) {
+                continue;
+            }
+            try {
+                animal.setLeashHolder(stand);
+            } catch (IllegalStateException ignored) {
+                // Some entities can reject leash changes based on state.
+            }
+        }
+    }
+
+    public void releaseLeashedAnimal() {
+        for (LivingEntity animal : attachedAnimals()) {
+            if (animal.isDead() || !animal.isLeashed()) {
+                continue;
+            }
+            Entity holder = animal.getLeashHolder();
+            if (holder != null && holder.getUniqueId().equals(stand.getUniqueId())) {
+                animal.setLeashHolder(null);
+            }
+        }
+    }
+
     public void applySettings(DroneSettings settings, DroneManager manager) {
         this.settings = settings;
         stand.getEquipment().setHelmet(createSkull(settings.skullTexture()));
@@ -171,25 +205,31 @@ public final class DeliveryDrone {
                 landAt(manager, computeLandingFrom(pendingLanding));
                 pendingLanding = null;
             }
-            Player receiver = Bukkit.getPlayer(receiverId);
-            if (receiver != null && receiver.isOnline()) {
-                receiver.sendMessage(manager.message("landing-notif", "<radius>", String.valueOf((int) settings.deliveryRadius())));
+            if (!landingNotified) {
+                landingNotified = true;
+                Player receiver = Bukkit.getPlayer(receiverId);
+                if (receiver != null && receiver.isOnline()) {
+                    receiver.sendMessage(manager.message("landing-notif", "<radius>", String.valueOf((int) settings.deliveryRadius())));
+                }
             }
-            this.beaconTicker = Bukkit.getScheduler().runTaskTimer(
-                    manager.plugin(),
-                    () -> {
-                        Player onlineReceiver = Bukkit.getPlayer(receiverId);
-                        if (onlineReceiver != null && onlineReceiver.isOnline()) {
-                            renderReceiverBeacon(onlineReceiver);
-                        }
-                    },
-                    20L,
-                    20L
-            );
+            if (beaconTicker == null) {
+                this.beaconTicker = Bukkit.getScheduler().runTaskTimer(
+                        manager.plugin(),
+                        () -> {
+                            Player onlineReceiver = Bukkit.getPlayer(receiverId);
+                            if (onlineReceiver != null && onlineReceiver.isOnline()) {
+                                renderReceiverBeacon(onlineReceiver);
+                            }
+                        },
+                        20L,
+                        20L
+                );
+            }
         }
 
         if (!landed && isChunkLoaded(expected)) {
             stand.teleport(expected);
+            tickAttachedAnimalFollow(expected);
             updateParticleTrail();
             stand.getWorld().playSound(stand.getLocation(), settings.flightSound(), 0.05f, 1.3f);
         }
@@ -307,7 +347,34 @@ public final class DeliveryDrone {
         }
     }
 
+    private void tickAttachedAnimalFollow(Location expectedDroneLocation) {
+        List<LivingEntity> animals = attachedAnimals();
+        if (animals.isEmpty()) {
+            return;
+        }
+        Location target = expectedDroneLocation.clone().add(0.0, -0.2, 0.0);
+        for (LivingEntity animal : animals) {
+            if (animal.isDead()) {
+                continue;
+            }
+            if (!animal.getWorld().equals(stand.getWorld())) {
+                continue;
+            }
+            if (animal.getLocation().distanceSquared(target) > 16.0D && isChunkLoaded(target)) {
+                animal.teleport(target);
+            }
+            if (!animal.isLeashed() || animal.getLeashHolder() == null || !animal.getLeashHolder().getUniqueId().equals(stand.getUniqueId())) {
+                try {
+                    animal.setLeashHolder(stand);
+                } catch (IllegalStateException ignored) {
+                    // Some entities can reject leash changes based on state.
+                }
+            }
+        }
+    }
+
     public void destroy() {
+        releaseLeashedAnimal();
         if (ticker != null) {
             ticker.cancel();
         }
@@ -462,5 +529,19 @@ public final class DeliveryDrone {
         holo.setSilent(true);
         holo.setPersistent(true);
         return holo;
+    }
+
+    private List<LivingEntity> attachedAnimals() {
+        if (attachedAnimalIds.isEmpty()) {
+            return List.of();
+        }
+        List<LivingEntity> result = new ArrayList<>();
+        for (UUID attachedAnimalId : attachedAnimalIds) {
+            Entity entity = Bukkit.getEntity(attachedAnimalId);
+            if (entity instanceof LivingEntity living) {
+                result.add(living);
+            }
+        }
+        return result;
     }
 }

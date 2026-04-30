@@ -22,6 +22,8 @@ public record DroneSettings(
         int inventorySize,
         String skullTexture,
         int maxActivePerSender,
+        boolean carryLeashedAnimals,
+        int maxLeashedAnimalsPerDrone,
         List<String> blockedWorlds,
         boolean hologramEnabled,
         String hologramFormat,
@@ -45,6 +47,8 @@ public record DroneSettings(
         int size = normalizeSize(cfg.getInt(section + "inventory-size", 54));
         String texture = cfg.getString(section + "skull-texture", "");
         int maxActive = Math.max(1, cfg.getInt(section + "max-active-per-sender", 3));
+        boolean carryLeashedAnimals = cfg.getBoolean(section + "carry-leashed-animals", false);
+        int maxLeashedAnimalsPerDrone = Math.max(0, cfg.getInt(section + "max-leashed-animals-per-drone", 1));
         List<String> blockedWorlds = cfg.getStringList(section + "blocked-worlds").stream()
                 .map(String::toLowerCase)
                 .toList();
@@ -68,6 +72,8 @@ public record DroneSettings(
                 size,
                 texture,
                 maxActive,
+                carryLeashedAnimals,
+                maxLeashedAnimalsPerDrone,
                 blockedWorlds,
                 hologramEnabled,
                 hologramFormat,

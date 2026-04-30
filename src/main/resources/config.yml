@@ -1,6 +1,6 @@
 settings:
   drone:
-    speed: 1.0
+    speed: 5.0
     startup-speed: 0.2
     startup-seconds: 3
     skull-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzM1YWEzZTJiZjE4NTQ0Zjc1ZTZlMTViMDI2Zjc0N2I1OTllMThmOTZhOWVjNTQ1N2JkNTFhZDhkZjA0YTE2YiJ9fX0="
@@ -8,6 +8,8 @@ settings:
     despawn-time-minutes: 10
     despawn-mode: "DELETE"
     max-active-per-sender: 3
+    carry-leashed-animals: false
+    max-leashed-animals-per-drone: 1
     blocked-worlds:
       - "world_nether"
       - "world_the_end"

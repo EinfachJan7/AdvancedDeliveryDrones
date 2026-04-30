@@ -14,6 +14,7 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -69,13 +70,19 @@ public final class DroneManager {
         byEntityUuid.clear();
     }
 
-    public DeliveryDrone spawnDrone(Player sender, Player receiver, Inventory inventory) {
+    public DeliveryDrone spawnDrone(Player sender, Player receiver, Inventory inventory, List<LivingEntity> attachedAnimals) {
+        return spawnDrone(sender, receiver, inventory, receiver.getLocation().clone(), attachedAnimals);
+    }
+
+    public DeliveryDrone spawnDrone(Player sender, Player receiver, Inventory inventory, Location fixedTarget, List<LivingEntity> attachedAnimals) {
         Location start = sender.getLocation().clone().add(0, 2.2, 0);
-        Location fixedTarget = receiver.getLocation().clone();
         ArmorStand stand = DeliveryDrone.spawnDroneEntity(start, settings.skullTexture());
         if (stand == null) {
             return null;
         }
+        List<UUID> attachedAnimalIds = attachedAnimals == null
+                ? List.of()
+                : attachedAnimals.stream().map(LivingEntity::getUniqueId).toList();
         UUID id = UUID.randomUUID();
         DeliveryDrone drone = new DeliveryDrone(
                 id,
@@ -84,6 +91,7 @@ public final class DroneManager {
                 receiver.getName(),
                 fixedTarget,
                 inventory,
+                attachedAnimalIds,
                 settings,
                 stand,
                 currentTick()
@@ -92,6 +100,7 @@ public final class DroneManager {
         byEntityUuid.put(drone.standId(), drone);
         byInventory.put(inventory, drone);
         incrementSenderCounter(sender.getUniqueId());
+        drone.attachLeashedAnimal();
         drone.startFlight(this);
         return drone;
     }
@@ -107,6 +116,7 @@ public final class DroneManager {
     public void openDroneInventory(Player player, DeliveryDrone drone) {
         if (!drone.wasOpenedByReceiver()) {
             drone.onReceiverOpened();
+            drone.releaseLeashedAnimal();
             decrementSenderCounter(drone.senderId());
         }
         drone.markInteraction(currentTick());
