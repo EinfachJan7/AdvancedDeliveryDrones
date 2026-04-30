@@ -242,19 +242,25 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         spawnDroneFromSelection(sender, holder, deliveryInventory);
     }
 
-    private List<LivingEntity> findSenderLeashedAnimals(Player sender) {
-        if (!droneManager.settings().carryLeashedAnimals()) {
+    private List<LivingEntity> resolveSelectedAnimals(UUID senderId, List<UUID> selectedAnimalIds) {
+        if (selectedAnimalIds == null || selectedAnimalIds.isEmpty()) {
             return List.of();
         }
-        int limit = droneManager.settings().maxLeashedAnimalsPerDrone();
-        if (limit <= 0) {
-            return List.of();
+        List<LivingEntity> selected = new ArrayList<>();
+        for (UUID animalId : selectedAnimalIds) {
+            Entity entity = Bukkit.getEntity(animalId);
+            if (!(entity instanceof LivingEntity living) || living.isDead()) {
+                continue;
+            }
+            if (!living.isLeashed()) {
+                continue;
+            }
+            Entity leashHolder = living.getLeashHolder();
+            if (leashHolder != null && leashHolder.getUniqueId().equals(senderId)) {
+                selected.add(living);
+            }
         }
-        List<LivingEntity> allLeashed = listSenderLeashedAnimals(sender);
-        if (allLeashed.isEmpty()) {
-            return List.of();
-        }
-        return allLeashed.subList(0, Math.min(limit, allLeashed.size()));
+        return selected;
     }
 
     private List<LivingEntity> listSenderLeashedAnimals(Player sender) {
@@ -408,7 +414,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return;
         }
         if (clicked.getType() == droneManager.settings().sendModeAnimalsMaterial()) {
-            sendAnimalsOnly(sender, holder);
+            Bukkit.getScheduler().runTask(plugin, () -> sendAnimalsOnly(sender, holder));
             return;
         }
         if (clicked.getType() == droneManager.settings().sendModeItemsMaterial()) {
@@ -454,7 +460,13 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                     return;
                 }
                 Inventory selector = Bukkit.createInventory(
-                        new SendModeInventoryHolder(sender.getUniqueId(), receiver.getUniqueId(), fixedTarget),
+                        new SendModeInventoryHolder(
+                                sender.getUniqueId(),
+                                receiver.getUniqueId(),
+                                fixedTarget,
+                                leashedAnimals.stream().map(LivingEntity::getUniqueId).toList(),
+                                fixedTarget != null && sender.getUniqueId().equals(receiver.getUniqueId())
+                        ),
                         9,
                         MINI_MESSAGE.deserialize(droneManager.settings().sendModeGuiTitle())
                 );
@@ -483,7 +495,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         int size = droneManager.settings().inventorySize();
         boolean adminSend = fixedTarget != null && sender.getUniqueId().equals(receiverId);
-        ComposeInventoryHolder holder = new ComposeInventoryHolder(sender.getUniqueId(), receiverId, fixedTarget, animalsOnly, adminSend);
+        ComposeInventoryHolder holder = new ComposeInventoryHolder(sender.getUniqueId(), receiverId, fixedTarget, animalsOnly, adminSend, List.of());
         String title = fixedTarget == null ? "Drone > " + receiver.getName() : "Admin Drone > " + formatTarget(fixedTarget);
         Inventory compose = Bukkit.createInventory(holder, size, Component.text(title));
         sender.openInventory(compose);
@@ -518,7 +530,8 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 holder.receiverId(),
                 holder.fixedTarget(),
                 true,
-                holder.senderId().equals(holder.receiverId()) && holder.fixedTarget() != null
+                holder.adminSend(),
+                holder.selectedAnimalIds()
         );
         spawnDroneFromSelection(sender, composeHolder, deliveryInventory);
         sender.closeInventory();
@@ -530,7 +543,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             sender.sendMessage(droneManager.message("player-offline", null, null));
             return;
         }
-        List<LivingEntity> attachedAnimals = holder.animalsOnly() ? findSenderLeashedAnimals(sender) : List.of();
+        List<LivingEntity> attachedAnimals = holder.animalsOnly()
+                ? resolveSelectedAnimals(holder.senderId(), holder.selectedAnimalIds())
+                : List.of();
         Location targetLocation = holder.fixedTarget() != null ? holder.fixedTarget() : receiver.getLocation().clone();
         de.cb.drones.drone.DeliveryDrone drone = droneManager.spawnDrone(
                 sender,
@@ -553,14 +568,27 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         receiver.sendMessage(incoming);
     }
 
-    private record ComposeInventoryHolder(UUID senderId, UUID receiverId, Location fixedTarget, boolean animalsOnly, boolean adminSend) implements InventoryHolder {
+    private record ComposeInventoryHolder(
+            UUID senderId,
+            UUID receiverId,
+            Location fixedTarget,
+            boolean animalsOnly,
+            boolean adminSend,
+            List<UUID> selectedAnimalIds
+    ) implements InventoryHolder {
         @Override
         public Inventory getInventory() {
             return null;
         }
     }
 
-    private record SendModeInventoryHolder(UUID senderId, UUID receiverId, Location fixedTarget) implements InventoryHolder {
+    private record SendModeInventoryHolder(
+            UUID senderId,
+            UUID receiverId,
+            Location fixedTarget,
+            List<UUID> selectedAnimalIds,
+            boolean adminSend
+    ) implements InventoryHolder {
         @Override
         public Inventory getInventory() {
             return null;

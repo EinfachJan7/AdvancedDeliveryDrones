@@ -8,8 +8,8 @@ settings:
     despawn-time-minutes: 10
     despawn-mode: "DELETE"
     max-active-per-sender: 3
-    carry-leashed-animals: false
-    max-leashed-animals-per-drone: 1
+    carry-leashed-animals: true
+    max-leashed-animals-per-drone: 5
     send-mode-gui:
       title: "Sende-Modus"
       animals-item:

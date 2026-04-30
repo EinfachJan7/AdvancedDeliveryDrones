@@ -92,12 +92,21 @@ public final class DroneManager {
         if (stand == null) {
             return null;
         }
-        List<UUID> attachedAnimalIds = attachedAnimals == null
-                ? List.of()
-                : attachedAnimals.stream().map(LivingEntity::getUniqueId).toList();
         List<EntityType> attachedAnimalTypes = attachedAnimals == null
                 ? List.of()
                 : attachedAnimals.stream().map(LivingEntity::getType).toList();
+        if (attachedAnimals != null) {
+            for (LivingEntity animal : attachedAnimals) {
+                try {
+                    if (animal.isLeashed()) {
+                        animal.setLeashHolder(null);
+                    }
+                } catch (Exception ignored) {
+                    // best effort cleanup before virtual transport
+                }
+                animal.remove();
+            }
+        }
         UUID id = UUID.randomUUID();
         DeliveryDrone drone = new DeliveryDrone(
                 id,
@@ -106,7 +115,6 @@ public final class DroneManager {
                 receiver.getName(),
                 fixedTarget,
                 inventory,
-                attachedAnimalIds,
                 attachedAnimalTypes,
                 animalsOnlyDelivery,
                 forceTargetChunkLoad,
@@ -118,7 +126,6 @@ public final class DroneManager {
         byEntityUuid.put(drone.standId(), drone);
         byInventory.put(inventory, drone);
         incrementSenderCounter(sender.getUniqueId());
-        drone.attachLeashedAnimal();
         drone.startFlight(this);
         return drone;
     }
