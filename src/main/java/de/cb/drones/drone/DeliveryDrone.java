@@ -204,26 +204,26 @@ public final class DeliveryDrone {
             if (isChunkLoaded(pendingLanding)) {
                 landAt(manager, computeLandingFrom(pendingLanding));
                 pendingLanding = null;
-            }
-            if (!landingNotified) {
-                landingNotified = true;
-                Player receiver = Bukkit.getPlayer(receiverId);
-                if (receiver != null && receiver.isOnline()) {
-                    receiver.sendMessage(manager.message("landing-notif", "<radius>", String.valueOf((int) settings.deliveryRadius())));
+                if (!landingNotified) {
+                    landingNotified = true;
+                    Player receiver = Bukkit.getPlayer(receiverId);
+                    if (receiver != null && receiver.isOnline()) {
+                        receiver.sendMessage(manager.message("landing-notif", "<radius>", String.valueOf((int) settings.deliveryRadius())));
+                    }
                 }
-            }
-            if (beaconTicker == null) {
-                this.beaconTicker = Bukkit.getScheduler().runTaskTimer(
-                        manager.plugin(),
-                        () -> {
-                            Player onlineReceiver = Bukkit.getPlayer(receiverId);
-                            if (onlineReceiver != null && onlineReceiver.isOnline()) {
-                                renderReceiverBeacon(onlineReceiver);
-                            }
-                        },
-                        20L,
-                        20L
-                );
+                if (beaconTicker == null) {
+                    this.beaconTicker = Bukkit.getScheduler().runTaskTimer(
+                            manager.plugin(),
+                            () -> {
+                                Player onlineReceiver = Bukkit.getPlayer(receiverId);
+                                if (onlineReceiver != null && onlineReceiver.isOnline()) {
+                                    renderReceiverBeacon(onlineReceiver);
+                                }
+                            },
+                            20L,
+                            20L
+                    );
+                }
             }
         }
 

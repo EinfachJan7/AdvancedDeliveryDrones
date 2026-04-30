@@ -6,7 +6,7 @@ authors: [CB]
 commands:
   drone:
     description: Main command for delivery drones
-    usage: /drone <send|toggle|reload|list|decline>
+    usage: /drone <send|admin|preview|toggle|reload|list|decline>
 permissions:
   drone.send:
     default: true

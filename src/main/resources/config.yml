@@ -52,3 +52,4 @@ messages:
   open-inventory: "<gold>Öffne Paket für <white><player></white> ...</gold>"
   incoming-drone: "<gold><white><player></white> hat dir eine Drohne geschickt.</gold>"
   preview-unavailable: "<red>Für diese Drohne ist keine Vorschau verfügbar.</red>"
+  too-many-leashed-animals: "<red>Du hast zu viele angeleinte Tiere. Maximum pro Drohne: <max>.</red>"
