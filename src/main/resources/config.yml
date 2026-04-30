@@ -1,0 +1,50 @@
+settings:
+  drone:
+    speed: 1.0
+    startup-speed: 0.2
+    startup-seconds: 3
+    skull-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzM1YWEzZTJiZjE4NTQ0Zjc1ZTZlMTViMDI2Zjc0N2I1OTllMThmOTZhOWVjNTQ1N2JkNTFhZDhkZjA0YTE2YiJ9fX0="
+    delivery-radius: 10.0
+    despawn-time-minutes: 10
+    despawn-mode: "DELETE"
+    max-active-per-sender: 3
+    blocked-worlds:
+      - "world_nether"
+      - "world_the_end"
+    particle-types:
+      - "ELECTRIC_SPARK"
+      # Example RGB dust particle (red, size 1.0):
+      # - "DUST:255,0,0:1.0"
+    particle-count: 4
+    particle-trail-length: 10
+    particle-y-offset: 1.0
+    flight-sound: "entity.elytra.flying"
+    inventory-size: 54
+    hologram:
+      enabled: true
+      offset-y: 1.0
+      format: "<yellow>Paket fuer <white><receiver></white> <gray>(Despawn: <minutes>m <seconds>s)</gray>"
+    bossbar:
+      enabled: true
+      format: "<gold>Distanz zur Drone: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>"
+
+messages:
+  prefix: "<gold><bold>DRONE</bold></gold> <dark_gray>»</dark_gray> "
+  no-permission: "<red>Keine Rechte!</red>"
+  player-offline: "<red>Dieser Spieler ist nicht online.</red>"
+  toggled-off: "<red>Der Spieler empfängt zurzeit keine Drohnen.</red>"
+  sent-success: "<green>Drohne zu <white><player></white> abgeschickt!</green>"
+  landing-notif: "<gold>Eine Drohne ist in deiner Nähe (<radius>m) gelandet!</gold>"
+  wrong-user: "<red>Das ist nicht deine Drohne!</red>"
+  world-blocked: "<red>In der Welt <white><world></white> sind Drohnen deaktiviert.</red>"
+  sender-limit-reached: "<red>Du hast bereits die maximale Anzahl aktiver Drohnen gesendet (<max>).</red>"
+  decline-none: "<red>Keine eingehenden Drohnen zum Ablehnen.</red>"
+  decline-success: "<green><count> Drohne(n) wurden abgelehnt und zurückgeschickt.</green>"
+  decline-sender-notify: "<yellow>Deine Drohne wurde von <white><player></white> abgelehnt. Items wurden zurückgegeben.</yellow>"
+  receiver-offline-return: "<yellow>Empfänger <white><player></white> ist offline gegangen. Deine Drone wurde abgebrochen und die Items wurden zurückgegeben.</yellow>"
+  receiver-dimension-return: "<yellow>Empfänger <white><player></white> hat die Dimension gewechselt. Deine Drone wurde abgebrochen und die Items wurden zurückgegeben.</yellow>"
+  return-delivered: "<gold>Deine zurückgesendeten Drohnen-Items wurden dir zugestellt.</gold>"
+  toggle-on: "<green>Du empfängst nun wieder Drohnen.</green>"
+  toggle-off: "<red>Du hast den Drohnen-Empfang deaktiviert.</red>"
+  reload: "<green>Config erfolgreich neu geladen.</green>"
+  open-inventory: "<gold>Öffne Paket für <white><player></white> ...</gold>"

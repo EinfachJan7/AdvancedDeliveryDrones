@@ -1,0 +1,16 @@
+name: AdvancedDeliveryDrones
+main: de.cb.drones.AdvancedDeliveryDronesPlugin
+version: 1.0.0
+api-version: "1.21"
+authors: [CB]
+commands:
+  drone:
+    description: Main command for delivery drones
+    usage: /drone <send|toggle|reload|list|decline>
+permissions:
+  drone.send:
+    default: true
+  drone.use:
+    default: true
+  drone.admin:
+    default: op

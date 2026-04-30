@@ -1,0 +1,11 @@
+de\cb\drones\command\DroneCommand$DroneInventoryHolder.class
+de\cb\drones\drone\DeliveryDrone.class
+de\cb\drones\AdvancedDeliveryDronesPlugin.class
+de\cb\drones\config\PlayerSettingsRepository.class
+de\cb\drones\command\DroneCommand$ComposeInventoryHolder.class
+de\cb\drones\drone\DroneInteractionListener.class
+de\cb\drones\drone\DroneSettings$DespawnMode.class
+de\cb\drones\drone\DroneSettings.class
+de\cb\drones\command\DroneCommand.class
+de\cb\drones\drone\DroneManager.class
+de\cb\drones\drone\DroneSettings$ParticleEffect.class
