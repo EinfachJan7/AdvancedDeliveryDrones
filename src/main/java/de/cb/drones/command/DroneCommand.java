@@ -4,9 +4,11 @@ import de.cb.drones.AdvancedDeliveryDronesPlugin;
 import de.cb.drones.config.PlayerSettingsRepository;
 import de.cb.drones.drone.DroneManager;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -14,6 +16,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -292,14 +295,60 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             player.sendMessage(droneManager.message("preview-unavailable", null, null));
             return true;
         }
+        int previewSize = drone.animalsOnlyDelivery() ? 9 : drone.inventory().getSize();
         Inventory preview = Bukkit.createInventory(
                 new PreviewInventoryHolder(drone.droneId(), player.getUniqueId()),
-                drone.inventory().getSize(),
+                previewSize,
                 Component.text("Drone Vorschau")
         );
-        preview.setContents(drone.inventory().getContents());
+        if (drone.animalsOnlyDelivery()) {
+            populateAnimalPreview(preview, drone.attachedAnimalTypes());
+        } else {
+            preview.setContents(drone.inventory().getContents());
+        }
         player.openInventory(preview);
         return true;
+    }
+
+    private void populateAnimalPreview(Inventory preview, List<EntityType> animalTypes) {
+        if (animalTypes == null || animalTypes.isEmpty()) {
+            return;
+        }
+        Map<EntityType, Integer> counts = new HashMap<>();
+        for (EntityType type : animalTypes) {
+            counts.merge(type, 1, Integer::sum);
+        }
+        int slot = 0;
+        for (Map.Entry<EntityType, Integer> entry : counts.entrySet()) {
+            if (slot >= preview.getSize()) {
+                break;
+            }
+            Material egg = resolveSpawnEgg(entry.getKey());
+            ItemStack stack = new ItemStack(egg, Math.min(64, entry.getValue()));
+            ItemMeta meta = stack.getItemMeta();
+            if (meta != null) {
+                meta.displayName(Component.text("Tier: " + entry.getKey().name()));
+                meta.lore(List.of(Component.text("Anzahl: " + entry.getValue())));
+                stack.setItemMeta(meta);
+            }
+            preview.setItem(slot, stack);
+            slot++;
+        }
+    }
+
+    private Material resolveSpawnEgg(EntityType type) {
+        Material exact = Material.getMaterial(type.name() + "_SPAWN_EGG");
+        if (exact != null) {
+            return exact;
+        }
+        if ("MUSHROOM_COW".equals(type.name()) || "MOOSHROOM".equals(type.name())) {
+            Material mooshroom = Material.getMaterial("MOOSHROOM_SPAWN_EGG");
+            if (mooshroom != null) {
+                return mooshroom;
+            }
+        }
+        Material matched = Material.matchMaterial(type.name() + "_SPAWN_EGG");
+        return matched != null ? matched : Material.EGG;
     }
 
     private boolean isInventoryEmpty(Inventory inv) {
@@ -358,11 +407,12 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (clicked == null || clicked.getType().isAir()) {
             return;
         }
-        switch (clicked.getType()) {
-            case LEAD -> openComposeInventory(sender, holder.receiverId(), holder.fixedTarget(), true);
-            case CHEST -> openComposeInventory(sender, holder.receiverId(), holder.fixedTarget(), false);
-            default -> {
-            }
+        if (clicked.getType() == droneManager.settings().sendModeAnimalsMaterial()) {
+            sendAnimalsOnly(sender, holder);
+            return;
+        }
+        if (clicked.getType() == droneManager.settings().sendModeItemsMaterial()) {
+            openComposeInventory(sender, holder.receiverId(), holder.fixedTarget(), false);
         }
     }
 
@@ -406,10 +456,18 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 Inventory selector = Bukkit.createInventory(
                         new SendModeInventoryHolder(sender.getUniqueId(), receiver.getUniqueId(), fixedTarget),
                         9,
-                        Component.text("Sende-Modus")
+                        MINI_MESSAGE.deserialize(droneManager.settings().sendModeGuiTitle())
                 );
-                selector.setItem(3, createModeItem(Material.LEAD, "Tiere senden"));
-                selector.setItem(5, createModeItem(Material.CHEST, "Items senden"));
+                selector.setItem(3, createModeItem(
+                        droneManager.settings().sendModeAnimalsMaterial(),
+                        droneManager.settings().sendModeAnimalsName(),
+                        droneManager.settings().sendModeAnimalsLore()
+                ));
+                selector.setItem(5, createModeItem(
+                        droneManager.settings().sendModeItemsMaterial(),
+                        droneManager.settings().sendModeItemsName(),
+                        droneManager.settings().sendModeItemsLore()
+                ));
                 sender.openInventory(selector);
                 return;
             }
@@ -424,21 +482,46 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return;
         }
         int size = droneManager.settings().inventorySize();
-        ComposeInventoryHolder holder = new ComposeInventoryHolder(sender.getUniqueId(), receiverId, fixedTarget, animalsOnly);
+        boolean adminSend = fixedTarget != null && sender.getUniqueId().equals(receiverId);
+        ComposeInventoryHolder holder = new ComposeInventoryHolder(sender.getUniqueId(), receiverId, fixedTarget, animalsOnly, adminSend);
         String title = fixedTarget == null ? "Drone > " + receiver.getName() : "Admin Drone > " + formatTarget(fixedTarget);
         Inventory compose = Bukkit.createInventory(holder, size, Component.text(title));
         sender.openInventory(compose);
         sender.sendMessage(droneManager.message("open-inventory", "<player>", receiver.getName()));
     }
 
-    private ItemStack createModeItem(Material material, String title) {
+    private ItemStack createModeItem(Material material, String title, List<String> loreLines) {
         ItemStack stack = new ItemStack(material);
         ItemMeta meta = stack.getItemMeta();
         if (meta != null) {
-            meta.displayName(Component.text(title));
+            meta.displayName(MINI_MESSAGE.deserialize(title));
+            if (loreLines != null && !loreLines.isEmpty()) {
+                List<Component> lore = new ArrayList<>();
+                for (String line : loreLines) {
+                    lore.add(MINI_MESSAGE.deserialize(line));
+                }
+                meta.lore(lore);
+            }
             stack.setItemMeta(meta);
         }
         return stack;
+    }
+
+    private void sendAnimalsOnly(Player sender, SendModeInventoryHolder holder) {
+        Inventory deliveryInventory = Bukkit.createInventory(
+                new DroneInventoryHolder(holder.senderId(), holder.receiverId()),
+                droneManager.settings().inventorySize(),
+                Component.text("Delivery Drone")
+        );
+        ComposeInventoryHolder composeHolder = new ComposeInventoryHolder(
+                holder.senderId(),
+                holder.receiverId(),
+                holder.fixedTarget(),
+                true,
+                holder.senderId().equals(holder.receiverId()) && holder.fixedTarget() != null
+        );
+        spawnDroneFromSelection(sender, composeHolder, deliveryInventory);
+        sender.closeInventory();
     }
 
     private void spawnDroneFromSelection(Player sender, ComposeInventoryHolder holder, Inventory deliveryInventory) {
@@ -449,7 +532,15 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         List<LivingEntity> attachedAnimals = holder.animalsOnly() ? findSenderLeashedAnimals(sender) : List.of();
         Location targetLocation = holder.fixedTarget() != null ? holder.fixedTarget() : receiver.getLocation().clone();
-        de.cb.drones.drone.DeliveryDrone drone = droneManager.spawnDrone(sender, receiver, deliveryInventory, targetLocation, attachedAnimals);
+        de.cb.drones.drone.DeliveryDrone drone = droneManager.spawnDrone(
+                sender,
+                receiver,
+                deliveryInventory,
+                targetLocation,
+                attachedAnimals,
+                holder.animalsOnly(),
+                holder.adminSend()
+        );
         if (drone == null) {
             return;
         }
@@ -462,7 +553,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         receiver.sendMessage(incoming);
     }
 
-    private record ComposeInventoryHolder(UUID senderId, UUID receiverId, Location fixedTarget, boolean animalsOnly) implements InventoryHolder {
+    private record ComposeInventoryHolder(UUID senderId, UUID receiverId, Location fixedTarget, boolean animalsOnly, boolean adminSend) implements InventoryHolder {
         @Override
         public Inventory getInventory() {
             return null;

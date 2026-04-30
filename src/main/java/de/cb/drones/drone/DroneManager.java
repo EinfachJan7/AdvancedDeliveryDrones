@@ -13,7 +13,9 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -70,12 +72,22 @@ public final class DroneManager {
         byEntityUuid.clear();
     }
 
-    public DeliveryDrone spawnDrone(Player sender, Player receiver, Inventory inventory, List<LivingEntity> attachedAnimals) {
-        return spawnDrone(sender, receiver, inventory, receiver.getLocation().clone(), attachedAnimals);
+    public DeliveryDrone spawnDrone(Player sender, Player receiver, Inventory inventory, List<LivingEntity> attachedAnimals, boolean animalsOnlyDelivery) {
+        return spawnDrone(sender, receiver, inventory, receiver.getLocation().clone(), attachedAnimals, animalsOnlyDelivery, false);
     }
 
-    public DeliveryDrone spawnDrone(Player sender, Player receiver, Inventory inventory, Location fixedTarget, List<LivingEntity> attachedAnimals) {
+    public DeliveryDrone spawnDrone(
+            Player sender,
+            Player receiver,
+            Inventory inventory,
+            Location fixedTarget,
+            List<LivingEntity> attachedAnimals,
+            boolean animalsOnlyDelivery,
+            boolean forceTargetChunkLoad
+    ) {
         Location start = sender.getLocation().clone().add(0, 2.2, 0);
+        loadChunkNow(start);
+        loadChunkNow(fixedTarget);
         ArmorStand stand = DeliveryDrone.spawnDroneEntity(start, settings.skullTexture());
         if (stand == null) {
             return null;
@@ -83,6 +95,9 @@ public final class DroneManager {
         List<UUID> attachedAnimalIds = attachedAnimals == null
                 ? List.of()
                 : attachedAnimals.stream().map(LivingEntity::getUniqueId).toList();
+        List<EntityType> attachedAnimalTypes = attachedAnimals == null
+                ? List.of()
+                : attachedAnimals.stream().map(LivingEntity::getType).toList();
         UUID id = UUID.randomUUID();
         DeliveryDrone drone = new DeliveryDrone(
                 id,
@@ -92,6 +107,9 @@ public final class DroneManager {
                 fixedTarget,
                 inventory,
                 attachedAnimalIds,
+                attachedAnimalTypes,
+                animalsOnlyDelivery,
+                forceTargetChunkLoad,
                 settings,
                 stand,
                 currentTick()
@@ -123,6 +141,15 @@ public final class DroneManager {
         player.openInventory(drone.inventory());
     }
 
+    public void handleAnimalOnlyInteract(DeliveryDrone drone) {
+        if (!drone.wasOpenedByReceiver()) {
+            drone.onReceiverOpened();
+            decrementSenderCounter(drone.senderId());
+        }
+        drone.releaseLeashedAnimal();
+        drone.markInteraction(currentTick());
+    }
+
     public boolean canSenderLaunch(UUID senderId) {
         return activeBySender.getOrDefault(senderId, 0) < settings.maxActivePerSender();
     }
@@ -145,13 +172,25 @@ public final class DroneManager {
 
     public void destroyDrone(DeliveryDrone drone, boolean dueToDespawn) {
         activeDrones.remove(drone.droneId());
-        byEntityUuid.remove(drone.standId());
+        UUID standId = drone.standId();
+        if (standId != null) {
+            byEntityUuid.remove(standId);
+        }
         byInventory.remove(drone.inventory());
         if (!drone.wasOpenedByReceiver()) {
             decrementSenderCounter(drone.senderId());
         }
         drone.clearItems();
         drone.destroy();
+    }
+
+    public void onDroneStandChanged(DeliveryDrone drone, UUID previousStandId, UUID newStandId) {
+        if (previousStandId != null) {
+            byEntityUuid.remove(previousStandId);
+        }
+        if (newStandId != null) {
+            byEntityUuid.put(newStandId, drone);
+        }
     }
 
     public int declineIncoming(Player receiver) {
@@ -315,5 +354,17 @@ public final class DroneManager {
             return;
         }
         activeBySender.put(senderId, current - 1);
+    }
+
+    private void loadChunkNow(Location location) {
+        World world = location.getWorld();
+        if (world == null) {
+            return;
+        }
+        int chunkX = location.getBlockX() >> 4;
+        int chunkZ = location.getBlockZ() >> 4;
+        if (!world.isChunkLoaded(chunkX, chunkZ)) {
+            world.getChunkAt(chunkX, chunkZ).load();
+        }
     }
 }

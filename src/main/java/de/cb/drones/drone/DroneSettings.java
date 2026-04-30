@@ -3,6 +3,7 @@ package de.cb.drones.drone;
 import java.util.ArrayList;
 import java.util.List;
 import org.bukkit.Color;
+import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -24,6 +25,13 @@ public record DroneSettings(
         int maxActivePerSender,
         boolean carryLeashedAnimals,
         int maxLeashedAnimalsPerDrone,
+        String sendModeGuiTitle,
+        Material sendModeAnimalsMaterial,
+        String sendModeAnimalsName,
+        List<String> sendModeAnimalsLore,
+        Material sendModeItemsMaterial,
+        String sendModeItemsName,
+        List<String> sendModeItemsLore,
         List<String> blockedWorlds,
         boolean hologramEnabled,
         String hologramFormat,
@@ -49,6 +57,13 @@ public record DroneSettings(
         int maxActive = Math.max(1, cfg.getInt(section + "max-active-per-sender", 3));
         boolean carryLeashedAnimals = cfg.getBoolean(section + "carry-leashed-animals", false);
         int maxLeashedAnimalsPerDrone = Math.max(0, cfg.getInt(section + "max-leashed-animals-per-drone", 1));
+        String sendModeGuiTitle = cfg.getString(section + "send-mode-gui.title", "Sende-Modus");
+        Material sendModeAnimalsMaterial = parseMaterial(cfg.getString(section + "send-mode-gui.animals-item.material", "LEAD"), Material.LEAD);
+        String sendModeAnimalsName = cfg.getString(section + "send-mode-gui.animals-item.name", "Tiere senden");
+        List<String> sendModeAnimalsLore = cfg.getStringList(section + "send-mode-gui.animals-item.lore");
+        Material sendModeItemsMaterial = parseMaterial(cfg.getString(section + "send-mode-gui.items-item.material", "CHEST"), Material.CHEST);
+        String sendModeItemsName = cfg.getString(section + "send-mode-gui.items-item.name", "Items senden");
+        List<String> sendModeItemsLore = cfg.getStringList(section + "send-mode-gui.items-item.lore");
         List<String> blockedWorlds = cfg.getStringList(section + "blocked-worlds").stream()
                 .map(String::toLowerCase)
                 .toList();
@@ -74,6 +89,13 @@ public record DroneSettings(
                 maxActive,
                 carryLeashedAnimals,
                 maxLeashedAnimalsPerDrone,
+                sendModeGuiTitle,
+                sendModeAnimalsMaterial,
+                sendModeAnimalsName,
+                sendModeAnimalsLore,
+                sendModeItemsMaterial,
+                sendModeItemsName,
+                sendModeItemsLore,
                 blockedWorlds,
                 hologramEnabled,
                 hologramFormat,
@@ -138,6 +160,14 @@ public record DroneSettings(
         } catch (Exception ignored) {
             return Sound.ITEM_ELYTRA_FLYING;
         }
+    }
+
+    private static Material parseMaterial(String value, Material fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+        Material parsed = Material.matchMaterial(value.trim(), true);
+        return parsed == null ? fallback : parsed;
     }
 
     private static int normalizeSize(int requested) {

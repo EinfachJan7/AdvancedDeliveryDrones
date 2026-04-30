@@ -10,6 +10,18 @@ settings:
     max-active-per-sender: 3
     carry-leashed-animals: false
     max-leashed-animals-per-drone: 1
+    send-mode-gui:
+      title: "Sende-Modus"
+      animals-item:
+        material: "LEAD"
+        name: "<gold>Tiere senden</gold>"
+        lore:
+          - "<gray>Sendet nur angeleinte Tiere.</gray>"
+      items-item:
+        material: "CHEST"
+        name: "<gold>Items senden</gold>"
+        lore:
+          - "<gray>Öffnet das Paket-Inventar.</gray>"
     blocked-worlds:
       - "world_nether"
       - "world_the_end"

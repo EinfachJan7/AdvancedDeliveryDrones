@@ -134,6 +134,14 @@ Sender: /drone send <Spieler>
         └─▶ Drohne landet → Empfänger kann Paket öffnen
 ```
 
+### Chunk- & Tierverhalten
+
+- Die Drohne lädt waehrend des normalen Flugs **keine Chunks pro Tick** nach.
+- Flugfortschritt und Despawn-Countdown laufen intern weiter, auch wenn betroffene Chunks kurzzeitig entladen sind.
+- Sobald ein relevanter Chunk wieder geladen ist, wird die Drohne am aktuellen Fortschrittspunkt wieder sichtbar (inkl. Tier-Reattach, falls Tiertransport aktiv war).
+- Bei `admin send` wird der Ziel-Chunk kurz vor Ankunft einmal aktiv vorgeladen, damit die Landung am Ziel robust klappt.
+- Tiere im Transport sind bis zum Einsammeln/Abschluss der Drohne invulnerable und werden beim Abschluss wieder auf ihren vorherigen Zustand zurueckgesetzt.
+
 ---
 
 ## 🧩 Kompatibilität

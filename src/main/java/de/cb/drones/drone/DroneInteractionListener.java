@@ -46,6 +46,11 @@ public final class DroneInteractionListener implements Listener {
             player.sendMessage(droneManager.message("wrong-user", null, null));
             return true;
         }
+        if (droneManager.settings().carryLeashedAnimals() && drone.animalsOnlyDelivery()) {
+            droneManager.handleAnimalOnlyInteract(drone);
+            droneManager.destroyDrone(drone, false);
+            return true;
+        }
 
         droneManager.openDroneInventory(player, drone);
         return true;

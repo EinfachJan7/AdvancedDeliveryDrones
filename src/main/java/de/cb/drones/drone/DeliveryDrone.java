@@ -4,8 +4,10 @@ import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -35,13 +37,20 @@ public final class DeliveryDrone {
     private final long flightStartTick;
     private final Inventory inventory;
     private final List<UUID> attachedAnimalIds;
-    private final ArmorStand stand;
+    private final List<EntityType> attachedAnimalTypes;
+    private final boolean animalsOnlyDelivery;
+    private final boolean forceTargetChunkLoad;
+    private ArmorStand stand;
+    private UUID standId;
+    private Location lastKnownLocation;
     private final Deque<Location> particleTrail = new LinkedList<>();
+    private final Map<UUID, Boolean> attachedAnimalInvulnerability = new HashMap<>();
     private ArmorStand hologramStand;
 
     private DroneSettings settings;
     private boolean landed;
     private boolean landingNotified;
+    private boolean targetChunkPreloaded;
     private Location pendingLanding;
     private Location landedLocation;
     private boolean openedByReceiver;
@@ -58,6 +67,9 @@ public final class DeliveryDrone {
             Location fixedTarget,
             Inventory inventory,
             List<UUID> attachedAnimalIds,
+            List<EntityType> attachedAnimalTypes,
+            boolean animalsOnlyDelivery,
+            boolean forceTargetChunkLoad,
             DroneSettings settings,
             ArmorStand stand,
             long createdTick
@@ -71,8 +83,13 @@ public final class DeliveryDrone {
         this.flightStartTick = createdTick;
         this.inventory = inventory;
         this.attachedAnimalIds = attachedAnimalIds == null ? List.of() : List.copyOf(attachedAnimalIds);
+        this.attachedAnimalTypes = attachedAnimalTypes == null ? List.of() : List.copyOf(attachedAnimalTypes);
+        this.animalsOnlyDelivery = animalsOnlyDelivery;
+        this.forceTargetChunkLoad = forceTargetChunkLoad;
         this.settings = settings;
         this.stand = stand;
+        this.standId = stand.getUniqueId();
+        this.lastKnownLocation = stand.getLocation().clone();
         this.lastInteractionTick = createdTick;
     }
 
@@ -81,7 +98,7 @@ public final class DeliveryDrone {
     }
 
     public UUID standId() {
-        return stand.getUniqueId();
+        return standId;
     }
 
     public UUID receiverId() {
@@ -101,7 +118,10 @@ public final class DeliveryDrone {
     }
 
     public Location currentLocation() {
-        return stand.getLocation().clone();
+        if (stand != null && !stand.isDead()) {
+            return stand.getLocation().clone();
+        }
+        return lastKnownLocation.clone();
     }
 
     public boolean isLanded() {
@@ -118,6 +138,14 @@ public final class DeliveryDrone {
 
     public boolean wasOpenedByReceiver() {
         return openedByReceiver;
+    }
+
+    public boolean animalsOnlyDelivery() {
+        return animalsOnlyDelivery;
+    }
+
+    public List<EntityType> attachedAnimalTypes() {
+        return attachedAnimalTypes;
     }
 
     public List<ItemStack> snapshotItems() {
@@ -143,6 +171,9 @@ public final class DeliveryDrone {
     }
 
     public void attachLeashedAnimal() {
+        if (stand == null || stand.isDead()) {
+            return;
+        }
         for (LivingEntity animal : attachedAnimals()) {
             if (animal.isDead()) {
                 continue;
@@ -152,6 +183,8 @@ public final class DeliveryDrone {
             }
             try {
                 animal.setLeashHolder(stand);
+                attachedAnimalInvulnerability.putIfAbsent(animal.getUniqueId(), animal.isInvulnerable());
+                animal.setInvulnerable(true);
             } catch (IllegalStateException ignored) {
                 // Some entities can reject leash changes based on state.
             }
@@ -160,22 +193,37 @@ public final class DeliveryDrone {
 
     public void releaseLeashedAnimal() {
         for (LivingEntity animal : attachedAnimals()) {
-            if (animal.isDead() || !animal.isLeashed()) {
+            if (animal.isDead()) {
                 continue;
             }
-            Entity holder = animal.getLeashHolder();
-            if (holder != null && holder.getUniqueId().equals(stand.getUniqueId())) {
-                animal.setLeashHolder(null);
+            if (animal.isLeashed()) {
+                Entity holder = animal.getLeashHolder();
+                boolean isDroneHolder = stand != null && !stand.isDead() && holder != null && holder.getUniqueId().equals(stand.getUniqueId());
+                if (isDroneHolder) {
+                    animal.setLeashHolder(null);
+                }
+            }
+            Boolean originalInvulnerable = attachedAnimalInvulnerability.remove(animal.getUniqueId());
+            if (originalInvulnerable != null) {
+                animal.setInvulnerable(originalInvulnerable);
+            } else if (animal.isInvulnerable()) {
+                // Safety fallback if entity was attached before state was tracked.
+                animal.setInvulnerable(false);
             }
         }
+        attachedAnimalInvulnerability.clear();
     }
 
     public void applySettings(DroneSettings settings, DroneManager manager) {
         this.settings = settings;
-        stand.getEquipment().setHelmet(createSkull(settings.skullTexture()));
+        if (stand != null && !stand.isDead()) {
+            stand.getEquipment().setHelmet(createSkull(settings.skullTexture()));
+        }
         if (landed) {
-            stand.setGlowing(true);
-            stand.setCustomNameVisible(settings.hologramEnabled());
+            if (stand != null && !stand.isDead()) {
+                stand.setGlowing(true);
+                stand.setCustomNameVisible(settings.hologramEnabled());
+            }
             if (settings.hologramEnabled()) {
                 updateHologram(Bukkit.getCurrentTick(), manager);
             }
@@ -189,17 +237,30 @@ public final class DeliveryDrone {
     }
 
     private void tickFlight(DroneManager manager) {
-        if (fixedTarget.getWorld() == null || !fixedTarget.getWorld().equals(stand.getWorld())) {
+        if (fixedTarget.getWorld() == null) {
             return;
         }
 
         long nowTick = Bukkit.getCurrentTick();
         Location expected = expectedLocation(nowTick);
+        // Keep virtual position progressing even when chunks are unloaded.
+        lastKnownLocation = expected.clone();
+        preloadTargetChunkIfNeeded(expected);
+        Location standAnchor = landed
+                ? computeLandingFrom(landedLocation != null ? landedLocation : fixedTarget)
+                : expected;
+        ensureStandPresent(manager, standAnchor);
+        if (stand == null || stand.isDead()) {
+            return;
+        }
+        if (!fixedTarget.getWorld().equals(stand.getWorld())) {
+            return;
+        }
         Location bossbarRef = landed ? (landedLocation != null ? landedLocation : stand.getLocation()) : expected;
 
         if (!landed && expected.distanceSquared(fixedTarget) <= settings.deliveryRadius() * settings.deliveryRadius()) {
             if (pendingLanding == null) {
-                pendingLanding = expected.clone();
+                pendingLanding = fixedTarget.clone();
             }
             if (isChunkLoaded(pendingLanding)) {
                 landAt(manager, computeLandingFrom(pendingLanding));
@@ -233,6 +294,10 @@ public final class DeliveryDrone {
             updateParticleTrail();
             stand.getWorld().playSound(stand.getLocation(), settings.flightSound(), 0.05f, 1.3f);
         }
+        if (landed) {
+            Location landedRef = landedLocation != null ? landedLocation : (stand != null && !stand.isDead() ? stand.getLocation() : lastKnownLocation);
+            tickAttachedAnimalFollow(landedRef);
+        }
         if (Bukkit.getCurrentTick() % 20L == 0L) {
             if (landed && isChunkLoaded(stand.getLocation())) {
                 updateHologram(Bukkit.getCurrentTick(), manager);
@@ -246,8 +311,13 @@ public final class DeliveryDrone {
         if (world == null) {
             return;
         }
+        ensureStandPresent(manager, landing);
+        if (stand == null || stand.isDead()) {
+            return;
+        }
         stand.teleport(landing);
         this.landedLocation = landing.clone();
+        this.lastKnownLocation = landing.clone();
         stand.setGlowing(true);
         this.landed = true;
         updateHologram(Bukkit.getCurrentTick(), manager);
@@ -305,7 +375,8 @@ public final class DeliveryDrone {
                 return;
             }
         }
-        Location pos = stand.getLocation().clone().add(0.0, settings.hologramOffset(), 0.0);
+        Location base = stand != null && !stand.isDead() ? stand.getLocation() : lastKnownLocation;
+        Location pos = base.clone().add(0.0, settings.hologramOffset(), 0.0);
         hologramStand.teleport(pos);
         hologramStand.customName(manager.renderHologram(this, currentTick));
         hologramStand.setCustomNameVisible(true);
@@ -315,7 +386,7 @@ public final class DeliveryDrone {
         if (!receiver.isOnline() || !landed) {
             return;
         }
-        Location loc = stand.getLocation().clone().add(0, 0.4, 0);
+        Location loc = (stand != null && !stand.isDead() ? stand.getLocation() : lastKnownLocation).clone().add(0, 0.4, 0);
         for (DroneSettings.ParticleEffect effect : settings.particles()) {
             if (effect.data() != null) {
                 receiver.spawnParticle(effect.particle(), loc, 15, 0.2, 6, 0.2, 0.0, effect.data());
@@ -326,6 +397,9 @@ public final class DeliveryDrone {
     }
 
     private void updateParticleTrail() {
+        if (stand == null || stand.isDead()) {
+            return;
+        }
         Location now = stand.getLocation().clone().add(0.0, settings.particleYOffset(), 0.0);
         particleTrail.addFirst(now);
         while (particleTrail.size() > settings.particleTrailLength()) {
@@ -388,9 +462,11 @@ public final class DeliveryDrone {
         if (hologramStand != null && !hologramStand.isDead()) {
             hologramStand.remove();
         }
-        if (!stand.isDead()) {
+        if (stand != null && !stand.isDead()) {
             stand.remove();
         }
+        stand = null;
+        standId = null;
     }
 
     public static ArmorStand spawnDroneEntity(Location at, String skullTexture) {
@@ -518,6 +594,9 @@ public final class DeliveryDrone {
     }
 
     private ArmorStand spawnHologramStand() {
+        if (stand == null || stand.isDead()) {
+            return null;
+        }
         World world = stand.getWorld();
         ArmorStand holo = (ArmorStand) world.spawnEntity(stand.getLocation().clone().add(0, settings.hologramOffset(), 0), EntityType.ARMOR_STAND);
         holo.setVisible(false);
@@ -543,5 +622,48 @@ public final class DeliveryDrone {
             }
         }
         return result;
+    }
+
+    private void ensureStandPresent(DroneManager manager, Location preferredLocation) {
+        if (stand != null && !stand.isDead()) {
+            standId = stand.getUniqueId();
+            return;
+        }
+        if (!isChunkLoaded(preferredLocation)) {
+            return;
+        }
+        ArmorStand respawned = spawnDroneEntity(preferredLocation, settings.skullTexture());
+        if (respawned == null) {
+            return;
+        }
+        UUID previous = standId;
+        this.stand = respawned;
+        this.standId = respawned.getUniqueId();
+        this.lastKnownLocation = preferredLocation.clone();
+        if (landed) {
+            stand.setGlowing(true);
+        }
+        manager.onDroneStandChanged(this, previous, this.standId);
+        attachLeashedAnimal();
+    }
+
+    private void preloadTargetChunkIfNeeded(Location expected) {
+        if (!forceTargetChunkLoad || targetChunkPreloaded || landed) {
+            return;
+        }
+        World world = fixedTarget.getWorld();
+        if (world == null) {
+            return;
+        }
+        double triggerDistance = Math.max(settings.deliveryRadius() * 4.0D, 64.0D);
+        if (expected.distanceSquared(fixedTarget) > triggerDistance * triggerDistance) {
+            return;
+        }
+        int chunkX = fixedTarget.getBlockX() >> 4;
+        int chunkZ = fixedTarget.getBlockZ() >> 4;
+        if (!world.isChunkLoaded(chunkX, chunkZ)) {
+            world.getChunkAt(chunkX, chunkZ).load();
+        }
+        targetChunkPreloaded = true;
     }
 }
