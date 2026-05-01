@@ -3,6 +3,8 @@ package de.cb.drones.command;
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
 import de.cb.drones.config.PlayerSettingsRepository;
 import de.cb.drones.drone.DroneManager;
+import de.cb.drones.drone.DroneSettings;
+import de.cb.drones.gui.DroneMenuHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collections;
@@ -39,11 +41,13 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private final AdvancedDeliveryDronesPlugin plugin;
     private final DroneManager droneManager;
     private final PlayerSettingsRepository settingsRepository;
+    private final DroneMenuHandler menuHandler;
 
-    public DroneCommand(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository) {
+    public DroneCommand(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, DroneSettings droneSettings) {
         this.plugin = plugin;
         this.droneManager = droneManager;
         this.settingsRepository = settingsRepository;
+        this.menuHandler = new DroneMenuHandler(plugin, droneManager, settingsRepository, droneSettings);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -54,7 +58,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length == 0) {
-            player.sendMessage("/drone <send|admin|preview|toggle|reload|list|decline>");
+            menuHandler.getMenuGUI().openMainMenu(player);
             return true;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
@@ -158,6 +162,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         return true;
     }
 
+    
     private boolean executeList(Player player) {
         if (!player.hasPermission("drone.admin")) {
             player.sendMessage(droneManager.message("no-permission", null, null));

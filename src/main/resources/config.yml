@@ -22,6 +22,53 @@ settings:
         name: "<gold>Items senden</gold>"
         lore:
           - "<gray>Öffnet das Paket-Inventar.</gray>"
+    main-menu:
+      title: "Drone Menü"
+      size: 27
+      items:
+        send:
+          position: 11
+          material: "PLAYER_HEAD"
+          name: "<green>Drohne senden"
+          lore:
+            - "<gray>Wähle einen Spieler aus"
+            - "<gray>um ihm eine Drohne zu senden"
+        toggle:
+          position: 13
+          material: "REDSTONE"
+          name: "<yellow>Drohnen-Empfang umschalten"
+          lore:
+            - "<gray>Schalte ein/aus ob du"
+            - "<gray>Drohnen empfangen möchtest"
+        decline:
+          position: 15
+          material: "BARRIER"
+          name: "<red>Eingehende Drohnen ablehnen"
+          lore:
+            - "<gray>Lehne alle eingehenden"
+            - "<gray>Drohnen für dich ab"
+        preview:
+          position: 22
+          material: "ENDER_EYE"
+          name: "<aqua>Drohne-Vorschau"
+          lore:
+            - "<gray>Zeige eine Vorschau deiner"
+            - "<gray>aktiven Drohnen"
+      fill-item:
+        material: "GRAY_STAINED_GLASS_PANE"
+        name: " "
+    player-selection:
+      title: "Spieler auswählen"
+      size: 54
+      fill-item:
+        material: "GRAY_STAINED_GLASS_PANE"
+        name: " "
+      back-item:
+        position: 45
+        material: "ARROW"
+        name: "<yellow>Zurück"
+        lore:
+          - "<gray>Zurück zum Hauptmenü"
     blocked-worlds:
       - "world_nether"
       - "world_the_end"
@@ -41,6 +88,30 @@ settings:
     bossbar:
       enabled: true
       format: "<gold>Distanz zur Drone: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>"
+    collection-animation:
+      enabled: true
+
+discord:
+  enabled: true
+  webhook-url: ""
+  username: "Delivery Drone"
+  avatar-url: ""
+  embed:
+    enabled: true
+    color: "#00ff00"
+    thumbnail:
+      enabled: true
+      url: ""
+    image:
+      enabled: false
+      url: ""
+    footer:
+      text: "Advanced Delivery Drones"
+      icon-url: ""
+  include-items: true
+  include-animals: true
+  max-items-display: 10
+  max-animals-display: 5
 
 messages:
   prefix: "<gold><bold>DRONE</bold></gold> <dark_gray>»</dark_gray> "
@@ -65,3 +136,27 @@ messages:
   incoming-drone: "<gold><white><player></white> hat dir eine Drohne geschickt.</gold>"
   preview-unavailable: "<red>Für diese Drohne ist keine Vorschau verfügbar.</red>"
   too-many-leashed-animals: "<red>Du hast zu viele angeleinte Tiere. Maximum pro Drohne: <max>.</red>"
+  drone-spawned: "<green>Drohne wurde gespawnt und ist auf dem Weg!</green>"
+  drone-destroyed: "<yellow>Drohne wurde zerstört.</yellow>"
+  drone-landed: "<gold>Drohne ist gelandet!</gold>"
+  drone-collected: "<gold>Drohne wurde eingesammelt!</gold>"
+  send-mode-title: "<gold>Sende-Modus auswählen</gold>"
+  send-mode-animals: "<gold>Tiere senden</gold>"
+  send-mode-animals-lore: "<gray>Sendet nur angeleinte Tiere</gray>"
+  send-mode-items: "<gold>Items senden</gold>"
+  send-mode-items-lore: "<gray>Öffnet das Paket-Inventar</gray>"
+  gui-title-main: "<gold>Drone Menü</gold>"
+  gui-title-player-selection: "<gold>Spieler auswählen</gold>"
+  gui-item-send-name: "<green>Drohne senden</green>"
+  gui-item-send-lore: "<gray>Wähle einen Spieler aus</gray><gray>um ihm eine Drohne zu senden</gray>"
+  gui-item-toggle-name: "<yellow>Drohnen-Empfang umschalten</yellow>"
+  gui-item-toggle-lore: "<gray>Schalte ein/aus ob du</gray><gray>Drohnen empfangen möchtest</gray>"
+  gui-item-decline-name: "<red>Eingehende Drohnen ablehnen</red>"
+  gui-item-decline-lore: "<gray>Lehne alle eingehenden</gray><gray>Drohnen für dich ab</gray>"
+  gui-item-preview-name: "<aqua>Drohne-Vorschau</aqua>"
+  gui-item-preview-lore: "<gray>Zeige eine Vorschau deiner</gray><gray>aktiven Drohnen</gray>"
+  gui-item-back-name: "<yellow>Zurück</yellow>"
+  gui-item-back-lore: "<gray>Zurück zum Hauptmenü</gray>"
+  discord-webhook-disabled: "<yellow>Discord Webhook ist deaktiviert.</yellow>"
+  discord-webhook-enabled: "<green>Discord Webhook ist aktiviert.</green>"
+  performance-throttled: "<yellow>Performance wird gedrosselt (zu viele Drohnen).</yellow>"

@@ -1,7 +1,9 @@
 package de.cb.drones.drone;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -37,7 +39,10 @@ public record DroneSettings(
         String hologramFormat,
         double hologramOffset,
         boolean bossbarEnabled,
-        String bossbarFormat
+        String bossbarFormat,
+        boolean collectionAnimationEnabled,
+        GuiSettings mainMenu,
+        GuiSettings playerSelection
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg) {
         String section = "settings.drone.";
@@ -72,6 +77,12 @@ public record DroneSettings(
         double hologramOffset = cfg.getDouble(section + "hologram.offset-y", 1.0D);
         boolean bossbarEnabled = cfg.getBoolean(section + "bossbar.enabled", true);
         String bossbarFormat = cfg.getString(section + "bossbar.format", "<gold>Distanz: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>");
+        boolean collectionAnimationEnabled = cfg.getBoolean(section + "collection-animation.enabled", true);
+        
+        // Parse main menu GUI settings
+        GuiSettings mainMenu = parseGuiSettings(cfg, section + "main-menu.", createDefaultMainMenuItems());
+        GuiSettings playerSelection = parseGuiSettings(cfg, section + "player-selection.", createDefaultPlayerSelectionItems());
+        
         return new DroneSettings(
                 speed,
                 startupSpeed,
@@ -101,7 +112,10 @@ public record DroneSettings(
                 hologramFormat,
                 hologramOffset,
                 bossbarEnabled,
-                bossbarFormat
+                bossbarFormat,
+                collectionAnimationEnabled,
+                mainMenu,
+                playerSelection
         );
     }
 
@@ -190,5 +204,50 @@ public record DroneSettings(
     }
 
     public record ParticleEffect(Particle particle, Object data) {
+    }
+
+    private static GuiSettings parseGuiSettings(FileConfiguration cfg, String section, Map<String, GuiItem> defaultItems) {
+        String title = cfg.getString(section + "title", "GUI");
+        int size = Math.max(9, Math.min(54, cfg.getInt(section + "size", 27)));
+        
+        Map<String, GuiItem> items = new HashMap<>();
+        for (Map.Entry<String, GuiItem> entry : defaultItems.entrySet()) {
+            String key = entry.getKey();
+            GuiItem defaultItem = entry.getValue();
+            
+            String itemSection = section + "items." + key;
+            int position = cfg.getInt(itemSection + ".position", defaultItem.position());
+            Material material = parseMaterial(cfg.getString(itemSection + ".material", defaultItem.material().name()), defaultItem.material());
+            String name = cfg.getString(itemSection + ".name", defaultItem.name());
+            List<String> lore = cfg.getStringList(itemSection + ".lore");
+            if (lore.isEmpty()) {
+                lore = defaultItem.lore();
+            }
+            
+            items.put(key, new GuiItem(position, material, name, lore));
+        }
+        
+        // Parse fill item
+        String fillSection = section + "fill-item";
+        Material fillMaterial = parseMaterial(cfg.getString(fillSection + ".material", "GRAY_STAINED_GLASS_PANE"), Material.GRAY_STAINED_GLASS_PANE);
+        String fillName = cfg.getString(fillSection + ".name", " ");
+        GuiItem fillItem = new GuiItem(-1, fillMaterial, fillName, List.of());
+        
+        return new GuiSettings(title, size, items, fillItem);
+    }
+
+    private static Map<String, GuiItem> createDefaultMainMenuItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        items.put("send", new GuiItem(11, Material.PLAYER_HEAD, "<green>Drohne senden", List.of("<gray>Wähle einen Spieler aus", "<gray>um ihm eine Drohne zu senden")));
+        items.put("toggle", new GuiItem(13, Material.REDSTONE, "<yellow>Drohnen-Empfang umschalten", List.of("<gray>Schalte ein/aus ob du", "<gray>Drohnen empfangen möchtest")));
+        items.put("decline", new GuiItem(15, Material.BARRIER, "<red>Eingehende Drohnen ablehnen", List.of("<gray>Lehne alle eingehenden", "<gray>Drohnen für dich ab")));
+        items.put("preview", new GuiItem(22, Material.ENDER_EYE, "<aqua>Drohne-Vorschau", List.of("<gray>Zeige eine Vorschau deiner", "<gray>aktiven Drohnen")));
+        return items;
+    }
+
+    private static Map<String, GuiItem> createDefaultPlayerSelectionItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        items.put("back", new GuiItem(45, Material.ARROW, "<yellow>Zurück", List.of("<gray>Zurück zum Hauptmenü")));
+        return items;
     }
 }

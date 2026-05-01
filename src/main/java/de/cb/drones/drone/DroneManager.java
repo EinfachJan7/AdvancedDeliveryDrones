@@ -1,7 +1,11 @@
 package de.cb.drones.drone;
 
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
+import de.cb.drones.discord.DiscordWebhookManager;
+import de.cb.drones.performance.PerformanceOptimizer;
+import java.util.logging.Level;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +29,8 @@ import org.bukkit.scheduler.BukkitTask;
 public final class DroneManager {
     private final AdvancedDeliveryDronesPlugin plugin;
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
+    private final DiscordWebhookManager discordWebhookManager;
+    private final PerformanceOptimizer performanceOptimizer;
     private final Map<UUID, DeliveryDrone> activeDrones = new HashMap<>();
     private final Map<UUID, DeliveryDrone> byEntityUuid = new HashMap<>();
     private final Map<Inventory, DeliveryDrone> byInventory = new HashMap<>();
@@ -33,9 +39,11 @@ public final class DroneManager {
     private DroneSettings settings;
     private BukkitTask cleanupTask;
 
-    public DroneManager(AdvancedDeliveryDronesPlugin plugin, DroneSettings settings) {
+    public DroneManager(AdvancedDeliveryDronesPlugin plugin, DroneSettings settings, DiscordWebhookManager discordWebhookManager) {
         this.plugin = plugin;
         this.settings = settings;
+        this.discordWebhookManager = discordWebhookManager;
+        this.performanceOptimizer = new PerformanceOptimizer(plugin);
     }
 
     public AdvancedDeliveryDronesPlugin plugin() {
@@ -58,13 +66,25 @@ public final class DroneManager {
     }
 
     public void start() {
+        // Clean up any old drone ArmorStands from previous sessions
+        cleanupAllOldDrones();
+        
+        // Load saved drones asynchronously
+        // loadSavedDronesAsync();
+        
         this.cleanupTask = Bukkit.getScheduler().runTaskTimer(plugin, this::cleanupExpired, 20L, 20L);
+    }
+
+    public PerformanceOptimizer getPerformanceOptimizer() {
+        return performanceOptimizer;
     }
 
     public void shutdown() {
         if (cleanupTask != null) {
             cleanupTask.cancel();
         }
+        performanceOptimizer.shutdown();
+        
         for (DeliveryDrone drone : new ArrayList<>(activeDrones.values())) {
             destroyDrone(drone, false);
         }
@@ -127,6 +147,10 @@ public final class DroneManager {
         byInventory.put(inventory, drone);
         incrementSenderCounter(sender.getUniqueId());
         drone.startFlight(this);
+        
+        // Send Discord notification
+        discordWebhookManager.sendDeliveryNotification(sender, receiver, drone);
+        
         return drone;
     }
 
@@ -143,6 +167,12 @@ public final class DroneManager {
             drone.onReceiverOpened();
             drone.releaseLeashedAnimal();
             decrementSenderCounter(drone.senderId());
+            
+            // Send Discord notification for successful delivery
+            Player sender = Bukkit.getPlayer(drone.senderId());
+            if (sender != null) {
+                discordWebhookManager.sendDeliveryCompleted(sender, player, drone);
+            }
         }
         drone.markInteraction(currentTick());
         player.openInventory(drone.inventory());
@@ -152,6 +182,13 @@ public final class DroneManager {
         if (!drone.wasOpenedByReceiver()) {
             drone.onReceiverOpened();
             decrementSenderCounter(drone.senderId());
+            
+            // Send Discord notification for successful delivery
+            Player receiver = Bukkit.getPlayer(drone.receiverId());
+            Player sender = Bukkit.getPlayer(drone.senderId());
+            if (sender != null && receiver != null) {
+                discordWebhookManager.sendDeliveryCompleted(sender, receiver, drone);
+            }
         }
         drone.releaseLeashedAnimal();
         drone.markInteraction(currentTick());
@@ -177,17 +214,23 @@ public final class DroneManager {
         return new ArrayList<>(activeDrones.values());
     }
 
-    public void destroyDrone(DeliveryDrone drone, boolean dueToDespawn) {
-        activeDrones.remove(drone.droneId());
-        UUID standId = drone.standId();
-        if (standId != null) {
-            byEntityUuid.remove(standId);
+    public void destroyDrone(DeliveryDrone drone, boolean keepForPersistence) {
+        if (drone == null) {
+            return;
         }
-        byInventory.remove(drone.inventory());
-        if (!drone.wasOpenedByReceiver()) {
+        if (!keepForPersistence) {
+            activeDrones.remove(drone.droneId());
+            UUID standId = drone.standId();
+            if (standId != null) {
+                byEntityUuid.remove(standId);
+            }
+            byInventory.remove(drone.inventory());
+            if (!drone.wasOpenedByReceiver()) {
+                pendingReturns.put(drone.senderId(), drone.snapshotItems());
+            }
             decrementSenderCounter(drone.senderId());
         }
-        drone.clearItems();
+        
         drone.destroy();
     }
 
@@ -208,6 +251,12 @@ public final class DroneManager {
             return 0;
         }
         for (DeliveryDrone drone : incoming) {
+            // Send Discord notification for declined delivery
+            Player sender = Bukkit.getPlayer(drone.senderId());
+            if (sender != null) {
+                discordWebhookManager.sendDeliveryDeclined(sender, receiver, drone);
+            }
+            
             returnItemsToSender(drone);
             destroyDrone(drone, false);
         }
@@ -342,6 +391,13 @@ public final class DroneManager {
                 .filter(drone -> drone.isExpired(tick))
                 .toList();
         for (DeliveryDrone drone : toRemove) {
+            // Send Discord notification for expired drone
+            Player sender = Bukkit.getPlayer(drone.senderId());
+            Player receiver = Bukkit.getPlayer(drone.receiverId());
+            if (sender != null && receiver != null) {
+                discordWebhookManager.sendDeliveryExpired(sender, receiver, drone);
+            }
+            
             destroyDrone(drone, true);
         }
     }
@@ -363,15 +419,108 @@ public final class DroneManager {
         activeBySender.put(senderId, current - 1);
     }
 
+    private String getPlayerName(UUID playerId) {
+        org.bukkit.entity.Player player = Bukkit.getPlayer(playerId);
+        if (player != null) {
+            return player.getName();
+        }
+        
+        // Try to get from offline player
+        org.bukkit.OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerId);
+        if (offlinePlayer != null && offlinePlayer.getName() != null) {
+            return offlinePlayer.getName();
+        }
+        
+        return "Unbekannt";
+    }
+
     private void loadChunkNow(Location location) {
-        World world = location.getWorld();
-        if (world == null) {
-            return;
+        // Use the performance optimizer's async chunk loading instead of blocking the main thread
+        performanceOptimizer.loadChunkOptimized(location);
+    }
+
+    private void cleanupAllOldDrones() {
+        plugin.getLogger().info("Cleaning up old drone ArmorStands from previous sessions...");
+        java.util.concurrent.atomic.AtomicInteger removedCount = new java.util.concurrent.atomic.AtomicInteger(0);
+        
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            world.getEntities().stream()
+                .filter(entity -> entity instanceof org.bukkit.entity.ArmorStand)
+                .forEach(armorStand -> {
+                    org.bukkit.entity.ArmorStand stand = (org.bukkit.entity.ArmorStand) armorStand;
+                    boolean isOldDrone = false;
+                    
+                    // Check if it's not registered in our system (likely old drone)
+                    if (!byEntityUuid.containsKey(stand.getUniqueId())) {
+                        // Check for drone characteristics
+                        if (stand.isInvisible()) {
+                            isOldDrone = true;
+                        }
+                        
+                        if (!isOldDrone && stand.isCustomNameVisible() && stand.getCustomName() != null) {
+                            String name = stand.getCustomName();
+                            if (name.contains("Drone") || name.contains("Drohne")) {
+                                isOldDrone = true;
+                            }
+                        }
+                        
+                        // Check for typical drone properties
+                        if (!isOldDrone && stand.hasGravity() == false) {
+                            isOldDrone = true;
+                        }
+                    }
+                    
+                    if (isOldDrone) {
+                        plugin.getLogger().info("Removing old drone ArmorStand: " + stand.getUniqueId() + 
+                            " at " + stand.getLocation());
+                        stand.remove();
+                        removedCount.incrementAndGet();
+                    }
+                });
         }
-        int chunkX = location.getBlockX() >> 4;
-        int chunkZ = location.getBlockZ() >> 4;
-        if (!world.isChunkLoaded(chunkX, chunkZ)) {
-            world.getChunkAt(chunkX, chunkZ).load();
+        
+        int count = removedCount.get();
+        if (count > 0) {
+            plugin.getLogger().info("Removed " + count + " old drone ArmorStands");
+        } else {
+            plugin.getLogger().info("No old drone ArmorStands found");
         }
+    }
+
+    private void cleanupOldArmorStands(Location location) {
+        if (location.getWorld() == null) return;
+        
+        // Find all ArmorStands within 5 blocks of the restore location (more aggressive)
+        location.getWorld().getNearbyEntities(location, 5.0, 5.0, 5.0).stream()
+            .filter(entity -> entity instanceof org.bukkit.entity.ArmorStand)
+            .forEach(armorStand -> {
+                // Check if this ArmorStand looks like a drone (has custom name or specific properties)
+                org.bukkit.entity.ArmorStand stand = (org.bukkit.entity.ArmorStand) armorStand;
+                boolean isDrone = false;
+                
+                // Check for drone characteristics
+                if (stand.isCustomNameVisible() && stand.getCustomName() != null) {
+                    String name = stand.getCustomName();
+                    if (name.contains("Drone") || name.contains("Drohne")) {
+                        isDrone = true;
+                    }
+                }
+                
+                // Check for invisible marker (drones are usually invisible)
+                if (!isDrone && stand.isInvisible()) {
+                    isDrone = true;
+                }
+                
+                // Check if it's not registered in our system (likely old drone)
+                if (!byEntityUuid.containsKey(stand.getUniqueId())) {
+                    isDrone = true;
+                }
+                
+                if (isDrone) {
+                    plugin.getLogger().info("Removing old drone ArmorStand: " + stand.getUniqueId() + 
+                        " at " + stand.getLocation());
+                    stand.remove();
+                }
+            });
     }
 }

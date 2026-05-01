@@ -43,6 +43,7 @@ public final class DeliveryDrone {
     private final Deque<Location> particleTrail = new LinkedList<>();
     private final List<UUID> spawnedTransportAnimalIds = new ArrayList<>();
     private ArmorStand hologramStand;
+    private DroneManager droneManager;
 
     private DroneSettings settings;
     private boolean landed;
@@ -56,6 +57,16 @@ public final class DeliveryDrone {
     private BukkitTask ticker;
     private BukkitTask beaconTicker;
     private BossBar bossBar;
+    private boolean smoothLanding;
+    private Location smoothLandingStart;
+    private long smoothLandingStartTick;
+    private final int smoothLandingDuration = 60; // 3 seconds at 20 ticks
+    private boolean collectionAnimation;
+    private Location collectionAnimationStart;
+    private long collectionAnimationStartTick;
+    private final int collectionAnimationDuration = 40; // 2 seconds at 20 ticks
+    private long lastBossBarUpdate = 0L;
+    private static final long BOSSBAR_UPDATE_INTERVAL = 5L; // Update every 5 ticks (0.25 seconds)
 
     public DeliveryDrone(
             UUID droneId,
@@ -218,8 +229,15 @@ public final class DeliveryDrone {
     }
 
     public void startFlight(DroneManager manager) {
+        this.droneManager = manager;
         applySettings(settings, manager);
         initBossbar(manager);
+        
+        // Register with performance optimizer
+        if (droneManager != null && droneManager.getPerformanceOptimizer() != null) {
+            droneManager.getPerformanceOptimizer().registerDrone(droneId);
+        }
+        
         this.ticker = Bukkit.getScheduler().runTaskTimer(manager.plugin(), () -> tickFlight(manager), 1L, 1L);
     }
 
@@ -250,27 +268,63 @@ public final class DeliveryDrone {
                 pendingLanding = fixedTarget.clone();
             }
             if (isChunkLoaded(pendingLanding)) {
-                landAt(manager, computeLandingFrom(pendingLanding));
-                pendingLanding = null;
-                if (!landingNotified) {
-                    landingNotified = true;
-                    Player receiver = Bukkit.getPlayer(receiverId);
-                    if (receiver != null && receiver.isOnline()) {
-                        receiver.sendMessage(manager.message("landing-notif", "<radius>", String.valueOf((int) settings.deliveryRadius())));
-                    }
+                Location landingSpot = computeLandingFrom(pendingLanding);
+                if (!smoothLanding) {
+                    // Start smooth landing animation
+                    smoothLanding = true;
+                    smoothLandingStart = expected.clone();
+                    smoothLandingStartTick = nowTick;
                 }
-                if (beaconTicker == null) {
-                    this.beaconTicker = Bukkit.getScheduler().runTaskTimer(
-                            manager.plugin(),
-                            () -> {
-                                Player onlineReceiver = Bukkit.getPlayer(receiverId);
-                                if (onlineReceiver != null && onlineReceiver.isOnline()) {
-                                    renderReceiverBeacon(onlineReceiver);
-                                }
-                            },
-                            20L,
-                            20L
-                    );
+                
+                // Continue smooth landing animation
+                if (smoothLanding) {
+                    long elapsedTicks = nowTick - smoothLandingStartTick;
+                    if (elapsedTicks >= smoothLandingDuration) {
+                        // Landing animation complete
+                        landAt(manager, landingSpot);
+                        pendingLanding = null;
+                        smoothLanding = false;
+                        if (!landingNotified) {
+                            landingNotified = true;
+                            Player receiver = Bukkit.getPlayer(receiverId);
+                            if (receiver != null && receiver.isOnline()) {
+                                receiver.sendMessage(manager.message("landing-notif", "<radius>", String.valueOf((int) settings.deliveryRadius())));
+                            }
+                        }
+                        if (beaconTicker == null) {
+                            this.beaconTicker = Bukkit.getScheduler().runTaskTimer(
+                                    manager.plugin(),
+                                    () -> {
+                                        Player onlineReceiver = Bukkit.getPlayer(receiverId);
+                                        if (onlineReceiver != null && onlineReceiver.isOnline()) {
+                                            renderReceiverBeacon(onlineReceiver);
+                                        }
+                                    },
+                                    20L,
+                                    20L
+                            );
+                        }
+                    } else {
+                        // Animate smooth descent
+                        double progress = (double) elapsedTicks / smoothLandingDuration;
+                        // Use ease-in-out cubic function for smooth animation
+                        double easedProgress = progress < 0.5 
+                            ? 4 * progress * progress * progress 
+                            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+                        
+                        Vector startVec = smoothLandingStart.toVector();
+                        Vector endVec = landingSpot.toVector();
+                        Vector current = startVec.add(endVec.subtract(startVec).multiply(easedProgress));
+                        
+                        Location animatedPos = new Location(landingSpot.getWorld(), current.getX(), current.getY(), current.getZ());
+                        ensureStandPresent(manager, animatedPos);
+                        if (stand != null && !stand.isDead()) {
+                            stand.teleport(animatedPos);
+                            tickAttachedAnimalFollow(animatedPos);
+                            updateParticleTrail();
+                            stand.getWorld().playSound(stand.getLocation(), settings.flightSound(), 0.05f, 1.3f);
+                        }
+                    }
                 }
             }
         }
@@ -297,6 +351,56 @@ public final class DeliveryDrone {
                 updateHologram(Bukkit.getCurrentTick(), manager);
             }
             updateBossBar(manager, bossbarRef);
+        }
+
+        // Handle collection animation
+        if (collectionAnimation && stand != null && !stand.isDead()) {
+            long elapsedTicks = nowTick - collectionAnimationStartTick;
+            if (elapsedTicks >= collectionAnimationDuration) {
+                // Animation complete, destroy the drone
+                performDestroy();
+            } else {
+                // Animate collection effect
+                animateCollection(elapsedTicks);
+            }
+        }
+    }
+
+    private void animateCollection(long elapsedTicks) {
+        if (stand == null || stand.isDead()) return;
+
+        double progress = (double) elapsedTicks / collectionAnimationDuration;
+        // Use ease-out cubic for smooth collection
+        double easedProgress = 1 - Math.pow(1 - progress, 3);
+
+        // Animate upward spiral and shrink
+        Location current = stand.getLocation().clone();
+        double height = easedProgress * 3.0; // Rise 3 blocks
+        double scale = 1.0 - (easedProgress * 0.8); // Shrink to 20% size
+        double rotation = elapsedTicks * 0.3; // Rotation speed
+
+        Location newPos = current.add(0, height * 0.1, 0); // Gradual rise
+        newPos.setYaw((float) (current.getYaw() + rotation * 10));
+        
+        // Apply scale effect through visual means
+        stand.teleport(newPos);
+        
+        // Create collection particles
+        for (int i = 0; i < 3; i++) {
+            double angle = (elapsedTicks * 0.5 + i * 120) * Math.PI / 180;
+            double radius = easedProgress * 2.0;
+            double x = current.getX() + Math.cos(angle) * radius;
+            double z = current.getZ() + Math.sin(angle) * radius;
+            double y = current.getY() + height * 0.2;
+            
+            Location particleLoc = new Location(current.getWorld(), x, y, z);
+            current.getWorld().spawnParticle(org.bukkit.Particle.END_ROD, particleLoc, 5, 0.1, 0.1, 0.1, 0.01);
+            current.getWorld().spawnParticle(org.bukkit.Particle.CLOUD, particleLoc, 2, 0.2, 0.2, 0.2, 0.05);
+        }
+
+        // Play collection sound
+        if (elapsedTicks % 10 == 0) { // Every 0.5 seconds
+            current.getWorld().playSound(current, org.bukkit.Sound.ENTITY_ITEM_PICKUP, 0.3f, 1.5f + (float) progress);
         }
     }
 
@@ -382,11 +486,26 @@ public final class DeliveryDrone {
             return;
         }
         Location loc = (stand != null && !stand.isDead() ? stand.getLocation() : lastKnownLocation).clone().add(0, 0.4, 0);
-        for (DroneSettings.ParticleEffect effect : settings.particles()) {
-            if (effect.data() != null) {
-                receiver.spawnParticle(effect.particle(), loc, 15, 0.2, 6, 0.2, 0.0, effect.data());
-            } else {
-                receiver.spawnParticle(effect.particle(), loc, 15, 0.2, 6, 0.2, 0.0);
+        if (droneManager != null) {
+            for (DroneSettings.ParticleEffect effect : settings.particles()) {
+                if (effect.data() != null) {
+                    droneManager.getPerformanceOptimizer().spawnParticlesOptimized(
+                        loc, effect.particle(), 15, 0.2, 6, 0.2, 0.0, effect.data()
+                    );
+                } else {
+                    droneManager.getPerformanceOptimizer().spawnParticlesOptimized(
+                        loc, effect.particle(), 15, 0.2, 6, 0.2, 0.0
+                    );
+                }
+            }
+        } else {
+            // Fallback
+            for (DroneSettings.ParticleEffect effect : settings.particles()) {
+                if (effect.data() != null) {
+                    receiver.spawnParticle(effect.particle(), loc, 15, 0.2, 6, 0.2, 0.0, effect.data());
+                } else {
+                    receiver.spawnParticle(effect.particle(), loc, 15, 0.2, 6, 0.2, 0.0);
+                }
             }
         }
     }
@@ -395,6 +514,20 @@ public final class DeliveryDrone {
         if (stand == null || stand.isDead()) {
             return;
         }
+        
+        // Check performance optimization
+        if (droneManager != null && droneManager.getPerformanceOptimizer() != null) {
+            // Skip particles if performance should be throttled
+            if (droneManager.getPerformanceOptimizer().shouldThrottlePerformance()) {
+                return;
+            }
+            
+            // Check particle cooldown
+            if (!droneManager.getPerformanceOptimizer().shouldSpawnParticles(droneId)) {
+                return;
+            }
+        }
+        
         Location now = stand.getLocation().clone().add(0.0, settings.particleYOffset(), 0.0);
         particleTrail.addFirst(now);
         while (particleTrail.size() > settings.particleTrailLength()) {
@@ -405,11 +538,27 @@ public final class DeliveryDrone {
         for (Location point : particleTrail) {
             int count = Math.max(1, settings.particleCount() - (index / 3));
             double spread = 0.02 + (index * 0.01);
-            for (DroneSettings.ParticleEffect effect : settings.particles()) {
-                if (effect.data() != null) {
-                    point.getWorld().spawnParticle(effect.particle(), point, count, spread, spread, spread, 0.0, effect.data());
-                } else {
-                    point.getWorld().spawnParticle(effect.particle(), point, count, spread, spread, spread, 0.0);
+            // Use performance optimizer for particles
+            if (droneManager != null) {
+                for (DroneSettings.ParticleEffect effect : settings.particles()) {
+                    if (effect.data() != null) {
+                        droneManager.getPerformanceOptimizer().spawnParticlesOptimized(
+                            point, effect.particle(), count, spread, spread, spread, 0.0, effect.data()
+                        );
+                    } else {
+                        droneManager.getPerformanceOptimizer().spawnParticlesOptimized(
+                            point, effect.particle(), count, spread, spread, spread, 0.0
+                        );
+                    }
+                }
+            } else {
+                // Fallback if droneManager is not set
+                for (DroneSettings.ParticleEffect effect : settings.particles()) {
+                    if (effect.data() != null) {
+                        point.getWorld().spawnParticle(effect.particle(), point, count, spread, spread, spread, 0.0, effect.data());
+                    } else {
+                        point.getWorld().spawnParticle(effect.particle(), point, count, spread, spread, spread, 0.0);
+                    }
                 }
             }
             index++;
@@ -455,6 +604,24 @@ public final class DeliveryDrone {
     }
 
     public void destroy() {
+        // Start collection animation if enabled and not already animating
+        if (settings.collectionAnimationEnabled() && !collectionAnimation && stand != null && !stand.isDead()) {
+            collectionAnimation = true;
+            collectionAnimationStart = stand.getLocation().clone();
+            collectionAnimationStartTick = Bukkit.getCurrentTick();
+            return; // Don't destroy immediately, let animation complete
+        }
+
+        // Normal destroy without animation
+        performDestroy();
+    }
+
+    private void performDestroy() {
+        // Unregister from performance optimizer
+        if (droneManager != null && droneManager.getPerformanceOptimizer() != null) {
+            droneManager.getPerformanceOptimizer().unregisterDrone(droneId);
+        }
+        
         releaseLeashedAnimal();
         if (ticker != null) {
             ticker.cancel();
@@ -474,6 +641,7 @@ public final class DeliveryDrone {
         }
         stand = null;
         standId = null;
+        collectionAnimation = false;
     }
 
     public static ArmorStand spawnDroneEntity(Location at, String skullTexture) {
@@ -544,13 +712,20 @@ public final class DeliveryDrone {
             }
             return;
         }
+        long currentTick = Bukkit.getCurrentTick();
+        // Only update boss bar every BOSSBAR_UPDATE_INTERVAL ticks to reduce performance impact
+        if (currentTick - lastBossBarUpdate < BOSSBAR_UPDATE_INTERVAL) {
+            return;
+        }
+        lastBossBarUpdate = currentTick;
+        
         Player receiver = Bukkit.getPlayer(receiverId);
         if (receiver == null || bossBar == null) {
             return;
         }
         double distance = receiver.getLocation().distance(droneRefLocation);
         bossBar.setProgress(1.0D);
-        bossBar.setTitle(manager.renderBossbar(distance, etaSeconds(Bukkit.getCurrentTick())));
+        bossBar.setTitle(manager.renderBossbar(distance, etaSeconds(currentTick)));
     }
 
     private long etaSeconds(long nowTick) {
