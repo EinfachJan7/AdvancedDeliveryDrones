@@ -5,6 +5,8 @@ import de.cb.drones.config.PlayerSettingsRepository;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.gui.DroneMenuHandler;
+import de.cb.drones.socket.DeliverySocket;
+import de.cb.drones.socket.SocketRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collections;
@@ -42,12 +44,14 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private final DroneManager droneManager;
     private final PlayerSettingsRepository settingsRepository;
     private final DroneMenuHandler menuHandler;
+    private final SocketRepository socketRepository;
 
-    public DroneCommand(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, DroneSettings droneSettings) {
+    public DroneCommand(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, DroneSettings droneSettings, SocketRepository socketRepository) {
         this.plugin = plugin;
         this.droneManager = droneManager;
         this.settingsRepository = settingsRepository;
-        this.menuHandler = new DroneMenuHandler(plugin, droneManager, settingsRepository, droneSettings);
+        this.menuHandler = new DroneMenuHandler(plugin, droneManager, settingsRepository, droneSettings, socketRepository);
+        this.socketRepository = socketRepository;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -70,8 +74,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "reload" -> executeReload(player);
             case "list" -> executeList(player);
             case "decline" -> executeDecline(player);
+            case "socket" -> executeSocket(player, args);
             default -> {
-                player.sendMessage("/drone <send|admin|preview|toggle|reload|list|decline>");
+                player.sendMessage("/drone <send|admin|preview|toggle|reload|list|decline|socket>");
                 yield true;
             }
         };
@@ -95,10 +100,6 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             sender.sendMessage(droneManager.message("world-blocked", "<world>", sender.getWorld().getName()));
             return true;
         }
-        if (droneManager.isBlockedWorld(target.getWorld().getName())) {
-            sender.sendMessage(droneManager.message("world-blocked", "<world>", target.getWorld().getName()));
-            return true;
-        }
         if (!settingsRepository.canReceive(target.getUniqueId())) {
             sender.sendMessage(droneManager.message("toggled-off", null, null));
             return true;
@@ -107,6 +108,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             sender.sendMessage(droneManager.message("sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender())));
             return true;
         }
+
         prepareSendFlow(sender, target, null);
         return true;
     }
@@ -158,6 +160,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         plugin.reloadPlugin();
+        menuHandler.updateSettings(droneManager.settings());
         player.sendMessage(droneManager.message("reload", null, null));
         return true;
     }
@@ -203,6 +206,144 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         player.sendMessage(droneManager.message("decline-success", "<count>", String.valueOf(declined)));
+        return true;
+    }
+
+    private boolean executeSocket(Player player, String[] args) {
+        if (!player.hasPermission("drone.socket")) {
+            player.sendMessage(droneManager.message("no-permission", null, null));
+            return true;
+        }
+        if (args.length < 2) {
+            player.sendMessage("/drone socket <place|remove|list|send>");
+            return true;
+        }
+        String sub = args[1].toLowerCase(Locale.ROOT);
+        return switch (sub) {
+            case "place" -> executeSocketPlace(player, args);
+            case "remove" -> executeSocketRemove(player, args);
+            case "list" -> executeSocketList(player);
+            case "send" -> executeSocketSend(player, args);
+            default -> {
+                player.sendMessage("/drone socket <place|remove|list|send>");
+                yield true;
+            }
+        };
+    }
+
+    private boolean executeSocketPlace(Player player, String[] args) {
+        if (args.length < 3) {
+            player.sendMessage("/drone socket place <name>");
+            return true;
+        }
+        String socketName = args[2];
+        if (socketName.length() > 32) {
+            player.sendMessage(droneManager.message("socket-name-too-long", null, null));
+            return true;
+        }
+
+        if (socketRepository.getSocketsByOwner(player.getUniqueId()).stream()
+                .anyMatch(s -> s.name().equals(socketName))) {
+            player.sendMessage(droneManager.message("socket-exists", "<name>", socketName));
+            return true;
+        }
+
+        if (droneManager.isBlockedWorld(player.getWorld().getName())) {
+            player.sendMessage(droneManager.message("world-blocked", "<world>", player.getWorld().getName()));
+            return true;
+        }
+
+        Location loc = player.getLocation();
+        socketRepository.addSocket(player.getUniqueId(), socketName, player.getName(), loc);
+
+        player.sendMessage(droneManager.message("socket-placed", "<name>", socketName));
+        player.sendMessage(droneManager.message("socket-location", "<coords>", loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ()));
+        return true;
+    }
+
+    private boolean executeSocketRemove(Player player, String[] args) {
+        if (args.length < 3) {
+            player.sendMessage("/drone socket remove <name>");
+            return true;
+        }
+        String name = args[2];
+        if (!socketRepository.socketNameExists(player.getUniqueId(), name)) {
+            player.sendMessage(droneManager.message("socket-not-found", "<name>", name));
+            return true;
+        }
+        boolean removed = socketRepository.removeSocket(player.getUniqueId(), name);
+        if (removed) {
+            player.sendMessage(droneManager.message("socket-removed", "<name>", name));
+        } else {
+            player.sendMessage(droneManager.message("socket-remove-failed", "<name>", name));
+        }
+        return true;
+    }
+
+    private boolean executeSocketList(Player player) {
+        List<DeliverySocket> sockets = socketRepository.getSocketsByOwner(player.getUniqueId());
+        if (sockets.isEmpty()) {
+            player.sendMessage(droneManager.message("socket-none", null, null));
+            return true;
+        }
+        player.sendMessage(droneManager.message("socket-list-header", "<count>", String.valueOf(sockets.size())));
+        for (DeliverySocket socket : sockets) {
+            Component line = MINI_MESSAGE.deserialize(
+                    "<gray>- <yellow><name></yellow> <dark_gray>|</dark_gray> "
+                            + "<white><world></white> <gray>(<coords>)</gray> "
+                            + "<click:run_command:'/drone socket send " + socket.name() + "'><green>[Send]</green></click> "
+                            + "<click:run_command:'/drone socket remove " + socket.name() + "'><red>[Remove]</red></click>",
+                    Placeholder.unparsed("name", socket.name()),
+                    Placeholder.unparsed("world", socket.getWorldName()),
+                    Placeholder.unparsed("coords", socket.getCoordinates())
+            );
+            player.sendMessage(line);
+        }
+        return true;
+    }
+
+    private boolean executeSocketSend(Player player, String[] args) {
+        if (args.length < 3) {
+            player.sendMessage("/drone socket send <socket-name>");
+            return true;
+        }
+        String socketName = args[2];
+
+        // Search for socket across all players
+        DeliverySocket targetSocket = null;
+        for (DeliverySocket socket : socketRepository.getAllSockets()) {
+            if (socket.name().equals(socketName)) {
+                targetSocket = socket;
+                break;
+            }
+        }
+
+        if (targetSocket == null) {
+            player.sendMessage(droneManager.message("socket-not-found", "<name>", socketName));
+            return true;
+        }
+
+        // Get socket owner
+        Player socketOwner = Bukkit.getPlayer(targetSocket.ownerId());
+        if (socketOwner == null || !socketOwner.isOnline()) {
+            player.sendMessage(droneManager.message("player-offline", null, null));
+            return true;
+        }
+
+        if (droneManager.isBlockedWorld(player.getWorld().getName())) {
+            player.sendMessage(droneManager.message("world-blocked", "<world>", player.getWorld().getName()));
+            return true;
+        }
+        if (droneManager.isBlockedWorld(targetSocket.getWorldName())) {
+            player.sendMessage(droneManager.message("world-blocked", "<world>", targetSocket.getWorldName()));
+            return true;
+        }
+        if (!droneManager.canSenderLaunch(player.getUniqueId())) {
+            player.sendMessage(droneManager.message("sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender())));
+            return true;
+        }
+
+        prepareSendFlow(player, socketOwner, targetSocket.location(), true, targetSocket.name());
         return true;
     }
 
@@ -374,7 +515,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return List.of("send", "admin", "preview", "toggle", "reload", "list", "decline");
+            return List.of("send", "admin", "preview", "toggle", "reload", "list", "decline", "socket");
         }
         if (args.length == 2 && "admin".equalsIgnoreCase(args[0])) {
             return List.of("send");
@@ -394,6 +535,29 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 }
             }
             return results;
+        }
+        if (args.length == 2 && "socket".equalsIgnoreCase(args[0])) {
+            return List.of("place", "remove", "list", "send");
+        }
+        if (args.length == 3 && "socket".equalsIgnoreCase(args[0])) {
+            if (sender instanceof Player player) {
+                if ("remove".equalsIgnoreCase(args[1])) {
+                    // Only own sockets for remove
+                    List<String> socketNames = new ArrayList<>();
+                    for (DeliverySocket socket : socketRepository.getSocketsByOwner(player.getUniqueId())) {
+                        socketNames.add(socket.name());
+                    }
+                    return socketNames;
+                }
+                if ("send".equalsIgnoreCase(args[1])) {
+                    // All sockets for send
+                    List<String> socketNames = new ArrayList<>();
+                    for (DeliverySocket socket : socketRepository.getAllSockets()) {
+                        socketNames.add(socket.name());
+                    }
+                    return socketNames;
+                }
+            }
         }
         return Collections.emptyList();
     }
@@ -456,6 +620,14 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private void prepareSendFlow(Player sender, Player receiver, Location fixedTarget) {
+        prepareSendFlow(sender, receiver, fixedTarget, false, null);
+    }
+
+    private void prepareSendFlow(Player sender, Player receiver, Location fixedTarget, boolean exactSocketTarget) {
+        prepareSendFlow(sender, receiver, fixedTarget, exactSocketTarget, null);
+    }
+
+    private void prepareSendFlow(Player sender, Player receiver, Location fixedTarget, boolean exactSocketTarget, String socketName) {
         if (droneManager.settings().carryLeashedAnimals()) {
             List<LivingEntity> leashedAnimals = listSenderLeashedAnimals(sender);
             if (!leashedAnimals.isEmpty()) {
@@ -470,7 +642,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                                 receiver.getUniqueId(),
                                 fixedTarget,
                                 leashedAnimals.stream().map(LivingEntity::getUniqueId).toList(),
-                                fixedTarget != null && sender.getUniqueId().equals(receiver.getUniqueId())
+                                fixedTarget != null && sender.getUniqueId().equals(receiver.getUniqueId()),
+                                exactSocketTarget,
+                                socketName
                         ),
                         9,
                         MINI_MESSAGE.deserialize(droneManager.settings().sendModeGuiTitle())
@@ -489,10 +663,18 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 return;
             }
         }
-        openComposeInventory(sender, receiver.getUniqueId(), fixedTarget, false);
+        openComposeInventory(sender, receiver.getUniqueId(), fixedTarget, false, exactSocketTarget, socketName);
     }
 
     private void openComposeInventory(Player sender, UUID receiverId, Location fixedTarget, boolean animalsOnly) {
+        openComposeInventory(sender, receiverId, fixedTarget, animalsOnly, false, null);
+    }
+
+    private void openComposeInventory(Player sender, UUID receiverId, Location fixedTarget, boolean animalsOnly, boolean exactSocketTarget) {
+        openComposeInventory(sender, receiverId, fixedTarget, animalsOnly, exactSocketTarget, null);
+    }
+
+    private void openComposeInventory(Player sender, UUID receiverId, Location fixedTarget, boolean animalsOnly, boolean exactSocketTarget, String socketName) {
         Player receiver = Bukkit.getPlayer(receiverId);
         if (receiver == null || !receiver.isOnline()) {
             sender.sendMessage(droneManager.message("player-offline", null, null));
@@ -500,8 +682,8 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         int size = droneManager.settings().inventorySize();
         boolean adminSend = fixedTarget != null && sender.getUniqueId().equals(receiverId);
-        ComposeInventoryHolder holder = new ComposeInventoryHolder(sender.getUniqueId(), receiverId, fixedTarget, animalsOnly, adminSend, List.of());
-        String title = fixedTarget == null ? "Drone > " + receiver.getName() : "Admin Drone > " + formatTarget(fixedTarget);
+        ComposeInventoryHolder holder = new ComposeInventoryHolder(sender.getUniqueId(), receiverId, fixedTarget, animalsOnly, adminSend, List.of(), exactSocketTarget, socketName);
+        String title = socketName != null ? "Drone > " + socketName : (fixedTarget == null ? "Drone > " + receiver.getName() : "Socket Drone > " + receiver.getName());
         Inventory compose = Bukkit.createInventory(holder, size, Component.text(title));
         sender.openInventory(compose);
         sender.sendMessage(droneManager.message("open-inventory", "<player>", receiver.getName()));
@@ -536,7 +718,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 holder.fixedTarget(),
                 true,
                 holder.adminSend(),
-                holder.selectedAnimalIds()
+                holder.selectedAnimalIds(),
+                holder.exactSocketTarget(),
+                holder.socketName()
         );
         spawnDroneFromSelection(sender, composeHolder, deliveryInventory);
         sender.closeInventory();
@@ -559,12 +743,14 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 targetLocation,
                 attachedAnimals,
                 holder.animalsOnly(),
-                holder.adminSend()
+                holder.adminSend(),
+                holder.exactSocketTarget(),
+                holder.socketName()
         );
         if (drone == null) {
             return;
         }
-        sender.sendMessage(droneManager.message("sent-success", "<player>", receiver.getName()));
+        sender.sendMessage(droneManager.message("sent-success", "<player>", holder.socketName() != null ? holder.socketName() : receiver.getName()));
         Component incoming = MINI_MESSAGE.deserialize(
                 droneManager.message("incoming-drone", "<player>", sender.getName())
                         + " <click:run_command:'/drone preview " + drone.droneId() + "'>"
@@ -579,7 +765,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             Location fixedTarget,
             boolean animalsOnly,
             boolean adminSend,
-            List<UUID> selectedAnimalIds
+            List<UUID> selectedAnimalIds,
+            boolean exactSocketTarget,
+            String socketName
     ) implements InventoryHolder {
         @Override
         public Inventory getInventory() {
@@ -592,7 +780,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             UUID receiverId,
             Location fixedTarget,
             List<UUID> selectedAnimalIds,
-            boolean adminSend
+            boolean adminSend,
+            boolean exactSocketTarget,
+            String socketName
     ) implements InventoryHolder {
         @Override
         public Inventory getInventory() {

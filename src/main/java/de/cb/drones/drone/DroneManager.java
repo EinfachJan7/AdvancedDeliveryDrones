@@ -93,7 +93,7 @@ public final class DroneManager {
     }
 
     public DeliveryDrone spawnDrone(Player sender, Player receiver, Inventory inventory, List<LivingEntity> attachedAnimals, boolean animalsOnlyDelivery) {
-        return spawnDrone(sender, receiver, inventory, receiver.getLocation().clone(), attachedAnimals, animalsOnlyDelivery, false);
+        return spawnDrone(sender, receiver, inventory, receiver.getLocation().clone(), attachedAnimals, animalsOnlyDelivery, false, false, null);
     }
 
     public DeliveryDrone spawnDrone(
@@ -103,7 +103,9 @@ public final class DroneManager {
             Location fixedTarget,
             List<LivingEntity> attachedAnimals,
             boolean animalsOnlyDelivery,
-            boolean forceTargetChunkLoad
+            boolean forceTargetChunkLoad,
+            boolean exactSocketTarget,
+            String socketName
     ) {
         Location start = sender.getLocation().clone().add(0, 2.2, 0);
         loadChunkNow(start);
@@ -138,6 +140,8 @@ public final class DroneManager {
                 attachedAnimalTypes,
                 animalsOnlyDelivery,
                 forceTargetChunkLoad,
+                exactSocketTarget,
+                socketName,
                 settings,
                 stand,
                 currentTick()
@@ -147,10 +151,10 @@ public final class DroneManager {
         byInventory.put(inventory, drone);
         incrementSenderCounter(sender.getUniqueId());
         drone.startFlight(this);
-        
+
         // Send Discord notification
         discordWebhookManager.sendDeliveryNotification(sender, receiver, drone);
-        
+
         return drone;
     }
 

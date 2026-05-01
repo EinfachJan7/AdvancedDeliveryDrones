@@ -42,7 +42,13 @@ public record DroneSettings(
         String bossbarFormat,
         boolean collectionAnimationEnabled,
         GuiSettings mainMenu,
-        GuiSettings playerSelection
+        GuiSettings playerSelection,
+        GuiSettings targetSelection,
+        GuiSettings socketSelection,
+        String socketItemNameFormat,
+        String socketItemOwnerFormat,
+        String socketItemClickHint,
+        String socketItemEmptyLine
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg) {
         String section = "settings.drone.";
@@ -82,7 +88,15 @@ public record DroneSettings(
         // Parse main menu GUI settings
         GuiSettings mainMenu = parseGuiSettings(cfg, section + "main-menu.", createDefaultMainMenuItems());
         GuiSettings playerSelection = parseGuiSettings(cfg, section + "player-selection.", createDefaultPlayerSelectionItems());
+        GuiSettings targetSelection = parseGuiSettings(cfg, section + "target-selection.", createDefaultTargetSelectionItems());
+        GuiSettings socketSelection = parseGuiSettings(cfg, section + "socket-selection.", createDefaultSocketSelectionItems());
         
+        // Socket item format
+        String socketItemNameFormat = cfg.getString(section + "socket-item-format.name-format", "<!italic><white><name></white>");
+        String socketItemOwnerFormat = cfg.getString(section + "socket-item-format.owner-format", "<!italic><gray>Besitzer: <white><owner></white></gray>");
+        String socketItemClickHint = cfg.getString(section + "socket-item-format.click-hint", "<!italic><green>Klicke um Drohne zu senden</green>");
+        String socketItemEmptyLine = cfg.getString(section + "socket-item-format.empty-line", "<!italic><gray></gray>");
+
         return new DroneSettings(
                 speed,
                 startupSpeed,
@@ -115,7 +129,13 @@ public record DroneSettings(
                 bossbarFormat,
                 collectionAnimationEnabled,
                 mainMenu,
-                playerSelection
+                playerSelection,
+                targetSelection,
+                socketSelection,
+                socketItemNameFormat,
+                socketItemOwnerFormat,
+                socketItemClickHint,
+                socketItemEmptyLine
         );
     }
 
@@ -248,6 +268,20 @@ public record DroneSettings(
     private static Map<String, GuiItem> createDefaultPlayerSelectionItems() {
         Map<String, GuiItem> items = new HashMap<>();
         items.put("back", new GuiItem(45, Material.ARROW, "<yellow>Zurück", List.of("<gray>Zurück zum Hauptmenü")));
+        return items;
+    }
+
+    private static Map<String, GuiItem> createDefaultTargetSelectionItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        items.put("back", new GuiItem(26, Material.ARROW, "<yellow>Zurück", List.of("<gray>Zurück zum Hauptmenü")));
+        items.put("player", new GuiItem(11, Material.PLAYER_HEAD, "<green>Spieler auswählen", List.of("<gray>Wähle einen Spieler aus", "<gray>um ihm eine Drohne zu senden")));
+        items.put("socket", new GuiItem(15, Material.BEACON, "<yellow>Socket auswählen", List.of("<gray>Wähle einen Socket aus", "<gray>um dort eine Drohne zu senden")));
+        return items;
+    }
+
+    private static Map<String, GuiItem> createDefaultSocketSelectionItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        items.put("back", new GuiItem(45, Material.ARROW, "<yellow>Zurück", List.of("<gray>Zurück zur Zielauswahl")));
         return items;
     }
 }

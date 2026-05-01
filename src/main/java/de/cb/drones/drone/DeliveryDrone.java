@@ -37,6 +37,8 @@ public final class DeliveryDrone {
     private final List<EntityType> attachedAnimalTypes;
     private final boolean animalsOnlyDelivery;
     private final boolean forceTargetChunkLoad;
+    private final boolean exactSocketTarget;
+    private final String socketName;
     private ArmorStand stand;
     private UUID standId;
     private Location lastKnownLocation;
@@ -78,6 +80,8 @@ public final class DeliveryDrone {
             List<EntityType> attachedAnimalTypes,
             boolean animalsOnlyDelivery,
             boolean forceTargetChunkLoad,
+            boolean exactSocketTarget,
+            String socketName,
             DroneSettings settings,
             ArmorStand stand,
             long createdTick
@@ -93,6 +97,8 @@ public final class DeliveryDrone {
         this.attachedAnimalTypes = attachedAnimalTypes == null ? List.of() : List.copyOf(attachedAnimalTypes);
         this.animalsOnlyDelivery = animalsOnlyDelivery;
         this.forceTargetChunkLoad = forceTargetChunkLoad;
+        this.exactSocketTarget = exactSocketTarget;
+        this.socketName = socketName;
         this.settings = settings;
         this.stand = stand;
         this.standId = stand.getUniqueId();
@@ -118,6 +124,10 @@ public final class DeliveryDrone {
 
     public String receiverName() {
         return receiverName;
+    }
+
+    public String socketName() {
+        return socketName;
     }
 
     public Inventory inventory() {
@@ -263,12 +273,13 @@ public final class DeliveryDrone {
                 ? (landedLocation != null ? landedLocation : (standAvailable ? stand.getLocation() : lastKnownLocation))
                 : expected;
 
-        if (!landed && expected.distanceSquared(fixedTarget) <= settings.deliveryRadius() * settings.deliveryRadius()) {
+        double deliveryRadius = exactSocketTarget ? 0.5 : settings.deliveryRadius();
+        if (!landed && expected.distanceSquared(fixedTarget) <= deliveryRadius * deliveryRadius) {
             if (pendingLanding == null) {
                 pendingLanding = fixedTarget.clone();
             }
             if (isChunkLoaded(pendingLanding)) {
-                Location landingSpot = computeLandingFrom(pendingLanding);
+                Location landingSpot = exactSocketTarget ? pendingLanding.clone() : computeLandingFrom(pendingLanding);
                 if (!smoothLanding) {
                     // Start smooth landing animation
                     smoothLanding = true;
@@ -288,7 +299,11 @@ public final class DeliveryDrone {
                             landingNotified = true;
                             Player receiver = Bukkit.getPlayer(receiverId);
                             if (receiver != null && receiver.isOnline()) {
-                                receiver.sendMessage(manager.message("landing-notif", "<radius>", String.valueOf((int) settings.deliveryRadius())));
+                                if (socketName != null) {
+                                    receiver.sendMessage(manager.message("landing-notif-socket", "<socket>", socketName));
+                                } else {
+                                    receiver.sendMessage(manager.message("landing-notif", "<radius>", String.valueOf((int) settings.deliveryRadius())));
+                                }
                             }
                         }
                         if (beaconTicker == null) {
@@ -459,6 +474,14 @@ public final class DeliveryDrone {
 
     private void updateHologram(long currentTick, DroneManager manager) {
         if (!landed) {
+            return;
+        }
+        // Don't show hologram for socket drones
+        if (exactSocketTarget) {
+            if (hologramStand != null && !hologramStand.isDead()) {
+                hologramStand.remove();
+            }
+            hologramStand = null;
             return;
         }
         if (!settings.hologramEnabled()) {

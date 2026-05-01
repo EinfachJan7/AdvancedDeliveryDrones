@@ -6,6 +6,7 @@ import de.cb.drones.discord.DiscordWebhookManager;
 import de.cb.drones.drone.DroneInteractionListener;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
+import de.cb.drones.socket.SocketRepository;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.PluginCommand;
@@ -16,17 +17,19 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private PlayerSettingsRepository playerSettings;
     private DroneManager droneManager;
     private DiscordWebhookManager discordWebhookManager;
+    private SocketRepository socketRepository;
     
     @Override
     public void onEnable() {
         saveDefaultConfig();
         this.playerSettings = new PlayerSettingsRepository(this);
+        this.socketRepository = new SocketRepository(this);
         this.discordWebhookManager = new DiscordWebhookManager(this);
         this.droneManager = new DroneManager(this, DroneSettings.fromConfig(getConfig()), discordWebhookManager);
         this.droneManager.start();
 
-        
-        DroneCommand command = new DroneCommand(this, droneManager, playerSettings, droneManager.settings());
+
+        DroneCommand command = new DroneCommand(this, droneManager, playerSettings, droneManager.settings(), socketRepository);
         PluginCommand drone = getCommand("drone");
         if (drone != null) {
             drone.setExecutor(command);
@@ -44,8 +47,10 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     }
 
     public void reloadPlugin() {
+        saveDefaultConfig(); // Create config if it doesn't exist
         reloadConfig();
         playerSettings.reload();
+        socketRepository.reload();
         discordWebhookManager.loadSettings();
         droneManager.updateSettings(DroneSettings.fromConfig(getConfig()));
     }

@@ -11,54 +11,54 @@ settings:
     carry-leashed-animals: true
     max-leashed-animals-per-drone: 5
     send-mode-gui:
-      title: "Sende-Modus"
+      title: "<!italic>Sende-Modus"
       animals-item:
         material: "LEAD"
-        name: "<gold>Tiere senden</gold>"
+        name: "<!italic><gold>Tiere senden</gold>"
         lore:
-          - "<gray>Sendet nur angeleinte Tiere.</gray>"
+          - "<!italic><gray>Sendet nur angeleinte Tiere.</gray>"
       items-item:
         material: "CHEST"
-        name: "<gold>Items senden</gold>"
+        name: "<!italic><gold>Items senden</gold>"
         lore:
-          - "<gray>Öffnet das Paket-Inventar.</gray>"
+          - "<!italic><gray>Öffnet das Paket-Inventar.</gray>"
     main-menu:
-      title: "Drone Menü"
+      title: "<!italic>Drone Menü"
       size: 27
       items:
         send:
           position: 11
           material: "PLAYER_HEAD"
-          name: "<green>Drohne senden"
+          name: "<!italic><green>Drohne senden</green>"
           lore:
-            - "<gray>Wähle einen Spieler aus"
-            - "<gray>um ihm eine Drohne zu senden"
+            - "<!italic><gray>Wähle einen Spieler aus"
+            - "<!italic><gray>um ihm eine Drohne zu senden"
         toggle:
           position: 13
           material: "REDSTONE"
-          name: "<yellow>Drohnen-Empfang umschalten"
+          name: "<!italic><yellow>Drohnen-Empfang umschalten</yellow>"
           lore:
-            - "<gray>Schalte ein/aus ob du"
-            - "<gray>Drohnen empfangen möchtest"
+            - "<!italic><gray>Schalte ein/aus ob du"
+            - "<!italic><gray>Drohnen empfangen möchtest"
         decline:
           position: 15
           material: "BARRIER"
-          name: "<red>Eingehende Drohnen ablehnen"
+          name: "<!italic><red>Eingehende Drohnen ablehnen</red>"
           lore:
-            - "<gray>Lehne alle eingehenden"
-            - "<gray>Drohnen für dich ab"
+            - "<!italic><gray>Lehne alle eingehenden"
+            - "<!italic><gray>Drohnen für dich ab"
         preview:
           position: 22
           material: "ENDER_EYE"
-          name: "<aqua>Drohne-Vorschau"
+          name: "<!italic><aqua>Drohne-Vorschau</aqua>"
           lore:
-            - "<gray>Zeige eine Vorschau deiner"
-            - "<gray>aktiven Drohnen"
+            - "<!italic><gray>Zeige eine Vorschau deiner"
+            - "<!italic><gray>aktiven Drohnen"
       fill-item:
         material: "GRAY_STAINED_GLASS_PANE"
         name: " "
     player-selection:
-      title: "Spieler auswählen"
+      title: "<!italic>Spieler auswählen"
       size: 54
       fill-item:
         material: "GRAY_STAINED_GLASS_PANE"
@@ -66,9 +66,53 @@ settings:
       back-item:
         position: 45
         material: "ARROW"
-        name: "<yellow>Zurück"
+        name: "<!italic><yellow>Zurück</yellow>"
         lore:
-          - "<gray>Zurück zum Hauptmenü"
+          - "<!italic><gray>Zurück zum Hauptmenü"
+    target-selection:
+      title: "<!italic>Ziel auswählen"
+      size: 27
+      fill-item:
+        material: "GRAY_STAINED_GLASS_PANE"
+        name: " "
+      back-item:
+        position: 26
+        material: "ARROW"
+        name: "<!italic><yellow>Zurück</yellow>"
+        lore:
+          - "<!italic><gray>Zurück zum Hauptmenü"
+      items:
+        player:
+          position: 11
+          material: "PLAYER_HEAD"
+          name: "<!italic><green>Spieler auswählen</green>"
+          lore:
+            - "<!italic><gray>Wähle einen Spieler aus"
+            - "<!italic><gray>um ihm eine Drohne zu senden"
+        socket:
+          position: 15
+          material: "BEACON"
+          name: "<!italic><yellow>Socket auswählen</yellow>"
+          lore:
+            - "<!italic><gray>Wähle einen Socket aus"
+            - "<!italic><gray>um dort eine Drohne zu senden"
+    socket-selection:
+      title: "<!italic>Socket auswählen"
+      size: 54
+      fill-item:
+        material: "GRAY_STAINED_GLASS_PANE"
+        name: " "
+      back-item:
+        position: 45
+        material: "ARROW"
+        name: "<!italic><yellow>Zurück</yellow>"
+        lore:
+          - "<!italic><gray>Zurück zur Zielauswahl"
+    socket-item-format:
+      name-format: "<!italic><white><name></white>"
+      owner-format: "<!italic><gray>Besitzer: <white><owner></white></gray>"
+      click-hint: "<!italic><green>Klicke um Drohne zu senden</green>"
+      empty-line: "<!italic><gray></gray>"
     blocked-worlds:
       - "world_nether"
       - "world_the_end"
@@ -120,6 +164,7 @@ messages:
   toggled-off: "<red>Der Spieler empfängt zurzeit keine Drohnen.</red>"
   sent-success: "<green>Drohne zu <white><player></white> abgeschickt!</green>"
   landing-notif: "<gold>Eine Drohne ist in deiner Nähe (<radius>m) gelandet!</gold>"
+  landing-notif-socket: "<gold>Eine Drohne ist bei deinem Socket <white><socket></white> gelandet!</gold>"
   wrong-user: "<red>Das ist nicht deine Drohne!</red>"
   world-blocked: "<red>In der Welt <white><world></white> sind Drohnen deaktiviert.</red>"
   sender-limit-reached: "<red>Du hast bereits die maximale Anzahl aktiver Drohnen gesendet (<max>).</red>"
@@ -147,16 +192,26 @@ messages:
   send-mode-items-lore: "<gray>Öffnet das Paket-Inventar</gray>"
   gui-title-main: "<gold>Drone Menü</gold>"
   gui-title-player-selection: "<gold>Spieler auswählen</gold>"
-  gui-item-send-name: "<green>Drohne senden</green>"
-  gui-item-send-lore: "<gray>Wähle einen Spieler aus</gray><gray>um ihm eine Drohne zu senden</gray>"
-  gui-item-toggle-name: "<yellow>Drohnen-Empfang umschalten</yellow>"
-  gui-item-toggle-lore: "<gray>Schalte ein/aus ob du</gray><gray>Drohnen empfangen möchtest</gray>"
-  gui-item-decline-name: "<red>Eingehende Drohnen ablehnen</red>"
-  gui-item-decline-lore: "<gray>Lehne alle eingehenden</gray><gray>Drohnen für dich ab</gray>"
-  gui-item-preview-name: "<aqua>Drohne-Vorschau</aqua>"
-  gui-item-preview-lore: "<gray>Zeige eine Vorschau deiner</gray><gray>aktiven Drohnen</gray>"
-  gui-item-back-name: "<yellow>Zurück</yellow>"
+  gui-item-send-name: "<!italic><green>Drohne senden</green>"
+  gui-item-send-lore: "<!italic><gray>Wähle einen Spieler aus</gray><gray>um ihm eine Drohne zu senden</gray>"
+  gui-item-toggle-name: "<!italic><yellow>Drohnen-Empfang umschalten</yellow>"
+  gui-item-toggle-lore: "<!italic><gray>Schalte ein/aus ob du</gray><gray>Drohnen empfangen möchtest</gray>"
+  gui-item-decline-name: "<!italic><red>Eingehende Drohnen ablehnen</red>"
+  gui-item-decline-lore: "<!italic><gray>Lehne alle eingehenden</gray><gray>Drohnen für dich ab</gray>"
+  gui-item-preview-name: "<!italic><aqua>Drohne-Vorschau</aqua>"
+  gui-item-preview-lore: "<!italic><gray>Zeige eine Vorschau deiner</gray><gray>aktiven Drohnen</gray>"
+  gui-item-back-name: "<!italic><yellow>Zurück</yellow>"
   gui-item-back-lore: "<gray>Zurück zum Hauptmenü</gray>"
   discord-webhook-disabled: "<yellow>Discord Webhook ist deaktiviert.</yellow>"
   discord-webhook-enabled: "<green>Discord Webhook ist aktiviert.</green>"
   performance-throttled: "<yellow>Performance wird gedrosselt (zu viele Drohnen).</yellow>"
+  socket-placed: "<green>Socket <white><name></white> wurde platziert!</green>"
+  socket-location: "<gray>Position: <white><coords></white></gray>"
+  socket-removed: "<green>Socket <white><name></white> wurde entfernt!</green>"
+  socket-remove-failed: "<red>Konnte Socket <white><name></white> nicht entfernen.</red>"
+  socket-exists: "<red>Ein Socket mit dem Namen <white><name></white> existiert bereits.</red>"
+  socket-not-found: "<red>Socket <white><name></white> wurde nicht gefunden.</red>"
+  socket-none: "<gray>Du hast keine Sockets platziert.</gray>"
+  socket-list-header: "<gold>Deine Sockets (<white><count></white>):</gold>"
+  socket-name-too-long: "<red>Der Socket-Name darf maximal 32 Zeichen lang sein.</red>"
+  socket-error: "<red>Fehler beim Verarbeiten des Sockets: <white><error></white></red>"

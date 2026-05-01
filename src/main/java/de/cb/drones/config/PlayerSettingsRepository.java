@@ -8,6 +8,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class PlayerSettingsRepository {
     private static final String PATH_PREFIX = "delivery-settings.";
+    private static final String RECEIVE_SUFFIX = ".can-receive";
 
     private final JavaPlugin plugin;
     private final File file;
@@ -32,11 +33,11 @@ public final class PlayerSettingsRepository {
     }
 
     public boolean canReceive(UUID playerId) {
-        return config.getBoolean(PATH_PREFIX + playerId, true);
+        return config.getBoolean(PATH_PREFIX + playerId + RECEIVE_SUFFIX, true);
     }
 
     public void setCanReceive(UUID playerId, boolean state) {
-        config.set(PATH_PREFIX + playerId, state);
+        config.set(PATH_PREFIX + playerId + RECEIVE_SUFFIX, state);
         save();
     }
 
