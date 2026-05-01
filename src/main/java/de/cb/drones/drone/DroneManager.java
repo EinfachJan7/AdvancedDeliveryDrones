@@ -19,6 +19,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -85,9 +86,9 @@ public final class DroneManager {
         }
         performanceOptimizer.shutdown();
         
-        for (DeliveryDrone drone : new ArrayList<>(activeDrones.values())) {
-            destroyDrone(drone, false);
-        }
+        // Handle restart-safe cleanup for all active drones
+        handleRestartSafeCleanup();
+        
         activeDrones.clear();
         byEntityUuid.clear();
     }
@@ -488,6 +489,249 @@ public final class DroneManager {
             plugin.getLogger().info("Removed " + count + " old drone ArmorStands");
         } else {
             plugin.getLogger().info("No old drone ArmorStands found");
+        }
+    }
+
+    private void handleRestartSafeCleanup() {
+        plugin.getLogger().info("Performing restart-safe cleanup for " + activeDrones.size() + " active drones...");
+        
+        // Synchronously process all drones to ensure completion before shutdown
+        for (DeliveryDrone drone : new ArrayList<>(activeDrones.values())) {
+            try {
+                plugin.getLogger().info("Processing drone " + drone.droneId() + " for restart cleanup...");
+                
+                // Step 1: Kill all drone Armor Stands immediately
+                killDroneArmorStands(drone);
+                
+                // Step 2: Return items to sender (synchronous)
+                returnItemsToSenderRestart(drone);
+                
+                // Step 3: Return transported animals to their original locations (synchronous)
+                returnAnimalsToOriginalLocation(drone);
+                
+                // Step 4: Send Discord notification for restart cleanup
+                Player sender = Bukkit.getPlayer(drone.senderId());
+                Player receiver = Bukkit.getPlayer(drone.receiverId());
+                if (sender != null && receiver != null) {
+                    discordWebhookManager.sendDeliveryDeclined(sender, receiver, drone);
+                }
+                
+                // Step 5: Clean up drone data
+                cleanupDroneData(drone);
+                
+                plugin.getLogger().info("Restart-safe cleanup completed for drone " + drone.droneId());
+            } catch (Exception e) {
+                plugin.getLogger().warning("Error during restart-safe cleanup for drone " + drone.droneId() + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        
+        // Force cleanup of any remaining ArmorStands
+        cleanupAllRemainingDrones();
+        
+        plugin.getLogger().info("Restart-safe cleanup completed. All drones processed.");
+    }
+    
+    private void returnItemsToSenderRestart(DeliveryDrone drone) {
+        List<ItemStack> items = drone.snapshotItems();
+        if (items.isEmpty()) {
+            return;
+        }
+        
+        Player sender = Bukkit.getPlayer(drone.senderId());
+        if (sender == null || !sender.isOnline()) {
+            // Store for later delivery when player comes online
+            pendingReturns.computeIfAbsent(drone.senderId(), ignored -> new ArrayList<>()).addAll(items);
+            return;
+        }
+        
+        // Return items directly to sender's inventory
+        for (ItemStack item : items) {
+            Map<Integer, ItemStack> overflow = sender.getInventory().addItem(item);
+            if (!overflow.isEmpty()) {
+                overflow.values().forEach(stack -> sender.getWorld().dropItemNaturally(sender.getLocation(), stack));
+            }
+        }
+        
+        sender.sendMessage(message("restart-return-items", "<player>", drone.receiverName()));
+    }
+    
+    private void returnAnimalsToOriginalLocation(DeliveryDrone drone) {
+        // Get the start location from the drone
+        Location originalLocation = drone.startLocation();
+        if (originalLocation == null || originalLocation.getWorld() == null) {
+            return;
+        }
+        
+        // Ensure chunk is loaded at original location
+        if (!originalLocation.getWorld().isChunkLoaded(originalLocation.getBlockX() >> 4, originalLocation.getBlockZ() >> 4)) {
+            originalLocation.getWorld().getChunkAt(originalLocation.getBlockX() >> 4, originalLocation.getBlockZ() >> 4).load();
+        }
+        
+        // Find safe spawn location with fall protection
+        Location safeLocation = findSafeSpawnLocation(originalLocation);
+        
+        // Remove spawned animals and respawn them safely at original location
+        for (UUID animalId : drone.getSpawnedTransportAnimalIds()) {
+            Entity entity = Bukkit.getEntity(animalId);
+            if (entity instanceof LivingEntity animal && !animal.isDead()) {
+                // Store animal properties before removal
+                double health = animal.getHealth();
+                double maxHealth = animal.getMaxHealth();
+                boolean isBaby = false;
+                boolean isTamed = false;
+                org.bukkit.entity.AnimalTamer owner = null;
+                
+                // Check if it's a baby animal
+                if (animal instanceof org.bukkit.entity.Ageable ageable) {
+                    isBaby = !ageable.isAdult();
+                }
+                
+                // Check if it's tamed and store owner
+                if (animal instanceof org.bukkit.entity.Tameable tameable) {
+                    isTamed = tameable.isTamed();
+                    owner = tameable.getOwner();
+                }
+                
+                // Remove the current animal
+                animal.remove();
+                
+                // Respawn safely at original location
+                try {
+                    Entity newAnimal = safeLocation.getWorld().spawnEntity(safeLocation.clone().add(0.0, 1.0, 0.0), animal.getType());
+                    if (newAnimal instanceof LivingEntity newLiving) {
+                        // Restore health with safety check
+                        double safeHealth = Math.min(health, maxHealth);
+                        newLiving.setHealth(safeHealth);
+                        
+                        // Apply temporary fall damage immunity
+                        applyFallProtection(newLiving);
+                        
+                        // Restore age if it was a baby
+                        if (isBaby && newLiving instanceof org.bukkit.entity.Ageable newAgeable) {
+                            newAgeable.setBaby();
+                        }
+                        
+                        // Restore taming status
+                        if (isTamed && newLiving instanceof org.bukkit.entity.Tameable newTameable && owner != null) {
+                            newTameable.setTamed(true);
+                            newTameable.setOwner(owner);
+                        }
+                        
+                        plugin.getLogger().info("Safely respawned " + animal.getType() + " at original location with health: " + safeHealth);
+                    }
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Failed to safely respawn animal at original location: " + e.getMessage());
+                }
+            }
+        }
+        
+        plugin.getLogger().info("Safely returned " + drone.getSpawnedTransportAnimalIds().size() + " animals to original location");
+    }
+    
+    private Location findSafeSpawnLocation(Location originalLocation) {
+        World world = originalLocation.getWorld();
+        int x = originalLocation.getBlockX();
+        int z = originalLocation.getBlockZ();
+        
+        // Find the highest safe ground level
+        int y = world.getHighestBlockYAt(x, z, org.bukkit.HeightMap.MOTION_BLOCKING_NO_LEAVES);
+        
+        // Ensure we're not spawning too high (prevent fall damage)
+        int maxY = y + 3; // Maximum 3 blocks above ground
+        int spawnY = Math.min(originalLocation.getBlockY(), maxY);
+        
+        // Ensure minimum height (not below bedrock)
+        spawnY = Math.max(spawnY, world.getMinHeight() + 1);
+        
+        return new Location(world, x + 0.5, spawnY, z + 0.5);
+    }
+    
+    private void applyFallProtection(LivingEntity entity) {
+        // Apply temporary invulnerability to prevent fall damage
+        entity.setInvulnerable(true);
+        
+        // Schedule removal of invulnerability after a safe period
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (entity != null && !entity.isDead()) {
+                entity.setInvulnerable(false);
+            }
+        }, 60L); // 3 seconds of protection (60 ticks)
+    }
+    
+    private void killDroneArmorStands(DeliveryDrone drone) {
+        try {
+            // Kill the main drone ArmorStand
+            UUID standId = drone.standId();
+            if (standId != null) {
+                Entity entity = Bukkit.getEntity(standId);
+                if (entity instanceof ArmorStand armorStand && !armorStand.isDead()) {
+                    armorStand.remove();
+                    plugin.getLogger().info("Killed drone ArmorStand: " + standId);
+                }
+            }
+            
+            // Kill any hologram ArmorStands
+            for (Entity entity : Bukkit.selectEntities(null, "@e[type=armor_stand,custom_name=Drone]")) {
+                if (entity instanceof ArmorStand hologram && !hologram.isDead()) {
+                    // Check if this hologram belongs to our drone by proximity
+                    Location droneLoc = drone.currentLocation();
+                    if (droneLoc != null && hologram.getLocation().distanceSquared(droneLoc) <= 25.0) {
+                        hologram.remove();
+                        plugin.getLogger().info("Killed hologram ArmorStand for drone " + drone.droneId());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error killing drone ArmorStands: " + e.getMessage());
+        }
+    }
+    
+    private void cleanupDroneData(DeliveryDrone drone) {
+        try {
+            // Remove from all tracking maps
+            activeDrones.remove(drone.droneId());
+            if (drone.standId() != null) {
+                byEntityUuid.remove(drone.standId());
+            }
+            byInventory.remove(drone.inventory());
+            
+            // Decrement sender counter
+            decrementSenderCounter(drone.senderId());
+            
+            // Clear drone's internal data
+            drone.clearItems();
+            
+            plugin.getLogger().info("Cleaned up data for drone " + drone.droneId());
+        } catch (Exception e) {
+            plugin.getLogger().warning("Error cleaning up drone data: " + e.getMessage());
+        }
+    }
+    
+    private void cleanupAllRemainingDrones() {
+        plugin.getLogger().info("Performing final cleanup of any remaining drone entities...");
+        
+        // Find and remove any remaining drone-related ArmorStands
+        for (World world : Bukkit.getWorlds()) {
+            world.getEntities().stream()
+                .filter(entity -> entity instanceof ArmorStand)
+                .forEach(armorStand -> {
+                    ArmorStand stand = (ArmorStand) armorStand;
+                    boolean isDrone = false;
+                    
+                    // Check for drone characteristics
+                    if (stand.isInvisible() || 
+                        (stand.getCustomName() != null && 
+                         (stand.getCustomName().contains("Drone") || stand.getCustomName().contains("Drohne"))) ||
+                        (!stand.hasGravity() && stand.isInvulnerable())) {
+                        isDrone = true;
+                    }
+                    
+                    if (isDrone && !stand.isDead()) {
+                        stand.remove();
+                        plugin.getLogger().info("Removed remaining drone ArmorStand: " + stand.getUniqueId());
+                    }
+                });
         }
     }
 

@@ -144,6 +144,10 @@ public final class DeliveryDrone {
     public boolean isLanded() {
         return landed;
     }
+    
+    public boolean isFlying() {
+        return !landed;
+    }
 
     public boolean isExpired(long currentTick) {
         return currentTick - lastInteractionTick > settings.despawnTicks();
@@ -163,6 +167,14 @@ public final class DeliveryDrone {
 
     public List<EntityType> attachedAnimalTypes() {
         return attachedAnimalTypes;
+    }
+    
+    public Location startLocation() {
+        return startLocation;
+    }
+    
+    public List<UUID> getSpawnedTransportAnimalIds() {
+        return new ArrayList<>(spawnedTransportAnimalIds);
     }
 
     public List<ItemStack> snapshotItems() {

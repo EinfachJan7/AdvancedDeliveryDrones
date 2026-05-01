@@ -215,3 +215,4 @@ messages:
   socket-list-header: "<gold>Deine Sockets (<white><count></white>):</gold>"
   socket-name-too-long: "<red>Der Socket-Name darf maximal 32 Zeichen lang sein.</red>"
   socket-error: "<red>Fehler beim Verarbeiten des Sockets: <white><error></white></red>"
+  restart-return-items: "<yellow>Server-Neustart: Deine Drohne wurde storniert und die Items wurden zurückgegeben.</yellow>"
