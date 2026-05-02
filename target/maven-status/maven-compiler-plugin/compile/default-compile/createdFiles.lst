@@ -1,6 +1,7 @@
 de\cb\drones\command\DroneCommand$PreviewInventoryHolder.class
 de\cb\drones\AdvancedDeliveryDronesPlugin.class
 de\cb\drones\config\PlayerSettingsRepository.class
+de\cb\drones\gui\GuiConfiguration.class
 de\cb\drones\socket\SocketRepository.class
 de\cb\drones\socket\DeliverySocket.class
 de\cb\drones\discord\DiscordWebhookManager.class

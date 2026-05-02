@@ -52,7 +52,7 @@ public class DroneMenuGUI {
     }
     
     public void openMainMenu(Player player) {
-        GuiSettings menuSettings = droneSettings.mainMenu();
+        GuiSettings menuSettings = droneSettings.guiConfig().mainMenu();
         DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("main_menu");
         Inventory menu = player.getServer().createInventory(holder, menuSettings.size(), 
             MINI_MESSAGE.deserialize(menuSettings.title()));
@@ -80,7 +80,7 @@ public class DroneMenuGUI {
     }
     
     public void openPlayerSelectionMenu(Player sender) {
-        GuiSettings menuSettings = droneSettings.playerSelection();
+        GuiSettings menuSettings = droneSettings.guiConfig().playerSelection();
         List<org.bukkit.entity.Player> onlinePlayers = new ArrayList<>();
         for (org.bukkit.entity.Player player : sender.getServer().getOnlinePlayers()) {
             if (settingsRepository.canReceive(player.getUniqueId()) && !player.equals(sender)) {
@@ -144,13 +144,18 @@ public class DroneMenuGUI {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = head.getItemMeta();
         if (meta != null) {
-            meta.displayName(Component.text(player.getName()));
+            // Use configurable name format with placeholder replacement
+            String nameFormat = droneSettings.guiConfig().playerHeadNameFormat()
+                .replace("<player>", player.getName());
+            meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
 
-            List<Component> lore = List.of(
-                Component.text("Klicke um eine Drohne"),
-                Component.text("an " + player.getName() + " zu senden")
-            );
-            meta.lore(lore);
+            // Use configurable lore with placeholder replacement
+            List<Component> loreComponents = new ArrayList<>();
+            for (String line : droneSettings.guiConfig().playerHeadLore()) {
+                String formattedLine = line.replace("<player>", player.getName());
+                loreComponents.add(MINI_MESSAGE.deserialize(formattedLine));
+            }
+            meta.lore(loreComponents);
 
             // Set player head texture
             if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
@@ -163,7 +168,7 @@ public class DroneMenuGUI {
     }
 
     public void openTargetSelectionMenu(Player player) {
-        GuiSettings menuSettings = droneSettings.targetSelection();
+        GuiSettings menuSettings = droneSettings.guiConfig().targetSelection();
         DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("target_selection");
         Inventory menu = player.getServer().createInventory(holder, menuSettings.size(),
             MINI_MESSAGE.deserialize(menuSettings.title()));
@@ -191,7 +196,7 @@ public class DroneMenuGUI {
     }
 
     public void openSocketSelectionMenu(Player player) {
-        GuiSettings menuSettings = droneSettings.socketSelection();
+        GuiSettings menuSettings = droneSettings.guiConfig().socketSelection();
         List<DeliverySocket> allSockets = socketRepository.getAllSockets();
         int size = Math.max(menuSettings.size(), Math.min(54, ((allSockets.size() + 8) / 9) * 9));
 
@@ -227,19 +232,19 @@ public class DroneMenuGUI {
     }
 
     private ItemStack createSocketItem(DeliverySocket socket) {
-        ItemStack item = new ItemStack(Material.BEACON);
+        ItemStack item = new ItemStack(droneSettings.guiConfig().socketItemMaterial());
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             // Use configurable format for socket name
-            String nameFormat = droneSettings.socketItemNameFormat()
+            String nameFormat = droneSettings.guiConfig().socketItemNameFormat()
                 .replace("<name>", socket.name());
             meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
 
             // Use configurable formats for lore
-            String ownerFormat = droneSettings.socketItemOwnerFormat()
+            String ownerFormat = droneSettings.guiConfig().socketItemOwnerFormat()
                 .replace("<owner>", socket.ownerName());
-            String emptyLine = droneSettings.socketItemEmptyLine();
-            String clickHint = droneSettings.socketItemClickHint();
+            String emptyLine = droneSettings.guiConfig().socketItemEmptyLine();
+            String clickHint = droneSettings.guiConfig().socketItemClickHint();
 
             List<Component> lore = List.of(
                 MINI_MESSAGE.deserialize(ownerFormat),

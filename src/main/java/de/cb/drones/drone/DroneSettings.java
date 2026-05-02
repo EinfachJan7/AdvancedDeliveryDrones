@@ -1,5 +1,6 @@
 package de.cb.drones.drone;
 
+import de.cb.drones.gui.GuiConfiguration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,13 +28,6 @@ public record DroneSettings(
         int maxActivePerSender,
         boolean carryLeashedAnimals,
         int maxLeashedAnimalsPerDrone,
-        String sendModeGuiTitle,
-        Material sendModeAnimalsMaterial,
-        String sendModeAnimalsName,
-        List<String> sendModeAnimalsLore,
-        Material sendModeItemsMaterial,
-        String sendModeItemsName,
-        List<String> sendModeItemsLore,
         List<String> blockedWorlds,
         boolean hologramEnabled,
         String hologramFormat,
@@ -42,16 +36,9 @@ public record DroneSettings(
         String bossbarFormat,
         org.bukkit.boss.BarColor bossbarColor,
         boolean collectionAnimationEnabled,
-        GuiSettings mainMenu,
-        GuiSettings playerSelection,
-        GuiSettings targetSelection,
-        GuiSettings socketSelection,
-        String socketItemNameFormat,
-        String socketItemOwnerFormat,
-        String socketItemClickHint,
-        String socketItemEmptyLine
+        GuiConfiguration guiConfig
 ) {
-    public static DroneSettings fromConfig(FileConfiguration cfg) {
+    public static DroneSettings fromConfig(FileConfiguration cfg, FileConfiguration guiConfig) {
         String section = "settings.drone.";
         double speed = cfg.getDouble(section + "speed", 0.3D);
         double startupSpeed = Math.max(0.01D, cfg.getDouble(section + "startup-speed", Math.min(0.2D, speed)));
@@ -69,13 +56,6 @@ public record DroneSettings(
         int maxActive = Math.max(1, cfg.getInt(section + "max-active-per-sender", 3));
         boolean carryLeashedAnimals = cfg.getBoolean(section + "carry-leashed-animals", false);
         int maxLeashedAnimalsPerDrone = Math.max(0, cfg.getInt(section + "max-leashed-animals-per-drone", 1));
-        String sendModeGuiTitle = cfg.getString(section + "send-mode-gui.title", "Sende-Modus");
-        Material sendModeAnimalsMaterial = parseMaterial(cfg.getString(section + "send-mode-gui.animals-item.material", "LEAD"), Material.LEAD);
-        String sendModeAnimalsName = cfg.getString(section + "send-mode-gui.animals-item.name", "Tiere senden");
-        List<String> sendModeAnimalsLore = cfg.getStringList(section + "send-mode-gui.animals-item.lore");
-        Material sendModeItemsMaterial = parseMaterial(cfg.getString(section + "send-mode-gui.items-item.material", "CHEST"), Material.CHEST);
-        String sendModeItemsName = cfg.getString(section + "send-mode-gui.items-item.name", "Items senden");
-        List<String> sendModeItemsLore = cfg.getStringList(section + "send-mode-gui.items-item.lore");
         List<String> blockedWorlds = cfg.getStringList(section + "blocked-worlds").stream()
                 .map(String::toLowerCase)
                 .toList();
@@ -86,18 +66,9 @@ public record DroneSettings(
         String bossbarFormat = cfg.getString(section + "bossbar.format", "<gold>Distanz: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>");
         org.bukkit.boss.BarColor bossbarColor = parseBarColor(cfg.getString(section + "bossbar.color", "YELLOW"));
         boolean collectionAnimationEnabled = cfg.getBoolean(section + "collection-animation.enabled", true);
-        
-        // Parse main menu GUI settings
-        GuiSettings mainMenu = parseGuiSettings(cfg, section + "main-menu.", createDefaultMainMenuItems());
-        GuiSettings playerSelection = parseGuiSettings(cfg, section + "player-selection.", createDefaultPlayerSelectionItems());
-        GuiSettings targetSelection = parseGuiSettings(cfg, section + "target-selection.", createDefaultTargetSelectionItems());
-        GuiSettings socketSelection = parseGuiSettings(cfg, section + "socket-selection.", createDefaultSocketSelectionItems());
-        
-        // Socket item format
-        String socketItemNameFormat = cfg.getString(section + "socket-item-format.name-format", "<!italic><white><name></white>");
-        String socketItemOwnerFormat = cfg.getString(section + "socket-item-format.owner-format", "<!italic><gray>Besitzer: <white><owner></white></gray>");
-        String socketItemClickHint = cfg.getString(section + "socket-item-format.click-hint", "<!italic><green>Klicke um Drohne zu senden</green>");
-        String socketItemEmptyLine = cfg.getString(section + "socket-item-format.empty-line", "<!italic><gray></gray>");
+
+        // Create GUI configuration from separate file
+        GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
 
         return new DroneSettings(
                 speed,
@@ -116,13 +87,6 @@ public record DroneSettings(
                 maxActive,
                 carryLeashedAnimals,
                 maxLeashedAnimalsPerDrone,
-                sendModeGuiTitle,
-                sendModeAnimalsMaterial,
-                sendModeAnimalsName,
-                sendModeAnimalsLore,
-                sendModeItemsMaterial,
-                sendModeItemsName,
-                sendModeItemsLore,
                 blockedWorlds,
                 hologramEnabled,
                 hologramFormat,
@@ -131,14 +95,7 @@ public record DroneSettings(
                 bossbarFormat,
                 bossbarColor,
                 collectionAnimationEnabled,
-                mainMenu,
-                playerSelection,
-                targetSelection,
-                socketSelection,
-                socketItemNameFormat,
-                socketItemOwnerFormat,
-                socketItemClickHint,
-                socketItemEmptyLine
+                guiConfigObj
         );
     }
 

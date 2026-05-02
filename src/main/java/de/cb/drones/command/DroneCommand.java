@@ -58,7 +58,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players.");
+            sender.sendMessage(plugin.component("only-players"));
             return true;
         }
         if (args.length == 0) {
@@ -88,7 +88,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length < 2) {
-            sender.sendMessage("/drone send <Player>");
+            sender.sendMessage(plugin.component("usage-send"));
             return true;
         }
         Player target = Bukkit.getPlayerExact(args[1]);
@@ -119,12 +119,12 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length < 2 || !"send".equalsIgnoreCase(args[1]) || args.length < 5) {
-            player.sendMessage("/drone admin send <x> <y> <z> [world]");
+            player.sendMessage(plugin.component("usage-admin"));
             return true;
         }
         Location targetLocation = parseAdminTarget(player, args);
         if (targetLocation == null) {
-            player.sendMessage("/drone admin send <x> <y> <z> [world]");
+            player.sendMessage(plugin.component("usage-admin"));
             return true;
         }
         if (droneManager.isBlockedWorld(player.getWorld().getName())) {
@@ -173,10 +173,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         List<de.cb.drones.drone.DeliveryDrone> drones = droneManager.activeDronesSnapshot();
         if (drones.isEmpty()) {
-            player.sendMessage("Keine aktiven Drohnen.");
+            player.sendMessage(plugin.component("no-active-drones"));
             return true;
         }
-        player.sendMessage("Aktive Drohnen: " + drones.size());
+        player.sendMessage(droneManager.message("active-drones-count", "<count>", String.valueOf(drones.size())));
         for (de.cb.drones.drone.DeliveryDrone drone : drones) {
             Location loc = drone.currentLocation();
             String command = "/tp " + loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ();
@@ -215,7 +215,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length < 2) {
-            player.sendMessage("/drone socket <place|remove|list|send>");
+            player.sendMessage(plugin.component("usage-socket"));
             return true;
         }
         String sub = args[1].toLowerCase(Locale.ROOT);
@@ -225,7 +225,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "list" -> executeSocketList(player);
             case "send" -> executeSocketSend(player, args);
             default -> {
-                player.sendMessage("/drone socket <place|remove|list|send>");
+                player.sendMessage(plugin.component("usage-socket"));
                 yield true;
             }
         };
@@ -233,7 +233,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
     private boolean executeSocketPlace(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage("/drone socket place <name>");
+            player.sendMessage(plugin.component("usage-socket-place"));
             return true;
         }
         String socketName = args[2];
@@ -263,7 +263,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
     private boolean executeSocketRemove(Player player, String[] args) {
         if (args.length < 3) {
-            player.sendMessage("/drone socket remove <name>");
+            player.sendMessage(plugin.component("usage-socket-remove"));
             return true;
         }
         String name = args[2];
@@ -582,11 +582,11 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (clicked == null || clicked.getType().isAir()) {
             return;
         }
-        if (clicked.getType() == droneManager.settings().sendModeAnimalsMaterial()) {
+        if (clicked.getType() == droneManager.settings().guiConfig().sendMode().items().get("animals").material()) {
             Bukkit.getScheduler().runTask(plugin, () -> sendAnimalsOnly(sender, holder));
             return;
         }
-        if (clicked.getType() == droneManager.settings().sendModeItemsMaterial()) {
+        if (clicked.getType() == droneManager.settings().guiConfig().sendMode().items().get("items").material()) {
             openComposeInventory(sender, holder.receiverId(), holder.fixedTarget(), false);
         }
     }
@@ -647,17 +647,17 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                                 socketName
                         ),
                         9,
-                        MINI_MESSAGE.deserialize(droneManager.settings().sendModeGuiTitle())
+                        MINI_MESSAGE.deserialize(droneManager.settings().guiConfig().sendMode().title())
                 );
                 selector.setItem(3, createModeItem(
-                        droneManager.settings().sendModeAnimalsMaterial(),
-                        droneManager.settings().sendModeAnimalsName(),
-                        droneManager.settings().sendModeAnimalsLore()
+                        droneManager.settings().guiConfig().sendMode().items().get("animals").material(),
+                        droneManager.settings().guiConfig().sendMode().items().get("animals").name(),
+                        droneManager.settings().guiConfig().sendMode().items().get("animals").lore()
                 ));
                 selector.setItem(5, createModeItem(
-                        droneManager.settings().sendModeItemsMaterial(),
-                        droneManager.settings().sendModeItemsName(),
-                        droneManager.settings().sendModeItemsLore()
+                        droneManager.settings().guiConfig().sendMode().items().get("items").material(),
+                        droneManager.settings().guiConfig().sendMode().items().get("items").name(),
+                        droneManager.settings().guiConfig().sendMode().items().get("items").lore()
                 ));
                 sender.openInventory(selector);
                 return;

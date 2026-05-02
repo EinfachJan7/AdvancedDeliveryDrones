@@ -124,7 +124,7 @@ public final class DroneInteractionListener implements Listener {
                 event.setCancelled(true);
                 if (event.getWhoClicked() instanceof Player) {
                     Player player = (Player) event.getWhoClicked();
-                    player.sendMessage("§cDu kannst den Helm einer fliegenden Drohne nicht entfernen!");
+                    player.sendMessage(droneManager.message("drone-helmet-remove", null, null));
                 }
                 return;
             }
@@ -145,7 +145,7 @@ public final class DroneInteractionListener implements Listener {
                         event.setCancelled(true);
                         if (event.getWhoClicked() instanceof Player) {
                             Player player = (Player) event.getWhoClicked();
-                            player.sendMessage("§cDu kannst den Helm einer fliegenden Drohne nicht manipulieren!");
+                            player.sendMessage(droneManager.message("drone-helmet-manipulate", null, null));
                         }
                         return;
                     }
@@ -161,7 +161,7 @@ public final class DroneInteractionListener implements Listener {
         
         if (drone != null && drone.isFlying()) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage("§cDu kannst die Rüstung einer fliegenden Drohne nicht manipulieren!");
+            event.getPlayer().sendMessage(droneManager.message("drone-armor-manipulate", null, null));
         }
     }
 }

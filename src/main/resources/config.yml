@@ -10,109 +10,6 @@ settings:
     max-active-per-sender: 3
     carry-leashed-animals: true
     max-leashed-animals-per-drone: 5
-    send-mode-gui:
-      title: "<!italic>Sende-Modus"
-      animals-item:
-        material: "LEAD"
-        name: "<!italic><gold>Tiere senden</gold>"
-        lore:
-          - "<!italic><gray>Sendet nur angeleinte Tiere.</gray>"
-      items-item:
-        material: "CHEST"
-        name: "<!italic><gold>Items senden</gold>"
-        lore:
-          - "<!italic><gray>Öffnet das Paket-Inventar.</gray>"
-    main-menu:
-      title: "<!italic>Drone Menü"
-      size: 27
-      items:
-        send:
-          position: 11
-          material: "PLAYER_HEAD"
-          name: "<!italic><green>Drohne senden</green>"
-          lore:
-            - "<!italic><gray>Wähle einen Spieler aus"
-            - "<!italic><gray>um ihm eine Drohne zu senden"
-        toggle:
-          position: 13
-          material: "REDSTONE"
-          name: "<!italic><yellow>Drohnen-Empfang umschalten</yellow>"
-          lore:
-            - "<!italic><gray>Schalte ein/aus ob du"
-            - "<!italic><gray>Drohnen empfangen möchtest"
-        decline:
-          position: 15
-          material: "BARRIER"
-          name: "<!italic><red>Eingehende Drohnen ablehnen</red>"
-          lore:
-            - "<!italic><gray>Lehne alle eingehenden"
-            - "<!italic><gray>Drohnen für dich ab"
-        preview:
-          position: 22
-          material: "ENDER_EYE"
-          name: "<!italic><aqua>Drohne-Vorschau</aqua>"
-          lore:
-            - "<!italic><gray>Zeige eine Vorschau deiner"
-            - "<!italic><gray>aktiven Drohnen"
-      fill-item:
-        material: "GRAY_STAINED_GLASS_PANE"
-        name: " "
-    player-selection:
-      title: "<!italic>Spieler auswählen"
-      size: 54
-      fill-item:
-        material: "GRAY_STAINED_GLASS_PANE"
-        name: " "
-      back-item:
-        position: 45
-        material: "ARROW"
-        name: "<!italic><yellow>Zurück</yellow>"
-        lore:
-          - "<!italic><gray>Zurück zum Hauptmenü"
-    target-selection:
-      title: "<!italic>Ziel auswählen"
-      size: 27
-      fill-item:
-        material: "GRAY_STAINED_GLASS_PANE"
-        name: " "
-      back-item:
-        position: 26
-        material: "ARROW"
-        name: "<!italic><yellow>Zurück</yellow>"
-        lore:
-          - "<!italic><gray>Zurück zum Hauptmenü"
-      items:
-        player:
-          position: 11
-          material: "PLAYER_HEAD"
-          name: "<!italic><green>Spieler auswählen</green>"
-          lore:
-            - "<!italic><gray>Wähle einen Spieler aus"
-            - "<!italic><gray>um ihm eine Drohne zu senden"
-        socket:
-          position: 15
-          material: "BEACON"
-          name: "<!italic><yellow>Socket auswählen</yellow>"
-          lore:
-            - "<!italic><gray>Wähle einen Socket aus"
-            - "<!italic><gray>um dort eine Drohne zu senden"
-    socket-selection:
-      title: "<!italic>Socket auswählen"
-      size: 54
-      fill-item:
-        material: "GRAY_STAINED_GLASS_PANE"
-        name: " "
-      back-item:
-        position: 45
-        material: "ARROW"
-        name: "<!italic><yellow>Zurück</yellow>"
-        lore:
-          - "<!italic><gray>Zurück zur Zielauswahl"
-    socket-item-format:
-      name-format: "<!italic><white><name></white>"
-      owner-format: "<!italic><gray>Besitzer: <white><owner></white></gray>"
-      click-hint: "<!italic><green>Klicke um Drohne zu senden</green>"
-      empty-line: "<!italic><gray></gray>"
     blocked-worlds:
       - "world_nether"
       - "world_the_end"
@@ -218,3 +115,14 @@ messages:
   socket-name-too-long: "<red>Der Socket-Name darf maximal 32 Zeichen lang sein.</red>"
   socket-error: "<red>Fehler beim Verarbeiten des Sockets: <white><error></white></red>"
   restart-return-items: "<yellow>Server-Neustart: Deine Drohne wurde storniert und die Items wurden zurückgegeben.</yellow>"
+  drone-helmet-remove: "<red>Du kannst den Helm einer fliegenden Drohne nicht entfernen!</red>"
+  drone-helmet-manipulate: "<red>Du kannst den Helm einer fliegenden Drohne nicht manipulieren!</red>"
+  drone-armor-manipulate: "<red>Du kannst die Rüstung einer fliegenden Drohne nicht manipulieren!</red>"
+  only-players: "<red>Nur Spieler können diesen Befehl verwenden.</red>"
+  usage-send: "<gray>/drone send <Spieler></gray>"
+  usage-admin: "<gray>/drone admin send <x> <y> <z> [world]</gray>"
+  usage-socket: "<gray>/drone socket <place|remove|list|send></gray>"
+  usage-socket-place: "<gray>/drone socket place <name></gray>"
+  usage-socket-remove: "<gray>/drone socket remove <name></gray>"
+  no-active-drones: "<gray>Keine aktiven Drohnen.</gray>"
+  active-drones-count: "<gold>Aktive Drohnen: <white><count></white></gold>"

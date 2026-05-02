@@ -100,10 +100,10 @@ public class DroneMenuHandler implements Listener {
 
     private void handleMainMenuClick(Player player, ItemStack clicked, int slot) {
         // Get the configured positions from GUI settings with null checks
-        GuiItem sendItem = droneSettings.mainMenu().items().get("send");
-        GuiItem toggleItem = droneSettings.mainMenu().items().get("toggle");
-        GuiItem declineItem = droneSettings.mainMenu().items().get("decline");
-        GuiItem previewItem = droneSettings.mainMenu().items().get("preview");
+        GuiItem sendItem = droneSettings.guiConfig().mainMenu().items().get("send");
+        GuiItem toggleItem = droneSettings.guiConfig().mainMenu().items().get("toggle");
+        GuiItem declineItem = droneSettings.guiConfig().mainMenu().items().get("decline");
+        GuiItem previewItem = droneSettings.guiConfig().mainMenu().items().get("preview");
 
         if (sendItem != null && slot == sendItem.position()) { // Send Drone
             menuGUI.openTargetSelectionMenu(player);
@@ -135,7 +135,7 @@ public class DroneMenuHandler implements Listener {
 
     private void handlePlayerSelectionClick(Player player, ItemStack clicked, int slot) {
         // Check for back button first with null check
-        GuiItem backItem = droneSettings.playerSelection().items().get("back");
+        GuiItem backItem = droneSettings.guiConfig().playerSelection().items().get("back");
         if (backItem != null && slot == backItem.position()) {
             menuGUI.openMainMenu(player);
             return;
@@ -158,9 +158,9 @@ public class DroneMenuHandler implements Listener {
 
     private void handleTargetSelectionClick(Player player, ItemStack clicked, int slot) {
         // Get the configured positions from GUI settings with null checks
-        GuiItem backItem = droneSettings.targetSelection().items().get("back");
-        GuiItem playerItem = droneSettings.targetSelection().items().get("player");
-        GuiItem socketItem = droneSettings.targetSelection().items().get("socket");
+        GuiItem backItem = droneSettings.guiConfig().targetSelection().items().get("back");
+        GuiItem playerItem = droneSettings.guiConfig().targetSelection().items().get("player");
+        GuiItem socketItem = droneSettings.guiConfig().targetSelection().items().get("socket");
 
         if (backItem != null && slot == backItem.position()) {
             menuGUI.openMainMenu(player);
@@ -180,14 +180,14 @@ public class DroneMenuHandler implements Listener {
 
     private void handleSocketSelectionClick(Player player, ItemStack clicked, int slot) {
         // Get the configured back button position with null check
-        GuiItem backItem = droneSettings.socketSelection().items().get("back");
+        GuiItem backItem = droneSettings.guiConfig().socketSelection().items().get("back");
 
         if (backItem != null && slot == backItem.position()) {
             menuGUI.openTargetSelectionMenu(player);
             return;
         }
 
-        if (clicked.getType() != org.bukkit.Material.BEACON) return;
+        if (clicked.getType() != droneSettings.guiConfig().socketItemMaterial()) return;
 
         org.bukkit.inventory.meta.ItemMeta meta = clicked.getItemMeta();
         if (meta == null) return;

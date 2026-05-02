@@ -10,7 +10,11 @@ import de.cb.drones.socket.SocketRepository;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.io.File;
 
 public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
@@ -18,16 +22,18 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private DroneManager droneManager;
     private DiscordWebhookManager discordWebhookManager;
     private SocketRepository socketRepository;
+    private FileConfiguration guiConfig;
     
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        saveGuiConfig();
         this.playerSettings = new PlayerSettingsRepository(this);
         this.socketRepository = new SocketRepository(this);
         this.discordWebhookManager = new DiscordWebhookManager(this);
-        this.droneManager = new DroneManager(this, DroneSettings.fromConfig(getConfig()), discordWebhookManager);
+        this.guiConfig = loadGuiConfig();
+        this.droneManager = new DroneManager(this, DroneSettings.fromConfig(getConfig(), guiConfig), discordWebhookManager);
         this.droneManager.start();
-
 
         DroneCommand command = new DroneCommand(this, droneManager, playerSettings, droneManager.settings(), socketRepository);
         PluginCommand drone = getCommand("drone");
@@ -48,11 +54,28 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
 
     public void reloadPlugin() {
         saveDefaultConfig(); // Create config if it doesn't exist
+        saveGuiConfig(); // Ensure GUI config exists
         reloadConfig();
         playerSettings.reload();
         socketRepository.reload();
         discordWebhookManager.loadSettings();
-        droneManager.updateSettings(DroneSettings.fromConfig(getConfig()));
+        this.guiConfig = loadGuiConfig();
+        droneManager.updateSettings(DroneSettings.fromConfig(getConfig(), guiConfig));
+    }
+
+    private void saveGuiConfig() {
+        File guiConfigFile = new File(getDataFolder(), "gui.yml");
+        if (!guiConfigFile.exists()) {
+            saveResource("gui.yml", false);
+        }
+    }
+
+    private FileConfiguration loadGuiConfig() {
+        File guiConfigFile = new File(getDataFolder(), "gui.yml");
+        if (!guiConfigFile.exists()) {
+            saveResource("gui.yml", false);
+        }
+        return YamlConfiguration.loadConfiguration(guiConfigFile);
     }
 
     public Component component(String key) {

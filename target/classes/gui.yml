@@ -1,0 +1,147 @@
+# =============================================================================
+# ADVANCED DELIVERY DRONES - GUI CONFIGURATION
+# =============================================================================
+# This file contains all GUI configurations for the drone plugin.
+# You can customize titles, sizes, items, positions, names, and lore for all GUIs.
+# Use <player> as a placeholder for player names in player head items.
+# Use MiniMessage formatting for colors and styles (e.g., <red>, <bold>, <italic>)
+
+# =============================================================================
+# SEND MODE GUI - Choose between sending animals or items
+# =============================================================================
+send-mode:
+  title: "<!italic>Sende-Modus"
+  size: 27
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+  items:
+    animals:
+      position: 11
+      material: "LEAD"
+      name: "<!italic><gold>Tiere senden</gold>"
+      lore:
+        - "<!italic><gray>Sendet nur angeleinte Tiere.</gray>"
+    items:
+      position: 15
+      material: "CHEST"
+      name: "<!italic><gold>Items senden</gold>"
+      lore:
+        - "<!italic><gray>Öffnet das Paket-Inventar.</gray>"
+
+# =============================================================================
+# MAIN MENU GUI - Main drone menu with all options
+# =============================================================================
+main-menu:
+  title: "<!italic>Drone Menü"
+  size: 27
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+  items:
+    send:
+      position: 11
+      material: "PLAYER_HEAD"
+      name: "<!italic><green>Drohne senden</green>"
+      lore:
+        - "<!italic><gray>Wähle einen Spieler aus"
+        - "<!italic><gray>um ihm eine Drohne zu senden"
+    toggle:
+      position: 13
+      material: "REDSTONE"
+      name: "<!italic><yellow>Drohnen-Empfang umschalten</yellow>"
+      lore:
+        - "<!italic><gray>Schalte ein/aus ob du"
+        - "<!italic><gray>Drohnen empfangen möchtest"
+    decline:
+      position: 15
+      material: "BARRIER"
+      name: "<!italic><red>Eingehende Drohnen ablehnen</red>"
+      lore:
+        - "<!italic><gray>Lehne alle eingehenden"
+        - "<!italic><gray>Drohnen für dich ab"
+    preview:
+      position: 22
+      material: "ENDER_EYE"
+      name: "<!italic><aqua>Drohne-Vorschau</aqua>"
+      lore:
+        - "<!italic><gray>Zeige eine Vorschau deiner"
+        - "<!italic><gray>aktiven Drohnen"
+
+# =============================================================================
+# PLAYER SELECTION GUI - Select a player to send a drone to
+# =============================================================================
+player-selection:
+  title: "<!italic>Spieler auswählen"
+  size: 54
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+  back-item:
+    position: 45
+    material: "ARROW"
+    name: "<!italic><yellow>Zurück</yellow>"
+    lore:
+      - "<!italic><gray>Zurück zum Hauptmenü"
+  player-head-item:
+    name-format: "<!italic><white><player></white>"
+    lore:
+      - "<!italic><gray>Klicke um eine Drohne</gray>"
+      - "<!italic><gray>an <white><player></white> zu senden</gray>"
+
+# =============================================================================
+# TARGET SELECTION GUI - Choose between player or socket target
+# =============================================================================
+target-selection:
+  title: "<!italic>Ziel auswählen"
+  size: 27
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+  back-item:
+    position: 26
+    material: "ARROW"
+    name: "<!italic><yellow>Zurück</yellow>"
+    lore:
+      - "<!italic><gray>Zurück zum Hauptmenü"
+  items:
+    player:
+      position: 11
+      material: "PLAYER_HEAD"
+      name: "<!italic><green>Spieler auswählen</green>"
+      lore:
+        - "<!italic><gray>Wähle einen Spieler aus"
+        - "<!italic><gray>um ihm eine Drohne zu senden"
+    socket:
+      position: 15
+      material: "BEACON"
+      name: "<!italic><yellow>Socket auswählen</yellow>"
+      lore:
+        - "<!italic><gray>Wähle einen Socket aus"
+        - "<!italic><gray>um dort eine Drohne zu senden"
+
+# =============================================================================
+# SOCKET SELECTION GUI - Select a delivery socket
+# =============================================================================
+socket-selection:
+  title: "<!italic>Socket auswählen"
+  size: 54
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+  back-item:
+    position: 45
+    material: "ARROW"
+    name: "<!italic><yellow>Zurück</yellow>"
+    lore:
+      - "<!italic><gray>Zurück zur Zielauswahl"
+
+# =============================================================================
+# SOCKET ITEM FORMATTING - Dynamic formatting for socket items
+# =============================================================================
+socket-item-format:
+  name-format: "<!italic><white><name></white>"
+  owner-format: "<!italic><gray>Besitzer: <white><owner></white></gray>"
+  click-hint: "<!italic><green>Klicke um Drohne zu senden</green>"
+  empty-line: "<!italic><gray></gray>"
+  material: "BEACON"
