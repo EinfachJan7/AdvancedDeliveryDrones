@@ -40,6 +40,7 @@ public record DroneSettings(
         double hologramOffset,
         boolean bossbarEnabled,
         String bossbarFormat,
+        org.bukkit.boss.BarColor bossbarColor,
         boolean collectionAnimationEnabled,
         GuiSettings mainMenu,
         GuiSettings playerSelection,
@@ -83,6 +84,7 @@ public record DroneSettings(
         double hologramOffset = cfg.getDouble(section + "hologram.offset-y", 1.0D);
         boolean bossbarEnabled = cfg.getBoolean(section + "bossbar.enabled", true);
         String bossbarFormat = cfg.getString(section + "bossbar.format", "<gold>Distanz: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>");
+        org.bukkit.boss.BarColor bossbarColor = parseBarColor(cfg.getString(section + "bossbar.color", "YELLOW"));
         boolean collectionAnimationEnabled = cfg.getBoolean(section + "collection-animation.enabled", true);
         
         // Parse main menu GUI settings
@@ -127,6 +129,7 @@ public record DroneSettings(
                 hologramOffset,
                 bossbarEnabled,
                 bossbarFormat,
+                bossbarColor,
                 collectionAnimationEnabled,
                 mainMenu,
                 playerSelection,
@@ -254,6 +257,17 @@ public record DroneSettings(
         GuiItem fillItem = new GuiItem(-1, fillMaterial, fillName, List.of());
         
         return new GuiSettings(title, size, items, fillItem);
+    }
+
+    private static org.bukkit.boss.BarColor parseBarColor(String value) {
+        if (value == null || value.isBlank()) {
+            return org.bukkit.boss.BarColor.YELLOW;
+        }
+        try {
+            return org.bukkit.boss.BarColor.valueOf(value.toUpperCase());
+        } catch (Exception ignored) {
+            return org.bukkit.boss.BarColor.YELLOW;
+        }
     }
 
     private static Map<String, GuiItem> createDefaultMainMenuItems() {

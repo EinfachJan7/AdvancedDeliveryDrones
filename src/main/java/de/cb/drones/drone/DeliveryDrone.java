@@ -732,7 +732,7 @@ public final class DeliveryDrone {
             return;
         }
         if (bossBar == null) {
-            bossBar = Bukkit.createBossBar("Drone", org.bukkit.boss.BarColor.YELLOW, org.bukkit.boss.BarStyle.SEGMENTED_10);
+            bossBar = Bukkit.createBossBar("Drone", settings.bossbarColor(), org.bukkit.boss.BarStyle.SEGMENTED_10);
         }
         bossBar.addPlayer(receiver);
         bossBar.setVisible(true);

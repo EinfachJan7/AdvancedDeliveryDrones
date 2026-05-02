@@ -132,6 +132,8 @@ settings:
     bossbar:
       enabled: true
       format: "<gold>Distanz zur Drone: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>"
+      # Available colors: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+      color: "YELLOW"
     collection-animation:
       enabled: true
 
