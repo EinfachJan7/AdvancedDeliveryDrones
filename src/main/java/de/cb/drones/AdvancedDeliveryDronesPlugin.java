@@ -37,7 +37,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         // this.blacklistRepository = new SocketBlacklistRepository(this);
         this.discordWebhookManager = new DiscordWebhookManager(this);
         this.guiConfig = loadGuiConfig();
-        this.droneManager = new DroneManager(this, DroneSettings.fromConfig(getConfig(), guiConfig), discordWebhookManager);
+        this.droneManager = new DroneManager(this, DroneSettings.fromConfig(getConfig(), guiConfig), discordWebhookManager, socketRepository);
         this.droneManager.start();
 
         this.droneCommand = new DroneCommand(this, droneManager, playerSettings, droneManager.settings(), socketRepository);

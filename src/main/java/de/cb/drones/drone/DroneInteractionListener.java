@@ -2,6 +2,7 @@ package de.cb.drones.drone;
 
 import de.cb.drones.socket.DeliverySocket;
 import de.cb.drones.socket.SocketRepository;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,7 +20,6 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.ItemStack;
 
 public final class DroneInteractionListener implements Listener {
     private final DroneManager droneManager;
@@ -54,16 +54,19 @@ public final class DroneInteractionListener implements Listener {
         
         // Check if player is authorized to open the drone
         boolean isAuthorized = drone.receiverId().equals(player.getUniqueId());
+        boolean isSocketPickup = false;
+        DeliverySocket socket = null;
         
         // If not the receiver, check if this is a socket delivery and player is trusted
         if (!isAuthorized && drone.socketName() != null) {
             // Find the socket by searching all sockets for the matching name
-            DeliverySocket socket = socketRepository.getAllSockets().stream()
+            socket = socketRepository.getAllSockets().stream()
                     .filter(s -> s.name().equals(drone.socketName()))
                     .findFirst()
                     .orElse(null);
             if (socket != null && (socket.ownerId().equals(player.getUniqueId()) || socket.trustedPlayers().contains(player.getUniqueId()))) {
                 isAuthorized = true;
+                isSocketPickup = true;
             }
         }
         
@@ -80,6 +83,11 @@ public final class DroneInteractionListener implements Listener {
             droneManager.handleAnimalOnlyInteract(drone);
             droneManager.destroyDrone(drone, false);
             return true;
+        }
+
+        // Track socket pickup for notification when drone is destroyed
+        if (isSocketPickup && socket != null) {
+            drone.markAsSocketPickup(player.getUniqueId(), socket.name());
         }
 
         droneManager.openDroneInventory(player, drone);
@@ -107,6 +115,19 @@ public final class DroneInteractionListener implements Listener {
             return;
         }
         if (drone.snapshotItems().isEmpty()) {
+            // Check if this was a socket pickup and send notifications
+            if (drone.isSocketPickup()) {
+                DeliverySocket socket = socketRepository.getAllSockets().stream()
+                        .filter(s -> s.name().equals(drone.socketPickupSocketName()))
+                        .findFirst()
+                        .orElse(null);
+                if (socket != null) {
+                    Player pickupPlayer = Bukkit.getPlayer(drone.socketPickupPlayerId());
+                    if (pickupPlayer != null) {
+                        droneManager.sendSocketPickupNotifications(pickupPlayer, drone, socket);
+                    }
+                }
+            }
             droneManager.destroyDrone(drone, false);
         }
     }
@@ -189,4 +210,5 @@ public final class DroneInteractionListener implements Listener {
             droneManager.sendMessage(event.getPlayer(), "drone-armor-manipulate");
         }
     }
-}
+
+    }

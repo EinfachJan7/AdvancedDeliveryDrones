@@ -3,6 +3,8 @@ package de.cb.drones.drone;
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
 import de.cb.drones.discord.DiscordWebhookManager;
 import de.cb.drones.performance.PerformanceOptimizer;
+import de.cb.drones.socket.DeliverySocket;
+import de.cb.drones.socket.SocketRepository;
 import java.util.logging.Level;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +34,7 @@ public final class DroneManager {
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private final DiscordWebhookManager discordWebhookManager;
     private final PerformanceOptimizer performanceOptimizer;
+    private final SocketRepository socketRepository;
     private final Map<UUID, DeliveryDrone> activeDrones = new HashMap<>();
     private final Map<UUID, DeliveryDrone> byEntityUuid = new HashMap<>();
     private final Map<Inventory, DeliveryDrone> byInventory = new HashMap<>();
@@ -40,10 +43,11 @@ public final class DroneManager {
     private DroneSettings settings;
     private BukkitTask cleanupTask;
 
-    public DroneManager(AdvancedDeliveryDronesPlugin plugin, DroneSettings settings, DiscordWebhookManager discordWebhookManager) {
+    public DroneManager(AdvancedDeliveryDronesPlugin plugin, DroneSettings settings, DiscordWebhookManager discordWebhookManager, SocketRepository socketRepository) {
         this.plugin = plugin;
         this.settings = settings;
         this.discordWebhookManager = discordWebhookManager;
+        this.socketRepository = socketRepository;
         this.performanceOptimizer = new PerformanceOptimizer(plugin);
     }
 
@@ -82,6 +86,13 @@ public final class DroneManager {
         String prefix = plugin.getConfig().getString("messages.prefix", "");
         String body = plugin.getConfig().getString("messages." + key, key);
         body = body.replace(placeholder1, value1).replace(placeholder2, value2);
+        player.sendMessage(miniMessage.deserialize(prefix + body));
+    }
+
+    public void sendMessage(Player player, String key, String placeholder1, String value1, String placeholder2, String value2, String placeholder3, String value3) {
+        String prefix = plugin.getConfig().getString("messages.prefix", "");
+        String body = plugin.getConfig().getString("messages." + key, key);
+        body = body.replace(placeholder1, value1).replace(placeholder2, value2).replace(placeholder3, value3);
         player.sendMessage(miniMessage.deserialize(prefix + body));
     }
 
@@ -197,8 +208,9 @@ public final class DroneManager {
             if (sender != null) {
                 discordWebhookManager.sendDeliveryCompleted(sender, player, drone);
             }
+            // Only reset countdown on first opening
+            drone.markInteraction(currentTick());
         }
-        drone.markInteraction(currentTick());
         player.openInventory(drone.inventory());
     }
 
@@ -213,9 +225,59 @@ public final class DroneManager {
             if (sender != null && receiver != null) {
                 discordWebhookManager.sendDeliveryCompleted(sender, receiver, drone);
             }
+            
+            // Send socket pickup notifications if this is a socket delivery
+            if (drone.socketName() != null && receiver != null) {
+                // Find the socket by searching all sockets for the matching name
+                DeliverySocket socket = null;
+                for (DeliverySocket s : socketRepository.getAllSockets()) {
+                    if (s.name().equals(drone.socketName())) {
+                        socket = s;
+                        break;
+                    }
+                }
+                if (socket != null) {
+                    sendSocketPickupNotifications(receiver, drone, socket);
+                }
+            }
         }
         drone.releaseLeashedAnimal();
-        drone.markInteraction(currentTick());
+        // Only reset countdown on first interaction
+        if (!drone.wasOpenedByReceiver()) {
+            drone.markInteraction(currentTick());
+        }
+    }
+
+    public void sendSocketPickupNotifications(Player pickupPlayer, DeliveryDrone drone, DeliverySocket socket) {
+        // Check if notifications have already been sent to prevent duplicates
+        if (drone.areNotificationsSent()) {
+            return;
+        }
+        
+        // Notify the original sender that their drone was picked up from a socket
+        Player sender = Bukkit.getPlayer(drone.senderId());
+        if (sender != null && !sender.getUniqueId().equals(pickupPlayer.getUniqueId())) {
+            sendMessage(sender, "socket-drone-pickedup-sender", 
+                "<pickup_player>", pickupPlayer.getName(), 
+                "<socket_name>", socket.name());
+        }
+        
+        // Notify the socket owner if they're not the one who picked it up
+        Player socketOwner = Bukkit.getPlayer(socket.ownerId());
+        if (socketOwner != null && !socketOwner.getUniqueId().equals(pickupPlayer.getUniqueId())) {
+            sendMessage(socketOwner, "socket-drone-pickedup-owner", 
+                "<pickup_player>", pickupPlayer.getName(), 
+                "<socket_name>", socket.name(), 
+                "<original_sender>", Bukkit.getOfflinePlayer(drone.senderId()).getName());
+        }
+        
+        // Notify the pickup player who sent the drone
+        sendMessage(pickupPlayer, "socket-drone-pickedup-picker", 
+            "<original_sender>", Bukkit.getOfflinePlayer(drone.senderId()).getName(), 
+            "<socket_name>", socket.name());
+        
+        // Mark notifications as sent to prevent duplicates
+        drone.markNotificationsSent();
     }
 
     public boolean canSenderLaunch(UUID senderId) {
@@ -254,8 +316,27 @@ public final class DroneManager {
                 byEntityUuid.remove(standId);
             }
             byInventory.remove(drone.inventory());
-            if (!drone.wasOpenedByReceiver()) {
-                pendingReturns.put(drone.senderId(), drone.snapshotItems());
+            // Return items based on despawn mode
+            boolean shouldReturnItems = settings.despawnMode() == DroneSettings.DespawnMode.COLLECT || 
+                                      (settings.despawnMode() == DroneSettings.DespawnMode.DELETE && !drone.wasOpenedByReceiver());
+            if (shouldReturnItems) {
+                List<ItemStack> items = drone.snapshotItems();
+                if (!items.isEmpty()) {
+                    Player sender = Bukkit.getPlayer(drone.senderId());
+                    if (sender != null && sender.isOnline()) {
+                        // Deliver items immediately to online sender
+                        for (ItemStack stack : items) {
+                            Map<Integer, ItemStack> overflow = sender.getInventory().addItem(stack);
+                            if (!overflow.isEmpty()) {
+                                overflow.values().forEach(item -> sender.getWorld().dropItemNaturally(sender.getLocation(), item));
+                            }
+                        }
+                        sendMessage(sender, "return-delivered");
+                    } else {
+                        // Store for later delivery when player comes online
+                        pendingReturns.computeIfAbsent(drone.senderId(), ignored -> new ArrayList<>()).addAll(items);
+                    }
+                }
             }
             decrementSenderCounter(drone.senderId());
         }

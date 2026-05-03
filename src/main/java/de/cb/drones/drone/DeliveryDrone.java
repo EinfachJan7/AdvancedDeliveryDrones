@@ -84,6 +84,11 @@ public final class DeliveryDrone {
     private long lastSoundTick = -1L;
     private static final long SOUND_INTERVAL = 10L; // Sound every 10 ticks to reduce audio overhead
     
+    // Socket pickup tracking
+    private UUID socketPickupPlayerId;
+    private String socketPickupSocketName;
+    private boolean notificationsSent;
+    
     public DeliveryDrone(
             UUID droneId,
             UUID senderId,
@@ -211,6 +216,32 @@ public final class DeliveryDrone {
 
     public void markInteraction(long tick) {
         this.lastInteractionTick = tick;
+    }
+
+    public void markAsSocketPickup(UUID playerId, String socketName) {
+        this.socketPickupPlayerId = playerId;
+        this.socketPickupSocketName = socketName;
+        this.notificationsSent = false;
+    }
+
+    public boolean areNotificationsSent() {
+        return notificationsSent;
+    }
+
+    public void markNotificationsSent() {
+        this.notificationsSent = true;
+    }
+
+    public boolean isSocketPickup() {
+        return socketPickupPlayerId != null && socketPickupSocketName != null;
+    }
+
+    public UUID socketPickupPlayerId() {
+        return socketPickupPlayerId;
+    }
+
+    public String socketPickupSocketName() {
+        return socketPickupSocketName;
     }
 
     public void onReceiverOpened() {
