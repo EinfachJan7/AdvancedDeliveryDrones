@@ -1,5 +1,7 @@
 package de.cb.drones.drone;
 
+import de.cb.drones.socket.DeliverySocket;
+import de.cb.drones.socket.SocketRepository;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,9 +23,11 @@ import org.bukkit.inventory.ItemStack;
 
 public final class DroneInteractionListener implements Listener {
     private final DroneManager droneManager;
+    private final SocketRepository socketRepository;
 
-    public DroneInteractionListener(DroneManager droneManager) {
+    public DroneInteractionListener(DroneManager droneManager, SocketRepository socketRepository) {
         this.droneManager = droneManager;
+        this.socketRepository = socketRepository;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -47,10 +51,27 @@ public final class DroneInteractionListener implements Listener {
         if (drone == null) {
             return false;
         }
-        if (!drone.receiverId().equals(player.getUniqueId())) {
+        
+        // Check if player is authorized to open the drone
+        boolean isAuthorized = drone.receiverId().equals(player.getUniqueId());
+        
+        // If not the receiver, check if this is a socket delivery and player is trusted
+        if (!isAuthorized && drone.socketName() != null) {
+            // Find the socket by searching all sockets for the matching name
+            DeliverySocket socket = socketRepository.getAllSockets().stream()
+                    .filter(s -> s.name().equals(drone.socketName()))
+                    .findFirst()
+                    .orElse(null);
+            if (socket != null && (socket.ownerId().equals(player.getUniqueId()) || socket.trustedPlayers().contains(player.getUniqueId()))) {
+                isAuthorized = true;
+            }
+        }
+        
+        if (!isAuthorized) {
             droneManager.sendMessage(player, "wrong-user");
             return true;
         }
+        
         if (drone.isFlying()) {
             droneManager.sendMessage(player, "drone-flying");
             return true;

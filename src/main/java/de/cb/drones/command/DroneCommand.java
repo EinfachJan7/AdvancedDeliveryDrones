@@ -235,6 +235,8 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "send" -> executeSocketSend(player, args);
             case "manage" -> executeSocketManage(player);
             case "rename" -> executeSocketRename(player, args);
+            case "trust" -> executeSocketTrust(player, args);
+            case "untrust" -> executeSocketUntrust(player, args);
             default -> {
                 player.sendMessage(plugin.component("usage-socket"));
                 yield true;
@@ -354,6 +356,62 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         socketRepository.removeSocket(player.getUniqueId(), oldName);
         socketRepository.addSocket(player.getUniqueId(), player.getName(), newName, loc);
         droneManager.sendMessage(player, "socket-renamed", "<old>", oldName, "<new>", newName);
+        return true;
+    }
+
+    private boolean executeSocketTrust(Player player, String[] args) {
+        if (args.length < 4) {
+            player.sendMessage("/drone socket trust <socket-name> <player>");
+            return true;
+        }
+        String socketName = args[2];
+        String targetPlayerName = args[3];
+
+        DeliverySocket socket = socketRepository.getSocket(player.getUniqueId(), socketName);
+        if (socket == null) {
+            droneManager.sendMessage(player, "socket-not-found", "<name>", socketName);
+            return true;
+        }
+
+        Player targetPlayer = Bukkit.getPlayerExact(targetPlayerName);
+        if (targetPlayer == null || !targetPlayer.isOnline()) {
+            droneManager.sendMessage(player, "player-offline");
+            return true;
+        }
+
+        if (socketRepository.addTrustedPlayer(player.getUniqueId(), socketName, targetPlayer.getUniqueId())) {
+            droneManager.sendMessage(player, "socket-trust-added", "<socket>", socketName, "<player>", targetPlayerName);
+        } else {
+            droneManager.sendMessage(player, "socket-trust-already", "<socket>", socketName, "<player>", targetPlayerName);
+        }
+        return true;
+    }
+
+    private boolean executeSocketUntrust(Player player, String[] args) {
+        if (args.length < 4) {
+            player.sendMessage("/drone socket untrust <socket-name> <player>");
+            return true;
+        }
+        String socketName = args[2];
+        String targetPlayerName = args[3];
+
+        DeliverySocket socket = socketRepository.getSocket(player.getUniqueId(), socketName);
+        if (socket == null) {
+            droneManager.sendMessage(player, "socket-not-found", "<name>", socketName);
+            return true;
+        }
+
+        Player targetPlayer = Bukkit.getPlayerExact(targetPlayerName);
+        if (targetPlayer == null || !targetPlayer.isOnline()) {
+            droneManager.sendMessage(player, "player-offline");
+            return true;
+        }
+
+        if (socketRepository.removeTrustedPlayer(player.getUniqueId(), socketName, targetPlayer.getUniqueId())) {
+            droneManager.sendMessage(player, "socket-trust-removed", "<socket>", socketName, "<player>", targetPlayerName);
+        } else {
+            droneManager.sendMessage(player, "socket-trust-not-found", "<socket>", socketName, "<player>", targetPlayerName);
+        }
         return true;
     }
 
@@ -594,7 +652,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return results;
         }
         if (args.length == 2 && "socket".equalsIgnoreCase(args[0])) {
-            return List.of("place", "remove", "list", "send", "manage", "rename");
+            return List.of("place", "remove", "list", "send", "manage", "rename", "trust", "untrust");
         }
         if (args.length == 3 && "socket".equalsIgnoreCase(args[0])) {
             if (sender instanceof Player player) {
@@ -610,6 +668,22 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                             .map(DeliverySocket::name)
                             .toList();
                 }
+                if ("trust".equalsIgnoreCase(args[1]) || "untrust".equalsIgnoreCase(args[1])) {
+                    // Only own sockets for trust/untrust
+                    return socketRepository.getSocketsByOwner(player.getUniqueId()).stream()
+                            .map(DeliverySocket::name)
+                            .toList();
+                }
+            }
+        }
+        if (args.length == 4 && "socket".equalsIgnoreCase(args[0])) {
+            if ("trust".equalsIgnoreCase(args[1]) || "untrust".equalsIgnoreCase(args[1])) {
+                // Return online player names
+                List<String> results = new ArrayList<>();
+                for (Player online : Bukkit.getOnlinePlayers()) {
+                    results.add(online.getName());
+                }
+                return results;
             }
         }
         return Collections.emptyList();

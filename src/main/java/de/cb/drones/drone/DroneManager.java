@@ -396,8 +396,12 @@ public final class DroneManager {
         long totalSeconds = remaining / 20L;
         long minutes = totalSeconds / 60L;
         long seconds = totalSeconds % 60L;
+        
+        // Use socket name if drone is sent to a socket, otherwise use receiver name
+        String displayTarget = drone.socketName() != null ? drone.socketName() : drone.receiverName();
+        
         TagResolver resolver = TagResolver.resolver(
-                Placeholder.unparsed("receiver", drone.receiverName()),
+                Placeholder.unparsed("receiver", displayTarget),
                 Placeholder.unparsed("minutes", String.valueOf(minutes)),
                 Placeholder.unparsed("seconds", String.format("%02d", seconds))
         );

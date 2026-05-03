@@ -2,6 +2,7 @@ package de.cb.drones.socket;
 
 import org.bukkit.Location;
 
+import java.util.List;
 import java.util.UUID;
 
 public record DeliverySocket(
@@ -10,7 +11,8 @@ public record DeliverySocket(
         String ownerName,
         String name,
         Location location,
-        long createdTimestamp
+        long createdTimestamp,
+        List<UUID> trustedPlayers
 ) {
     public DeliverySocket {
         if (socketId == null) {
@@ -34,7 +36,8 @@ public record DeliverySocket(
                 ownerName,
                 name,
                 location.clone(),
-                System.currentTimeMillis()
+                System.currentTimeMillis(),
+                List.of()
         );
     }
 

@@ -125,6 +125,56 @@ player-selection:
       - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴇɴᴅᴇɴ</italic>"
 
 # =============================================================================
+# TRUST PLAYER SELECTION GUI
+# =============================================================================
+trust-player-selection:
+  title: "<!italic><#222222>👤 <gradient:#4ade80:#22c55e>sᴘɪᴇʟᴇʀ ᴠᴇʀᴛʀᴀᴜᴇɴ</gradient>"
+  size: 54
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+  back-item:
+    position: 45
+    material: "ARROW"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    lore:
+      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>sᴏᴄᴋᴇᴛ-ᴇᴅɪᴛᴏʀ</#f3f4f6>"
+  player-head-item:
+    name-format: "<!italic><gradient:#4ade80:#22c55e><bold><player></bold></gradient>"
+    lore:
+      - "<!italic><#4b5563>┌────────────────────┐"
+      - "<!italic><#9ca3af>  ᴠᴇʀᴛʀᴀᴜᴇ ᴅɪᴇsᴇᴍ"
+      - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀ:"
+      - "<!italic><#f3f4f6>  ➤ <player>"
+      - "<!italic><#4b5563>└────────────────────┘"
+      - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴠᴇʀᴛʀᴀᴜᴇɴ</italic>"
+
+# =============================================================================
+# UNTRUST PLAYER SELECTION GUI
+# =============================================================================
+untrust-player-selection:
+  title: "<!italic><#222222>👤 <gradient:#f87171:#ef4444>ᴛʀᴀᴜᴇɴ ᴇɴᴛꜰᴇʀɴᴇɴ</gradient>"
+  size: 54
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+  back-item:
+    position: 45
+    material: "ARROW"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    lore:
+      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>sᴏᴄᴋᴇᴛ-ᴇᴅɪᴛᴏʀ</#f3f4f6>"
+  player-head-item:
+    name-format: "<!italic><gradient:#f87171:#ef4444><bold><player></bold></gradient>"
+    lore:
+      - "<!italic><#4b5563>┌────────────────────┐"
+      - "<!italic><#9ca3af>  ᴇɴᴛꜰᴇʀɴᴇ ᴛʀᴀᴜᴇɴ"
+      - "<!italic><#9ca3af>  ᴠᴏɴ:"
+      - "<!italic><#f3f4f6>  ➤ <player>"
+      - "<!italic><#4b5563>└────────────────────┘"
+      - "<!italic><#f87171>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴇɴᴛꜰᴇʀɴᴇɴ</italic>"
+
+# =============================================================================
 # TARGET SELECTION GUI
 # =============================================================================
 target-selection:
@@ -225,34 +275,48 @@ socket-edit:
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
     name: " "
-  back-item:
-    position: 18
-    material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
-    lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜʀ <#f3f4f6>ᴠᴇʀᴡᴀʟᴛᴜɴɢ</#f3f4f6>"
   items:
     rename:
-      position: 11
+      position: 10
       material: "NAME_TAG"
       name: "<!italic><gradient:#a855f7:#ec4899><bold>✏️ ᴜᴍʙᴇɴᴇɴᴇɴ</bold></gradient>"
       lore:
         - "<!italic><#9ca3af>  ᴋʟɪᴄᴋᴇ ᴜᴍ ᴅᴇɴ"
         - "<!italic><#9ca3af>  ɴᴀᴍᴇɴ ᴢᴜ äɴᴅᴇʀɴ"
     relocate:
-      position: 13
+      position: 12
       material: "COMPASS"
       name: "<!italic><gradient:#a855f7:#ec4899><bold>📍 ɴᴇᴜ sᴇᴛᴢᴇɴ</bold></gradient>"
       lore:
         - "<!italic><#9ca3af>  ᴋʟɪᴄᴋᴇ ᴜᴍ ᴅɪᴇ"
         - "<!italic><#9ca3af>  ᴘᴏsɪᴛɪᴏɴ ᴢᴜ ᴀᴋᴛᴜᴀʟɪsɪᴇʀᴇɴ"
+    trust:
+      position: 14
+      material: "EMERALD"
+      name: "<!italic><gradient:#4ade80:#22c55e><bold>✓ sᴘɪᴇʟᴇʀ ᴠᴇʀᴛʀᴀᴜᴇɴ</bold></gradient>"
+      lore:
+        - "<!italic><#9ca3af>  ᴋʟɪᴄᴋᴇ ᴜᴍ ᴇɪɴᴇɴ"
+        - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀ ᴢᴜ ᴠᴇʀᴛʀᴀᴜᴇɴ"
+    untrust:
+      position: 16
+      material: "REDSTONE"
+      name: "<!italic><gradient:#f87171:#ef4444><bold>✗ ᴠᴇʀᴛʀᴀᴜᴇɴ ᴇɴᴛꜰᴇʀɴᴇɴ</bold></gradient>"
+      lore:
+        - "<!italic><#9ca3af>  ᴋʟɪᴄᴋᴇ ᴜᴍ ᴇɪɴᴇɴ"
+        - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀ ᴢᴜ ᴇɴᴛꜰᴇʀɴᴇɴ"
     delete:
-      position: 15
+      position: 22
       material: "BARRIER"
       name: "<!italic><gradient:#f87171:#ef4444><bold>✖ ʟösᴄʜᴇɴ</bold></gradient>"
       lore:
         - "<!italic><#9ca3af>  ᴋʟɪᴄᴋᴇ ᴜᴍ ᴅɪᴇsᴇɴ"
         - "<!italic><#9ca3af>  sᴏᴄᴋᴇᴛ ᴢᴜ ᴇɴᴛꜰᴇʀɴᴇɴ"
+    back:
+      position: 18
+      material: "ARROW"
+      name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+      lore:
+        - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜʀ <#f3f4f6>ᴠᴇʀᴡᴀʟᴛᴜɴɢ</#f3f4f6>"
 
 # =============================================================================
 # SIGN RENAME CONFIGURATION

@@ -1,7 +1,6 @@
 package de.cb.drones.gui;
 
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
-import de.cb.drones.command.DroneCommand;
 import de.cb.drones.config.PlayerSettingsRepository;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
@@ -24,8 +23,6 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.NamespacedKey;
 
 import java.util.HashMap;
@@ -108,6 +105,11 @@ public class DroneMenuHandler implements Listener {
                 if (menuType.startsWith("socket_edit:")) {
                     String socketName = menuType.substring("socket_edit:".length());
                     handleSocketEditClick(player, clicked, event.getSlot(), socketName);
+                } else if (menuType.startsWith("trust_selection:")) {
+                    String[] parts = menuType.substring("trust_selection:".length()).split(":");
+                    String socketName = parts[0];
+                    boolean isTrust = Boolean.parseBoolean(parts[1]);
+                    handleTrustSelectionClick(player, clicked, event.getSlot(), socketName, isTrust);
                 }
             }
         }
@@ -275,6 +277,72 @@ public class DroneMenuHandler implements Listener {
         }
     }
 
+    private void handleTrustSelectionClick(Player player, ItemStack clicked, int slot, String socketName, boolean isTrust) {
+        // Check for back button first
+        GuiItem backItem = droneSettings.guiConfig().playerSelection().items().get("back");
+        if (backItem != null && slot == backItem.position()) {
+            menuGUI.openSocketEditMenu(player, socketName);
+            return;
+        }
+
+        if (clicked.getType() != org.bukkit.Material.PLAYER_HEAD) return;
+
+        org.bukkit.inventory.meta.ItemMeta meta = clicked.getItemMeta();
+        if (meta == null) return;
+
+        if (isTrust) {
+            // Trust mode: extract player name from display name
+            String targetName = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
+            org.bukkit.entity.Player target = player.getServer().getPlayer(targetName);
+
+            if (target != null && target.isOnline()) {
+                if (socketRepository.addTrustedPlayer(player.getUniqueId(), socketName, target.getUniqueId())) {
+                    droneManager.sendMessage(player, "socket-trust-added", "<socket>", socketName, "<player>", targetName);
+                } else {
+                    droneManager.sendMessage(player, "socket-trust-already", "<socket>", socketName, "<player>", targetName);
+                }
+            }
+        } else {
+            // Untrust mode: get player UUID from persistent data or display name
+            UUID targetUUID = null;
+
+            // Try to get UUID from persistent data first
+            if (meta.getPersistentDataContainer() != null) {
+                NamespacedKey playerUuidKey = new NamespacedKey("advanced-delivery-drones", "player_uuid");
+                String uuidString = meta.getPersistentDataContainer().get(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING);
+                if (uuidString != null) {
+                    try {
+                        targetUUID = UUID.fromString(uuidString);
+                    } catch (IllegalArgumentException e) {
+                        // Invalid UUID format, fall back to name lookup
+                    }
+                }
+            }
+
+            // Fallback to name lookup
+            if (targetUUID == null) {
+                String targetName = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
+                org.bukkit.entity.Player target = player.getServer().getPlayer(targetName);
+                if (target != null) {
+                    targetUUID = target.getUniqueId();
+                }
+            }
+
+            if (targetUUID != null) {
+                if (socketRepository.removeTrustedPlayer(player.getUniqueId(), socketName, targetUUID)) {
+                    // Try to get player name for message
+                    org.bukkit.entity.Player targetPlayer = org.bukkit.Bukkit.getPlayer(targetUUID);
+                    String targetName = targetPlayer != null ? targetPlayer.getName() : "Unknown";
+                    droneManager.sendMessage(player, "socket-trust-removed", "<socket>", socketName, "<player>", targetName);
+                } else {
+                    droneManager.sendMessage(player, "socket-trust-not-found", "<socket>", socketName, "<player>", "Unknown");
+                }
+            }
+        }
+
+        menuGUI.openSocketEditMenu(player, socketName);
+    }
+
     private void handleSocketEditClick(Player player, ItemStack clicked, int slot, String socketName) {
         GuiItem backItem = droneSettings.guiConfig().socketEdit().items().get("back");
         if (backItem != null && slot == backItem.position()) {
@@ -308,6 +376,18 @@ public class DroneMenuHandler implements Listener {
             socketRepository.addSocket(player.getUniqueId(), player.getName(), socketName, player.getLocation());
             droneManager.sendMessage(player, "socket-relocated", "<name>", socketName);
             menuGUI.openSocketManagementMenu(player);
+            return;
+        }
+
+        GuiItem trustItem = droneSettings.guiConfig().socketEdit().items().get("trust");
+        if (trustItem != null && slot == trustItem.position()) {
+            menuGUI.openTrustPlayerSelectionMenu(player, socketName, true);
+            return;
+        }
+
+        GuiItem untrustItem = droneSettings.guiConfig().socketEdit().items().get("untrust");
+        if (untrustItem != null && slot == untrustItem.position()) {
+            menuGUI.openTrustPlayerSelectionMenu(player, socketName, false);
             return;
         }
 

@@ -171,6 +171,99 @@ public class DroneMenuGUI {
         return head;
     }
 
+    private ItemStack createPlayerHeadWithUUID(org.bukkit.entity.Player player, UUID uuid) {
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        ItemMeta meta = head.getItemMeta();
+        if (meta != null) {
+            // Use configurable name format with placeholder replacement
+            String nameFormat = droneSettings.guiConfig().playerHeadNameFormat()
+                .replace("<player>", player.getName());
+            meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
+
+            // Use configurable lore with placeholder replacement
+            List<Component> loreComponents = new ArrayList<>();
+            for (String line : droneSettings.guiConfig().playerHeadLore()) {
+                String formattedLine = line.replace("<player>", player.getName());
+                loreComponents.add(MINI_MESSAGE.deserialize(formattedLine));
+            }
+            meta.lore(loreComponents);
+
+            // Store UUID in persistent data for offline player handling
+            if (meta.getPersistentDataContainer() != null) {
+                NamespacedKey playerUuidKey = new NamespacedKey("advanced-delivery-drones", "player_uuid");
+                meta.getPersistentDataContainer().set(playerUuidKey, PersistentDataType.STRING, uuid.toString());
+            }
+
+            // Set player head texture
+            if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
+                skullMeta.setOwningPlayer(player);
+            }
+
+            head.setItemMeta(meta);
+        }
+        return head;
+    }
+
+    private ItemStack createTrustPlayerHead(org.bukkit.entity.Player player) {
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        ItemMeta meta = head.getItemMeta();
+        if (meta != null) {
+            // Use trust-specific name format with placeholder replacement
+            String nameFormat = droneSettings.guiConfig().trustPlayerHeadNameFormat()
+                .replace("<player>", player.getName());
+            meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
+
+            // Use trust-specific lore with placeholder replacement
+            List<Component> loreComponents = new ArrayList<>();
+            for (String line : droneSettings.guiConfig().trustPlayerHeadLore()) {
+                String formattedLine = line.replace("<player>", player.getName());
+                loreComponents.add(MINI_MESSAGE.deserialize(formattedLine));
+            }
+            meta.lore(loreComponents);
+
+            // Set player head texture
+            if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
+                skullMeta.setOwningPlayer(player);
+            }
+
+            head.setItemMeta(meta);
+        }
+        return head;
+    }
+
+    private ItemStack createUntrustPlayerHeadWithUUID(org.bukkit.entity.Player player, UUID uuid) {
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        ItemMeta meta = head.getItemMeta();
+        if (meta != null) {
+            // Use untrust-specific name format with placeholder replacement
+            String nameFormat = droneSettings.guiConfig().untrustPlayerHeadNameFormat()
+                .replace("<player>", player.getName());
+            meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
+
+            // Use untrust-specific lore with placeholder replacement
+            List<Component> loreComponents = new ArrayList<>();
+            for (String line : droneSettings.guiConfig().untrustPlayerHeadLore()) {
+                String formattedLine = line.replace("<player>", player.getName());
+                loreComponents.add(MINI_MESSAGE.deserialize(formattedLine));
+            }
+            meta.lore(loreComponents);
+
+            // Store UUID in persistent data for offline player handling
+            if (meta.getPersistentDataContainer() != null) {
+                NamespacedKey playerUuidKey = new NamespacedKey("advanced-delivery-drones", "player_uuid");
+                meta.getPersistentDataContainer().set(playerUuidKey, PersistentDataType.STRING, uuid.toString());
+            }
+
+            // Set player head texture
+            if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
+                skullMeta.setOwningPlayer(player);
+            }
+
+            head.setItemMeta(meta);
+        }
+        return head;
+    }
+
     public void openTargetSelectionMenu(Player player) {
         GuiSettings menuSettings = droneSettings.guiConfig().targetSelection();
         DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("target_selection");
@@ -256,11 +349,24 @@ public class DroneMenuGUI {
             String emptyLine = droneSettings.guiConfig().socketItemEmptyLine();
             String clickHint = droneSettings.guiConfig().socketItemClickHint();
 
-            List<Component> lore = List.of(
-                MINI_MESSAGE.deserialize(ownerFormat),
-                MINI_MESSAGE.deserialize(emptyLine),
-                MINI_MESSAGE.deserialize(clickHint)
-            );
+            // Build lore with trusted players
+            List<Component> lore = new ArrayList<>();
+            lore.add(MINI_MESSAGE.deserialize(ownerFormat));
+            
+            // Add trusted players if any
+            if (!socket.trustedPlayers().isEmpty()) {
+                for (UUID trustedUuid : socket.trustedPlayers()) {
+                    org.bukkit.entity.Player trustedPlayer = org.bukkit.Bukkit.getPlayer(trustedUuid);
+                    if (trustedPlayer != null) {
+                        String trustedFormat = "<!italic><#9ca3af>  ᴠᴇʀᴛʀᴀᴜᴇᴛ: <#4ade80>" + trustedPlayer.getName();
+                        lore.add(MINI_MESSAGE.deserialize(trustedFormat));
+                    }
+                }
+            }
+            
+            lore.add(MINI_MESSAGE.deserialize(emptyLine));
+            lore.add(MINI_MESSAGE.deserialize(clickHint));
+            
             meta.lore(lore);
 
             item.setItemMeta(meta);
@@ -380,6 +486,18 @@ public class DroneMenuGUI {
             menu.setItem(relocateItem.position(), relocateButton);
         }
 
+        GuiItem trustItem = menuSettings.items().get("trust");
+        if (trustItem != null && trustItem.position() >= 0 && trustItem.position() < size) {
+            ItemStack trustButton = createMenuItem(trustItem.material(), trustItem.name(), trustItem.lore());
+            menu.setItem(trustItem.position(), trustButton);
+        }
+
+        GuiItem untrustItem = menuSettings.items().get("untrust");
+        if (untrustItem != null && untrustItem.position() >= 0 && untrustItem.position() < size) {
+            ItemStack untrustButton = createMenuItem(untrustItem.material(), untrustItem.name(), untrustItem.lore());
+            menu.setItem(untrustItem.position(), untrustButton);
+        }
+
         GuiItem deleteItem = menuSettings.items().get("delete");
         if (deleteItem != null && deleteItem.position() >= 0 && deleteItem.position() < size) {
             ItemStack deleteButton = createMenuItem(deleteItem.material(), deleteItem.name(), deleteItem.lore());
@@ -387,6 +505,86 @@ public class DroneMenuGUI {
         }
 
         // Add back button
+        GuiItem backItem = menuSettings.items().get("back");
+        if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
+            ItemStack backButton = createMenuItem(backItem.material(), backItem.name(), backItem.lore());
+            menu.setItem(backItem.position(), backButton);
+        }
+
+        player.openInventory(menu);
+    }
+
+    public void openTrustPlayerSelectionMenu(Player player, String socketName, boolean isTrust) {
+        GuiSettings menuSettings = isTrust
+            ? droneSettings.guiConfig().trustPlayerSelection()
+            : droneSettings.guiConfig().untrustPlayerSelection();
+
+        int size;
+        Inventory menu;
+        if (isTrust) {
+            // Trust mode: show all online players
+            List<org.bukkit.entity.Player> onlinePlayers = new ArrayList<>();
+            for (org.bukkit.entity.Player target : player.getServer().getOnlinePlayers()) {
+                if (!target.equals(player)) {
+                    onlinePlayers.add(target);
+                }
+            }
+
+            size = Math.max(menuSettings.size(), Math.min(54, ((onlinePlayers.size() + 8) / 9) * 9));
+            DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("trust_selection:" + socketName + ":" + isTrust);
+            menu = player.getServer().createInventory(holder, size,
+                MINI_MESSAGE.deserialize(menuSettings.title()));
+            holder.setInventory(menu);
+
+            // First, fill all slots with fill item if configured
+            if (menuSettings.fillItem() != null) {
+                ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
+                    menuSettings.fillItem().name(), menuSettings.fillItem().lore());
+                for (int i = 0; i < size; i++) {
+                    menu.setItem(i, filler);
+                }
+            }
+
+            // Add player heads
+            for (int i = 0; i < onlinePlayers.size() && i < size; i++) {
+                org.bukkit.entity.Player target = onlinePlayers.get(i);
+                ItemStack headItem = createTrustPlayerHead(target);
+                menu.setItem(i, headItem);
+            }
+        } else {
+            // Untrust mode: show only trusted players (with their UUIDs stored)
+            DeliverySocket socket = socketRepository.getSocket(player.getUniqueId(), socketName);
+            List<UUID> trustedPlayerUUIDs = socket != null ? socket.trustedPlayers() : new ArrayList<>();
+
+            size = Math.max(menuSettings.size(), Math.min(54, ((trustedPlayerUUIDs.size() + 8) / 9) * 9));
+            DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("trust_selection:" + socketName + ":" + isTrust);
+            menu = player.getServer().createInventory(holder, size,
+                MINI_MESSAGE.deserialize(menuSettings.title()));
+            holder.setInventory(menu);
+
+            // First, fill all slots with fill item if configured
+            if (menuSettings.fillItem() != null) {
+                ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
+                    menuSettings.fillItem().name(), menuSettings.fillItem().lore());
+                for (int i = 0; i < size; i++) {
+                    menu.setItem(i, filler);
+                }
+            }
+
+            // Add trusted player heads (online only, but with UUID for offline handling)
+            int slot = 0;
+            for (UUID trustedUuid : trustedPlayerUUIDs) {
+                if (slot >= size) break;
+                org.bukkit.entity.Player trustedPlayer = org.bukkit.Bukkit.getPlayer(trustedUuid);
+                if (trustedPlayer != null) {
+                    ItemStack headItem = createUntrustPlayerHeadWithUUID(trustedPlayer, trustedUuid);
+                    menu.setItem(slot, headItem);
+                    slot++;
+                }
+            }
+        }
+
+        // Add back button if configured (this will override fill items and player heads if conflict)
         GuiItem backItem = menuSettings.items().get("back");
         if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
             ItemStack backButton = createMenuItem(backItem.material(), backItem.name(), backItem.lore());

@@ -21,6 +21,8 @@ public class GuiConfiguration {
     private final GuiSettings socketSelection;
     private final GuiSettings socketManagement;
     private final GuiSettings socketEdit;
+    private final GuiSettings trustPlayerSelection;
+    private final GuiSettings untrustPlayerSelection;
     private final String socketItemNameFormat;
     private final String socketItemOwnerFormat;
     private final String socketItemClickHint;
@@ -28,6 +30,10 @@ public class GuiConfiguration {
     private final Material socketItemMaterial;
     private final String playerHeadNameFormat;
     private final List<String> playerHeadLore;
+    private final String trustPlayerHeadNameFormat;
+    private final List<String> trustPlayerHeadLore;
+    private final String untrustPlayerHeadNameFormat;
+    private final List<String> untrustPlayerHeadLore;
     private final String socketManagementItemNameFormat;
     private final String socketManagementItemLocationFormat;
     private final String socketManagementItemDeleteHint;
@@ -44,15 +50,17 @@ public class GuiConfiguration {
         this.socketSelection = parseGuiSettings(guiConfig, "socket-selection.", createDefaultSocketSelectionItems());
         this.socketManagement = parseGuiSettings(guiConfig, "socket-management.", createDefaultSocketManagementItems());
         this.socketEdit = parseGuiSettings(guiConfig, "socket-edit.", createDefaultSocketEditItems());
-        
+        this.trustPlayerSelection = parseGuiSettings(guiConfig, "trust-player-selection.", createDefaultPlayerSelectionItems());
+        this.untrustPlayerSelection = parseGuiSettings(guiConfig, "untrust-player-selection.", createDefaultPlayerSelectionItems());
+
         // Socket item format
         this.socketItemNameFormat = guiConfig.getString("socket-item-format.name-format", "<!italic><white><name></white>");
         this.socketItemOwnerFormat = guiConfig.getString("socket-item-format.owner-format", "<!italic><gray>Besitzer: <white><owner></white></gray>");
         this.socketItemClickHint = guiConfig.getString("socket-item-format.click-hint", "<!italic><green>Klicke um Drohne zu senden</green>");
         this.socketItemEmptyLine = guiConfig.getString("socket-item-format.empty-line", "<!italic><gray></gray>");
         this.socketItemMaterial = parseMaterial(guiConfig.getString("socket-item-format.material", "BEACON"), Material.BEACON);
-        
-        // Player head item format
+
+        // Player head item format (regular)
         this.playerHeadNameFormat = guiConfig.getString("player-selection.player-head-item.name-format", "<!italic><white><player></white>");
         List<String> tempPlayerHeadLore = guiConfig.getStringList("player-selection.player-head-item.lore");
         if (tempPlayerHeadLore.isEmpty()) {
@@ -62,6 +70,28 @@ public class GuiConfiguration {
             );
         }
         this.playerHeadLore = tempPlayerHeadLore;
+
+        // Player head item format (trust)
+        this.trustPlayerHeadNameFormat = guiConfig.getString("trust-player-selection.player-head-item.name-format", "<!italic><white><player></white>");
+        List<String> tempTrustPlayerHeadLore = guiConfig.getStringList("trust-player-selection.player-head-item.lore");
+        if (tempTrustPlayerHeadLore.isEmpty()) {
+            tempTrustPlayerHeadLore = List.of(
+                "<!italic><gray>Klicke um den Spieler</gray>",
+                "<!italic><gray>zu <#4ade80>vertrauen</gray>"
+            );
+        }
+        this.trustPlayerHeadLore = tempTrustPlayerHeadLore;
+
+        // Player head item format (untrust)
+        this.untrustPlayerHeadNameFormat = guiConfig.getString("untrust-player-selection.player-head-item.name-format", "<!italic><white><player></white>");
+        List<String> tempUntrustPlayerHeadLore = guiConfig.getStringList("untrust-player-selection.player-head-item.lore");
+        if (tempUntrustPlayerHeadLore.isEmpty()) {
+            tempUntrustPlayerHeadLore = List.of(
+                "<!italic><gray>Klicke um das Vertrauen</gray>",
+                "<!italic><gray>zu <#f87171>entfernen</gray>"
+            );
+        }
+        this.untrustPlayerHeadLore = tempUntrustPlayerHeadLore;
         
         // Socket management item format
         this.socketManagementItemNameFormat = guiConfig.getString("socket-management.socket-management-item.name-format", "<!italic><white><name></white>");
@@ -82,6 +112,8 @@ public class GuiConfiguration {
     public GuiSettings socketSelection() { return socketSelection; }
     public GuiSettings socketManagement() { return socketManagement; }
     public GuiSettings socketEdit() { return socketEdit; }
+    public GuiSettings trustPlayerSelection() { return trustPlayerSelection; }
+    public GuiSettings untrustPlayerSelection() { return untrustPlayerSelection; }
     public String socketItemNameFormat() { return socketItemNameFormat; }
     public String socketItemOwnerFormat() { return socketItemOwnerFormat; }
     public String socketItemClickHint() { return socketItemClickHint; }
@@ -89,6 +121,10 @@ public class GuiConfiguration {
     public Material socketItemMaterial() { return socketItemMaterial; }
     public String playerHeadNameFormat() { return playerHeadNameFormat; }
     public List<String> playerHeadLore() { return playerHeadLore; }
+    public String trustPlayerHeadNameFormat() { return trustPlayerHeadNameFormat; }
+    public List<String> trustPlayerHeadLore() { return trustPlayerHeadLore; }
+    public String untrustPlayerHeadNameFormat() { return untrustPlayerHeadNameFormat; }
+    public List<String> untrustPlayerHeadLore() { return untrustPlayerHeadLore; }
     public String socketManagementItemNameFormat() { return socketManagementItemNameFormat; }
     public String socketManagementItemLocationFormat() { return socketManagementItemLocationFormat; }
     public String socketManagementItemDeleteHint() { return socketManagementItemDeleteHint; }
@@ -196,9 +232,12 @@ public class GuiConfiguration {
 
     private static Map<String, GuiItem> createDefaultSocketEditItems() {
         Map<String, GuiItem> items = new HashMap<>();
-        items.put("rename", new GuiItem(11, Material.NAME_TAG, "<yellow>Rename", List.of("<gray>Click to rename the socket")));
-        items.put("relocate", new GuiItem(13, Material.COMPASS, "<yellow>Relocate", List.of("<gray>Click to change the position")));
-        items.put("delete", new GuiItem(15, Material.BARRIER, "<red>Delete", List.of("<gray>Click to delete the socket")));
+        items.put("rename", new GuiItem(10, Material.NAME_TAG, "<yellow>Umbenennen", List.of("<gray>Klicke um den Namen zu ändern")));
+        items.put("relocate", new GuiItem(12, Material.COMPASS, "<yellow>Neu setzen", List.of("<gray>Klicke um die Position zu aktualisieren")));
+        items.put("trust", new GuiItem(14, Material.EMERALD, "<green>Spieler vertrauen", List.of("<gray>Klicke um einen Spieler zu vertrauen")));
+        items.put("untrust", new GuiItem(16, Material.REDSTONE, "<red>Vertrauen entfernen", List.of("<gray>Klicke um einen Spieler zu entfernen")));
+        items.put("delete", new GuiItem(22, Material.BARRIER, "<red>Löschen", List.of("<gray>Klicke um diesen Socket zu entfernen")));
+        items.put("back", new GuiItem(18, Material.ARROW, "<purple>Zurück", List.of("<gray>Zurück zur Verwaltung")));
         return items;
     }
 }

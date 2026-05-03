@@ -47,7 +47,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
             drone.setTabCompleter(droneCommand);
         }
 
-        getServer().getPluginManager().registerEvents(new DroneInteractionListener(droneManager), this);
+        getServer().getPluginManager().registerEvents(new DroneInteractionListener(droneManager, socketRepository), this);
     }
 
     @Override

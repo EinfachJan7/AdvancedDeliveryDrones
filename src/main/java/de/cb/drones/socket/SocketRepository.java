@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public final class SocketRepository {
     private static final String SOCKETS_PATH = "sockets";
@@ -140,6 +139,64 @@ public final class SocketRepository {
         return config.contains(socketPath);
     }
 
+    public boolean addTrustedPlayer(UUID ownerId, String socketName, UUID playerUuid) {
+        DeliverySocket socket = getSocket(ownerId, socketName);
+        if (socket == null) {
+            return false;
+        }
+        
+        List<UUID> newTrustedPlayers = new ArrayList<>(socket.trustedPlayers());
+        if (newTrustedPlayers.contains(playerUuid)) {
+            return false; // Already trusted
+        }
+        newTrustedPlayers.add(playerUuid);
+        
+        DeliverySocket updatedSocket = new DeliverySocket(
+                socket.socketId(),
+                socket.ownerId(),
+                socket.ownerName(),
+                socket.name(),
+                socket.location(),
+                socket.createdTimestamp(),
+                newTrustedPlayers
+        );
+        saveSocket(updatedSocket);
+        return true;
+    }
+
+    public boolean removeTrustedPlayer(UUID ownerId, String socketName, UUID playerUuid) {
+        DeliverySocket socket = getSocket(ownerId, socketName);
+        if (socket == null) {
+            return false;
+        }
+        
+        List<UUID> newTrustedPlayers = new ArrayList<>(socket.trustedPlayers());
+        if (!newTrustedPlayers.contains(playerUuid)) {
+            return false; // Not in trusted list
+        }
+        newTrustedPlayers.remove(playerUuid);
+        
+        DeliverySocket updatedSocket = new DeliverySocket(
+                socket.socketId(),
+                socket.ownerId(),
+                socket.ownerName(),
+                socket.name(),
+                socket.location(),
+                socket.createdTimestamp(),
+                newTrustedPlayers
+        );
+        saveSocket(updatedSocket);
+        return true;
+    }
+
+    public List<UUID> getTrustedPlayers(UUID ownerId, String socketName) {
+        DeliverySocket socket = getSocket(ownerId, socketName);
+        if (socket == null) {
+            return List.of();
+        }
+        return new ArrayList<>(socket.trustedPlayers());
+    }
+
     private void saveSocket(DeliverySocket socket) {
         String socketPath = SOCKETS_PATH + "." + socket.ownerId() + "." + socket.name();
         config.set(socketPath + ".socket-id", socket.socketId().toString());
@@ -151,6 +208,13 @@ public final class SocketRepository {
         config.set(socketPath + ".yaw", socket.location().getYaw());
         config.set(socketPath + ".pitch", socket.location().getPitch());
         config.set(socketPath + ".created", socket.createdTimestamp());
+        
+        // Save trusted players
+        List<String> trustedPlayerStrings = socket.trustedPlayers().stream()
+                .map(UUID::toString)
+                .toList();
+        config.set(socketPath + ".trusted-players", trustedPlayerStrings);
+        
         save();
     }
 
@@ -165,6 +229,18 @@ public final class SocketRepository {
         float pitch = (float) config.getDouble(socketPath + ".pitch");
         long created = config.getLong(socketPath + ".created");
 
+        // Load trusted players
+        List<UUID> trustedPlayers = new ArrayList<>();
+        if (config.contains(socketPath + ".trusted-players")) {
+            for (String uuidStr : config.getStringList(socketPath + ".trusted-players")) {
+                try {
+                    trustedPlayers.add(UUID.fromString(uuidStr));
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().warning("Invalid UUID in trusted players for socket '" + name + "': " + uuidStr);
+                }
+            }
+        }
+
         World world = Bukkit.getWorld(worldName);
         if (world == null) {
             plugin.getLogger().warning("Socket '" + name + "' references unloaded world: " + worldName);
@@ -172,7 +248,7 @@ public final class SocketRepository {
         }
 
         Location location = new Location(world, x, y, z, yaw, pitch);
-        return new DeliverySocket(socketId, ownerId, ownerName, name, location, created);
+        return new DeliverySocket(socketId, ownerId, ownerName, name, location, created, trustedPlayers);
     }
 
     private void save() {
