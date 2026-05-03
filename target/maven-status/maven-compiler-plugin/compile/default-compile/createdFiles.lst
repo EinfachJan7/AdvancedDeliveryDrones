@@ -14,6 +14,7 @@ de\cb\drones\command\DroneCommand$DroneInventoryHolder.class
 de\cb\drones\discord\DiscordWebhookManager$1.class
 de\cb\drones\drone\DeliveryDrone.class
 de\cb\drones\drone\GuiSettings.class
+de\cb\drones\drone\DeliveryDrone$1.class
 de\cb\drones\drone\GuiItem.class
 de\cb\drones\command\DroneCommand$ComposeInventoryHolder.class
 de\cb\drones\drone\DroneInteractionListener.class

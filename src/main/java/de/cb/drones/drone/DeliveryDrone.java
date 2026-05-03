@@ -67,18 +67,22 @@ public final class DeliveryDrone {
     private long collectionAnimationStartTick;
     private final int collectionAnimationDuration = 40; // 2 seconds at 20 ticks
     private long lastBossBarUpdate = 0L;
-    private static final long BOSSBAR_UPDATE_INTERVAL = 10L; // Update every 10 ticks (0.5 seconds) - doubled
+    private static final long BOSSBAR_UPDATE_INTERVAL = 20L; // Update every 20 ticks (1 second) - increased for performance
     private long approachPhaseStartTick = -1L; // -1 means not in approach phase yet
     
     // Performance caches
     private long lastTraveledDistanceTick = -1L;
     private double cachedTraveledDistance = 0.0;
     private long lastParticleUpdateTick = -1L;
-    private static final long PARTICLE_UPDATE_INTERVAL = 2L; // Particles every 2 ticks instead of every tick
+    private static final long PARTICLE_UPDATE_INTERVAL = 2L; // Particles every 2 ticks for better visual quality
     private long lastHologramUpdateTick = -1L;
-    private static final long HOLOGRAM_UPDATE_INTERVAL = 40L; // Hologram every 2 seconds (40 ticks) instead of every second
+    private static final long HOLOGRAM_UPDATE_INTERVAL = 60L; // Hologram every 3 seconds (60 ticks)
     private long lastExpectedLocationTick = -1L;
     private Location cachedExpectedLocation = null;
+    private long lastTeleportTick = -1L;
+    private static final long TELEPORT_INTERVAL = 1L; // Teleport every tick for smooth movement
+    private long lastSoundTick = -1L;
+    private static final long SOUND_INTERVAL = 10L; // Sound every 10 ticks to reduce audio overhead
     
     public DeliveryDrone(
             UUID droneId,
@@ -400,7 +404,13 @@ public final class DeliveryDrone {
             droneManager.getPerformanceOptimizer().registerDrone(droneId);
         }
 
-        this.ticker = Bukkit.getScheduler().runTaskTimer(manager.plugin(), () -> tickFlight(manager), 1L, 1L);
+        // Use BukkitRunnable instead of lambda to avoid synthetic method calls
+        this.ticker = new org.bukkit.scheduler.BukkitRunnable() {
+            @Override
+            public void run() {
+                tickFlight(manager);
+            }
+        }.runTaskTimer(manager.plugin(), 1L, 1L);
     }
 
     private void tickFlight(DroneManager manager) {
@@ -411,7 +421,8 @@ public final class DeliveryDrone {
         long nowTick = Bukkit.getCurrentTick();
         Location expected = expectedLocation(nowTick);
         // Keep virtual position progressing even when chunks are unloaded.
-        lastKnownLocation = expected.clone();
+        // Reference the same location object instead of cloning
+        lastKnownLocation = expected;
         preloadTargetChunkIfNeeded(expected);
         Location standAnchor = landed
                 ? computeLandingFrom(landedLocation != null ? landedLocation : fixedTarget)
@@ -421,8 +432,11 @@ public final class DeliveryDrone {
         if (standAvailable && !fixedTarget.getWorld().equals(stand.getWorld())) {
             return;
         }
+        
+        // Cache stand location to avoid multiple getLocation() calls
+        Location standLocation = standAvailable ? stand.getLocation() : null;
         Location bossbarRef = landed
-                ? (landedLocation != null ? landedLocation : (standAvailable ? stand.getLocation() : lastKnownLocation))
+                ? (landedLocation != null ? landedLocation : (standLocation != null ? standLocation : lastKnownLocation))
                 : expected;
 
         double deliveryRadius = exactSocketTarget ? 0.5 : settings.deliveryRadius();
@@ -478,26 +492,31 @@ public final class DeliveryDrone {
                         double progress = (double) elapsedTicks / smoothLandingDuration;
                         // Use ease-out cubic function for more natural landing
                         double easedProgress = 1 - Math.pow(1 - progress, 3);
-                        
+
                         // Add slight hover effect at the beginning
                         double hoverEffect = Math.sin(progress * Math.PI) * 0.2;
-                        
+
                         Vector startVec = smoothLandingStart.toVector();
                         Vector endVec = landingSpot.toVector();
                         Vector current = startVec.add(endVec.subtract(startVec).multiply(easedProgress));
-                        
+
                         // Apply hover effect only to Y coordinate
                         current.setY(current.getY() + hoverEffect);
-                        
+
                         Location animatedPos = new Location(landingSpot.getWorld(), current.getX(), current.getY(), current.getZ());
                         ensureStandPresent(manager, animatedPos);
                         if (stand != null && !stand.isDead()) {
                             stand.teleport(animatedPos);
                         }
-                        
+
                         tickAttachedAnimalFollow(animatedPos);
                         updateParticleTrail();
-                        stand.getWorld().playSound(stand.getLocation(), settings.flightSound(), 0.05f, 1.3f);
+                        if (nowTick - lastSoundTick >= SOUND_INTERVAL) {
+                            // Cache stand location for sound playing
+                            Location soundLoc = stand != null && !stand.isDead() ? stand.getLocation() : animatedPos;
+                            soundLoc.getWorld().playSound(soundLoc, settings.flightSound(), 0.05f, 1.3f);
+                            lastSoundTick = nowTick;
+                        }
                     }
                 }
             }
@@ -511,10 +530,21 @@ public final class DeliveryDrone {
                     standAvailable = false;
                 }
             } else if (standAvailable) {
-                stand.teleport(expected);
+                boolean shouldTeleport = nowTick - lastTeleportTick >= TELEPORT_INTERVAL;
+                if (shouldTeleport) {
+                    stand.teleport(expected);
+                    lastTeleportTick = nowTick;
+                }
                 tickAttachedAnimalFollow(expected);
                 updateParticleTrail();
-                stand.getWorld().playSound(stand.getLocation(), settings.flightSound(), 0.05f, 1.3f);
+                if (nowTick - lastSoundTick >= SOUND_INTERVAL) {
+                    // Cache stand properties to avoid multiple calls
+                    if (standLocation == null) {
+                        standLocation = stand.getLocation();
+                    }
+                    standLocation.getWorld().playSound(standLocation, settings.flightSound(), 0.05f, 1.3f);
+                    lastSoundTick = nowTick;
+                }
             }
         }
         if (landed && standAvailable) {
@@ -616,12 +646,13 @@ public final class DeliveryDrone {
         }
         
         // For player targets, scan for highest safe position in radius
-        double scanRadius = settings.deliveryRadius(); // Use configured delivery radius
+        double scanRadius = settings.deliveryRadius();
         int centerX = at.getBlockX();
         int centerZ = at.getBlockZ();
+        double scanRadiusSq = scanRadius * scanRadius;
         
         int bestY = world.getMinHeight();
-        double bestDistance = Double.MAX_VALUE;
+        double bestDistanceSq = Double.MAX_VALUE;
         int bestX = centerX;
         int bestZ = centerZ;
         
@@ -629,21 +660,21 @@ public final class DeliveryDrone {
         int scanRange = (int) Math.ceil(scanRadius);
         for (int dx = -scanRange; dx <= scanRange; dx++) {
             for (int dz = -scanRange; dz <= scanRange; dz++) {
+                // Check if within radius (using squared distance to avoid sqrt)
+                int distSq = dx * dx + dz * dz;
+                if (distSq > scanRadiusSq) continue;
+                
                 int x = centerX + dx;
                 int z = centerZ + dz;
-                
-                // Check if within radius
-                double distance = Math.sqrt(dx * dx + dz * dz);
-                if (distance > scanRadius) continue;
                 
                 // Get highest safe block at this position
                 int y = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
                 y = Math.max(y, world.getMinHeight() + 1);
                 
                 // Check if this spot is better (higher and closer to target)
-                if (y > bestY || (y == bestY && distance < bestDistance)) {
+                if (y > bestY || (y == bestY && distSq < bestDistanceSq)) {
                     bestY = y;
-                    bestDistance = distance;
+                    bestDistanceSq = distSq;
                     bestX = x;
                     bestZ = z;
                 }
@@ -656,26 +687,46 @@ public final class DeliveryDrone {
     private Location expectedLocation(long nowTick) {
         // Cache result for same tick to avoid redundant calculations
         if (nowTick == lastExpectedLocationTick && cachedExpectedLocation != null) {
-            return cachedExpectedLocation.clone();
+            return cachedExpectedLocation;
         }
         
-        Location target = fixedTarget.clone().add(0.0, 0.1, 0.0);
-        Vector delta = target.toVector().subtract(startLocation.toVector());
-        double distance = delta.length();
+        // Calculate deltas directly to avoid Location.clone() and Vector operations
+        double targetX = fixedTarget.getX();
+        double targetY = fixedTarget.getY() + 0.1;
+        double targetZ = fixedTarget.getZ();
+        
+        double deltaX = targetX - startLocation.getX();
+        double deltaY = targetY - startLocation.getY();
+        double deltaZ = targetZ - startLocation.getZ();
+        
+        // Calculate distance without Vector object
+        double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
+        
         if (distance <= 0.001D) {
             lastExpectedLocationTick = nowTick;
-            cachedExpectedLocation = target;
-            return target;
+            if (cachedExpectedLocation == null) {
+                cachedExpectedLocation = new Location(startLocation.getWorld(), targetX, targetY, targetZ, 
+                    fixedTarget.getYaw(), fixedTarget.getPitch());
+            }
+            return cachedExpectedLocation;
         }
-        delta.normalize();
+        
         double traveled = calculateTraveledDistance(nowTick);
         double factor = Math.min(1.0D, traveled / distance);
-        Vector pos = startLocation.toVector().add(delta.multiply(distance * factor));
-        Location result = new Location(startLocation.getWorld(), pos.getX(), pos.getY(), pos.getZ(), target.getYaw(), target.getPitch());
+        
+        // Apply factor directly without Vector multiplication
+        Location result = new Location(
+            startLocation.getWorld(),
+            startLocation.getX() + deltaX * factor,
+            startLocation.getY() + deltaY * factor,
+            startLocation.getZ() + deltaZ * factor,
+            fixedTarget.getYaw(),
+            fixedTarget.getPitch()
+        );
         
         // Cache the result
         lastExpectedLocationTick = nowTick;
-        cachedExpectedLocation = result.clone();
+        cachedExpectedLocation = result;
         return result;
     }
 
@@ -690,9 +741,19 @@ public final class DeliveryDrone {
         long startupPart = Math.min(elapsedTicks, startupTicks);
         long cruisePart = Math.max(0L, elapsedTicks - startupPart);
         
-        // Calculate total distance to target (can be cached per flight)
-        Location target = fixedTarget.clone().add(0.0, 0.1, 0.0);
-        double totalDistance = startLocation.distance(target);
+        // Calculate total distance to target directly (avoid Location.distance)
+        double targetX = fixedTarget.getX();
+        double targetY = fixedTarget.getY() + 0.1;
+        double targetZ = fixedTarget.getZ();
+        
+        double startX = startLocation.getX();
+        double startY = startLocation.getY();
+        double startZ = startLocation.getZ();
+        
+        double deltaX = targetX - startX;
+        double deltaY = targetY - startY;
+        double deltaZ = targetZ - startZ;
+        double totalDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
         
         // Calculate distance traveled during startup phase
         double startupDistance = startupPart * settings.startupSpeed();
@@ -700,7 +761,7 @@ public final class DeliveryDrone {
         // Calculate distance already covered in cruise phase at normal speed
         double cruiseDistanceCovered = cruisePart * settings.speed();
         
-        // Calculate total distance covered so far (hypothetical, at normal speed)
+        // Calculate total distance covered so far
         double totalDistanceCovered = startupDistance + cruiseDistanceCovered;
         
         // Calculate remaining distance to target
@@ -710,27 +771,18 @@ public final class DeliveryDrone {
         
         // Check if we're within approach distance of target
         if (remainingDistanceToTarget <= settings.approachDistance()) {
-            // We should be in approach phase
-            
-            // If we just entered approach phase, record the start tick
+            // In approach phase
             if (approachPhaseStartTick < 0) {
                 approachPhaseStartTick = nowTick;
             }
             
-            // Calculate how many ticks we've been in approach phase
             long approachPhaseTicks = nowTick - approachPhaseStartTick;
-            
-            // Calculate the distance we should have covered at approach speed
             double approachDistanceCovered = approachPhaseTicks * settings.approachSpeed();
-            
-            // Distance covered before approach phase = total - approachDistance - remaining
             double distanceBeforeApproach = Math.max(0.0, totalDistance - settings.approachDistance());
-            
             result = distanceBeforeApproach + approachDistanceCovered;
         } else {
-            // Not in approach phase yet, reset the tracker
+            // Not in approach phase yet
             approachPhaseStartTick = -1L;
-            // Normal case: all cruise phase at normal speed
             result = startupDistance + cruiseDistanceCovered;
         }
         
@@ -831,36 +883,44 @@ public final class DeliveryDrone {
             }
         }
         
-        Location now = stand.getLocation().clone().add(0.0, settings.particleYOffset(), 0.0);
+        Location standLoc = stand.getLocation();
+        Location now = new Location(standLoc.getWorld(), standLoc.getX(), 
+            standLoc.getY() + settings.particleYOffset(), standLoc.getZ());
         particleTrail.addFirst(now);
-        while (particleTrail.size() > settings.particleTrailLength()) {
+        
+        // Limit trail length to reduce memory and iteration cost
+        int maxTrailLength = Math.min(settings.particleTrailLength(), 20);
+        while (particleTrail.size() > maxTrailLength) {
             particleTrail.removeLast();
         }
 
         int index = 0;
         for (Location point : particleTrail) {
-            int count = Math.max(1, settings.particleCount() - (index / 3));
-            double spread = 0.02 + (index * 0.01);
-            // Use performance optimizer for particles
-            if (droneManager != null) {
-                for (DroneSettings.ParticleEffect effect : settings.particles()) {
-                    if (effect.data() != null) {
-                        droneManager.getPerformanceOptimizer().spawnParticlesOptimized(
-                            point, effect.particle(), count, spread, spread, spread, 0.0, effect.data()
-                        );
-                    } else {
-                        droneManager.getPerformanceOptimizer().spawnParticlesOptimized(
-                            point, effect.particle(), count, spread, spread, spread, 0.0
-                        );
+            // Skip every other particle point for better performance
+            if (index % 2 == 0) {
+                int count = Math.max(1, settings.particleCount() - (index / 4));
+                double spread = 0.02 + (index * 0.01);
+                // Use performance optimizer for particles
+                if (droneManager != null) {
+                    for (DroneSettings.ParticleEffect effect : settings.particles()) {
+                        if (effect.data() != null) {
+                            droneManager.getPerformanceOptimizer().spawnParticlesOptimized(
+                                point, effect.particle(), count, spread, spread, spread, 0.0, effect.data()
+                            );
+                        } else {
+                            droneManager.getPerformanceOptimizer().spawnParticlesOptimized(
+                                point, effect.particle(), count, spread, spread, spread, 0.0
+                            );
+                        }
                     }
-                }
-            } else {
-                // Fallback if droneManager is not set
-                for (DroneSettings.ParticleEffect effect : settings.particles()) {
-                    if (effect.data() != null) {
-                        point.getWorld().spawnParticle(effect.particle(), point, count, spread, spread, spread, 0.0, effect.data());
-                    } else {
-                        point.getWorld().spawnParticle(effect.particle(), point, count, spread, spread, spread, 0.0);
+                } else {
+                    // Fallback if droneManager is not set
+                    for (DroneSettings.ParticleEffect effect : settings.particles()) {
+                        if (effect.data() != null) {
+                            point.getWorld().spawnParticle(effect.particle(), point, count, spread, spread, spread, 0.0, effect.data());
+                        } else {
+                            point.getWorld().spawnParticle(effect.particle(), point, count, spread, spread, spread, 0.0);
+                        }
                     }
                 }
             }
@@ -876,8 +936,15 @@ public final class DeliveryDrone {
         if (animals.isEmpty()) {
             return;
         }
+        
         Location standLocation = stand.getLocation();
-        Location target = expectedDroneLocation.clone().add(0.0, -0.2, 0.0);
+        double targetX = expectedDroneLocation.getX();
+        double targetY = expectedDroneLocation.getY() - 0.2;
+        double targetZ = expectedDroneLocation.getZ();
+        double standX = standLocation.getX();
+        double standY = standLocation.getY();
+        double standZ = standLocation.getZ();
+        
         for (LivingEntity animal : animals) {
             if (animal.isDead()) {
                 continue;
@@ -885,17 +952,35 @@ public final class DeliveryDrone {
             if (!animal.getWorld().equals(stand.getWorld())) {
                 continue;
             }
-            double toTargetSq = animal.getLocation().distanceSquared(target);
+            
+            Location animalLoc = animal.getLocation();
+            double animalX = animalLoc.getX();
+            double animalY = animalLoc.getY();
+            double animalZ = animalLoc.getZ();
+            
+            // Calculate squared distances to avoid expensive sqrt
+            double dx = animalX - targetX;
+            double dy = animalY - targetY;
+            double dz = animalZ - targetZ;
+            double toTargetSq = dx * dx + dy * dy + dz * dz;
+            
             boolean teleported = false;
-            if (toTargetSq > 16.0D && isChunkLoaded(target)) {
-                animal.teleport(target);
+            if (toTargetSq > 16.0D && isChunkLoaded(expectedDroneLocation)) {
+                animal.teleport(new Location(expectedDroneLocation.getWorld(), targetX, targetY, targetZ));
                 teleported = true;
             }
-            double toStandSq = animal.getLocation().distanceSquared(standLocation);
-            // Avoid repeated re-leash attempts when the animal cannot safely catch up yet.
+            
+            // Calculate squared distance to stand
+            double sdx = animalX - standX;
+            double sdy = animalY - standY;
+            double sdz = animalZ - standZ;
+            double toStandSq = sdx * sdx + sdy * sdy + sdz * sdz;
+            
+            // Avoid repeated re-leash attempts
             if (!teleported && toStandSq > 100.0D) {
                 continue;
             }
+            
             if (!animal.isLeashed() || animal.getLeashHolder() == null || !animal.getLeashHolder().getUniqueId().equals(stand.getUniqueId())) {
                 try {
                     animal.setLeashHolder(stand);
@@ -1042,8 +1127,15 @@ public final class DeliveryDrone {
             return 0L;
         }
         
-        Location target = fixedTarget.clone().add(0.0, 0.1, 0.0);
-        double remainingDistance = current.distance(target);
+        // Calculate distance directly without Location.clone()
+        double targetX = fixedTarget.getX();
+        double targetY = fixedTarget.getY() + 0.1;
+        double targetZ = fixedTarget.getZ();
+        
+        double dx = current.getX() - targetX;
+        double dy = current.getY() - targetY;
+        double dz = current.getZ() - targetZ;
+        double remainingDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
         
         // Add landing animation time if within delivery radius
         double deliveryRadius = exactSocketTarget ? 0.5 : settings.deliveryRadius();
@@ -1076,8 +1168,11 @@ public final class DeliveryDrone {
             return settings.speed();
         }
         
-        Location target = fixedTarget.clone().add(0.0, 0.1, 0.0);
-        double distanceToTarget = current.distance(target);
+        // Calculate distance directly without Location.clone()
+        double dx = current.getX() - fixedTarget.getX();
+        double dy = current.getY() - (fixedTarget.getY() + 0.1);
+        double dz = current.getZ() - fixedTarget.getZ();
+        double distanceToTarget = Math.sqrt(dx * dx + dy * dy + dz * dz);
         
         // Use approach speed when close to target (even if chunk not loaded)
         if (distanceToTarget <= settings.approachDistance()) {

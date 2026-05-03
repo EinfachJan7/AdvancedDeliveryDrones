@@ -364,14 +364,11 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         String socketName = args[2];
 
-        // Search for socket across all players
-        DeliverySocket targetSocket = null;
-        for (DeliverySocket socket : socketRepository.getAllSockets()) {
-            if (socket.name().equals(socketName)) {
-                targetSocket = socket;
-                break;
-            }
-        }
+        // Search for socket across all players using stream for performance
+        DeliverySocket targetSocket = socketRepository.getAllSockets().stream()
+                .filter(socket -> socket.name().equals(socketName))
+                .findFirst()
+                .orElse(null);
 
         if (targetSocket == null) {
             droneManager.sendMessage(player, "socket-not-found", "<name>", socketName);
@@ -602,20 +599,16 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (args.length == 3 && "socket".equalsIgnoreCase(args[0])) {
             if (sender instanceof Player player) {
                 if ("remove".equalsIgnoreCase(args[1])) {
-                    // Only own sockets for remove
-                    List<String> socketNames = new ArrayList<>();
-                    for (DeliverySocket socket : socketRepository.getSocketsByOwner(player.getUniqueId())) {
-                        socketNames.add(socket.name());
-                    }
-                    return socketNames;
+                    // Only own sockets for remove - use stream for efficiency
+                    return socketRepository.getSocketsByOwner(player.getUniqueId()).stream()
+                            .map(DeliverySocket::name)
+                            .toList();
                 }
                 if ("send".equalsIgnoreCase(args[1])) {
-                    // All sockets for send
-                    List<String> socketNames = new ArrayList<>();
-                    for (DeliverySocket socket : socketRepository.getAllSockets()) {
-                        socketNames.add(socket.name());
-                    }
-                    return socketNames;
+                    // All sockets for send - use stream for efficiency
+                    return socketRepository.getAllSockets().stream()
+                            .map(DeliverySocket::name)
+                            .toList();
                 }
             }
         }
@@ -642,11 +635,18 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (clicked == null || clicked.getType().isAir()) {
             return;
         }
-        if (clicked.getType() == droneManager.settings().guiConfig().sendMode().items().get("animals").material()) {
+        
+        // Cache config items to avoid multiple lookups
+        var sendModeItems = droneManager.settings().guiConfig().sendMode().items();
+        Material animalsMaterial = sendModeItems.get("animals").material();
+        Material itemsMaterial = sendModeItems.get("items").material();
+        Material clickedType = clicked.getType();
+        
+        if (clickedType == animalsMaterial) {
             Bukkit.getScheduler().runTask(plugin, () -> sendAnimalsOnly(sender, holder));
             return;
         }
-        if (clicked.getType() == droneManager.settings().guiConfig().sendMode().items().get("items").material()) {
+        if (clickedType == itemsMaterial) {
             openComposeInventory(sender, holder.receiverId(), holder.fixedTarget(), false);
         }
     }
