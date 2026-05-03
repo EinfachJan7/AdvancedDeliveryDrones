@@ -12,6 +12,7 @@ settings:
     max-active-per-sender: 1
     carry-leashed-animals: true
     max-leashed-animals-per-drone: 1
+    max-sockets-per-player: 1
     blocked-worlds:
       - "world_nether"
       - "world_the_end"
@@ -35,6 +36,11 @@ settings:
       color: "RED"
     collection-animation:
       enabled: true
+    launch-animation:
+      enabled: true
+      seconds: 3
+      sound: "entity.firework_rocket.launch"
+      sound-volume: 1.0
 
 discord:
   enabled: true
@@ -80,7 +86,7 @@ messages:
   reload: "<green>Config erfolgreich neu geladen.</green>"
   open-inventory: "<gold>Öffne Paket für <white><player></white> ...</gold>"
   open-inventory-socket: "<gold>Öffne Paket für Socket <yellow><socket></yellow> (<white><player></white>) ...</gold>"
-  socket-limit-reached: "<red>Du hast bereits einen Socket. Maximal 1 Socket pro Spieler. Entferne ihn zuerst mit /drone socket remove <name>.</red>"
+  socket-limit-reached: "<red>Du hast bereits die maximale Anzahl an Sockets (<white><max></white>). Entferne einen zuerst mit /drone socket remove <name>.</red>"
   drone-inventory-title: "<gold>Delivery Drone</gold>"
   drone-preview-title: "<gold>Drone Vorschau</gold>"
   animal-display-name: "<gold>Tier: <type></gold>"
@@ -125,6 +131,10 @@ messages:
   socket-none: "<gray>Du hast keine Sockets platziert.</gray>"
   socket-list-header: "<gold>Deine Sockets (<white><count></white>):</gold>"
   socket-name-too-long: "<red>Der Socket-Name darf maximal 32 Zeichen lang sein.</red>"
+  socket-deleted: "<green>Socket <white><name></white> wurde gelöscht!</green>"
+  socket-relocated: "<green>Socket <white><name></white> wurde an deine aktuelle Position verschoben!</green>"
+  socket-renamed: "<green>Socket <white><old></white> wurde zu <white><new></white> umbenannt!</green>"
+  socket-drone-incoming: "<red>Eine Drohne ist auf dem Weg zu Socket <white><name></white>. Position kann nicht geändert werden.</red>"
   socket-error: "<red>Fehler beim Verarbeiten des Sockets: <white><error></white></red>"
   restart-return-items: "<yellow>Server-Neustart: Deine Drohne wurde storniert und die Items wurden zurückgegeben.</yellow>"
   drone-helmet-remove: "<red>Du kannst den Helm einer fliegenden Drohne nicht entfernen!</red>"

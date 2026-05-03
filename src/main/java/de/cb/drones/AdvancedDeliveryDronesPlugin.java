@@ -7,6 +7,7 @@ import de.cb.drones.drone.DroneInteractionListener;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.socket.SocketRepository;
+// import de.cb.drones.socket.SocketBlacklistRepository;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.PluginCommand;
@@ -21,25 +22,29 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private PlayerSettingsRepository playerSettings;
     private DroneManager droneManager;
     private DiscordWebhookManager discordWebhookManager;
+    // private SocketBlacklistRepository blacklistRepository;
     private SocketRepository socketRepository;
     private FileConfiguration guiConfig;
+    private DroneCommand droneCommand;
     
     @Override
     public void onEnable() {
         saveDefaultConfig();
         saveGuiConfig();
         this.playerSettings = new PlayerSettingsRepository(this);
-        this.socketRepository = new SocketRepository(this);
+        int maxSockets = getConfig().getInt("settings.drone.max-sockets-per-player", 3);
+        this.socketRepository = new SocketRepository(this, maxSockets);
+        // this.blacklistRepository = new SocketBlacklistRepository(this);
         this.discordWebhookManager = new DiscordWebhookManager(this);
         this.guiConfig = loadGuiConfig();
         this.droneManager = new DroneManager(this, DroneSettings.fromConfig(getConfig(), guiConfig), discordWebhookManager);
         this.droneManager.start();
 
-        DroneCommand command = new DroneCommand(this, droneManager, playerSettings, droneManager.settings(), socketRepository);
+        this.droneCommand = new DroneCommand(this, droneManager, playerSettings, droneManager.settings(), socketRepository);
         PluginCommand drone = getCommand("drone");
         if (drone != null) {
-            drone.setExecutor(command);
-            drone.setTabCompleter(command);
+            drone.setExecutor(droneCommand);
+            drone.setTabCompleter(droneCommand);
         }
 
         getServer().getPluginManager().registerEvents(new DroneInteractionListener(droneManager), this);
@@ -57,10 +62,16 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         saveGuiConfig(); // Ensure GUI config exists
         reloadConfig();
         playerSettings.reload();
-        socketRepository.reload();
+        // blacklistRepository.reload();
+        int maxSockets = getConfig().getInt("settings.drone.max-sockets-per-player", 3);
+        this.socketRepository.setMaxSocketsPerPlayer(maxSockets);
+        this.socketRepository.reload();
         discordWebhookManager.loadSettings();
         this.guiConfig = loadGuiConfig();
         droneManager.updateSettings(DroneSettings.fromConfig(getConfig(), guiConfig));
+        if (droneCommand != null) {
+            droneCommand.updateMenuHandlerSettings(droneManager.settings());
+        }
     }
 
     private void saveGuiConfig() {
@@ -75,7 +86,15 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         if (!guiConfigFile.exists()) {
             saveResource("gui.yml", false);
         }
-        return YamlConfiguration.loadConfiguration(guiConfigFile);
+        // Always create a fresh FileConfiguration to avoid caching issues
+        YamlConfiguration config = new YamlConfiguration();
+        try {
+            config.load(guiConfigFile);
+        } catch (Exception e) {
+            getLogger().warning("Could not load gui.yml: " + e.getMessage());
+            // Return empty config as fallback
+        }
+        return config;
     }
 
     public Component component(String key) {
@@ -105,4 +124,8 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     public DiscordWebhookManager getDiscordWebhookManager() {
         return discordWebhookManager;
     }
+
+    // public SocketBlacklistRepository getBlacklistRepository() {
+    //     return blacklistRepository;
+    // }
 }

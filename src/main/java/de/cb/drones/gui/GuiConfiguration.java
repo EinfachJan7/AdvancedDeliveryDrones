@@ -19,6 +19,8 @@ public class GuiConfiguration {
     private final GuiSettings playerSelection;
     private final GuiSettings targetSelection;
     private final GuiSettings socketSelection;
+    private final GuiSettings socketManagement;
+    private final GuiSettings socketEdit;
     private final String socketItemNameFormat;
     private final String socketItemOwnerFormat;
     private final String socketItemClickHint;
@@ -26,6 +28,13 @@ public class GuiConfiguration {
     private final Material socketItemMaterial;
     private final String playerHeadNameFormat;
     private final List<String> playerHeadLore;
+    private final String socketManagementItemNameFormat;
+    private final String socketManagementItemLocationFormat;
+    private final String socketManagementItemDeleteHint;
+    private final String socketManagementItemEmptyLine;
+    private final Material socketManagementItemMaterial;
+    private final String signRenameBorderLine;
+    private final String signRenameTitleLine;
     
     public GuiConfiguration(FileConfiguration guiConfig) {
         this.sendMode = parseGuiSettings(guiConfig, "send-mode.", createDefaultSendModeItems());
@@ -33,6 +42,8 @@ public class GuiConfiguration {
         this.playerSelection = parseGuiSettings(guiConfig, "player-selection.", createDefaultPlayerSelectionItems());
         this.targetSelection = parseGuiSettings(guiConfig, "target-selection.", createDefaultTargetSelectionItems());
         this.socketSelection = parseGuiSettings(guiConfig, "socket-selection.", createDefaultSocketSelectionItems());
+        this.socketManagement = parseGuiSettings(guiConfig, "socket-management.", createDefaultSocketManagementItems());
+        this.socketEdit = parseGuiSettings(guiConfig, "socket-edit.", createDefaultSocketEditItems());
         
         // Socket item format
         this.socketItemNameFormat = guiConfig.getString("socket-item-format.name-format", "<!italic><white><name></white>");
@@ -51,6 +62,17 @@ public class GuiConfiguration {
             );
         }
         this.playerHeadLore = tempPlayerHeadLore;
+        
+        // Socket management item format
+        this.socketManagementItemNameFormat = guiConfig.getString("socket-management.socket-management-item.name-format", "<!italic><white><name></white>");
+        this.socketManagementItemLocationFormat = guiConfig.getString("socket-management.socket-management-item.location-format", "<!italic><gray>Ort: <white><world>, <x>, <y>, <z></white></gray>");
+        this.socketManagementItemDeleteHint = guiConfig.getString("socket-management.socket-management-item.delete-hint", "<!italic><red>Rechtsklick zum Löschen</red>");
+        this.socketManagementItemEmptyLine = guiConfig.getString("socket-management.socket-management-item.empty-line", "<!italic><gray></gray>");
+        this.socketManagementItemMaterial = parseMaterial(guiConfig.getString("socket-management.socket-management-item.material", "BEACON"), Material.BEACON);
+        
+        // Sign rename configuration
+        this.signRenameBorderLine = guiConfig.getString("sign-rename.border-line", "^^^^^^^^^^^^^^^");
+        this.signRenameTitleLine = guiConfig.getString("sign-rename.title-line", "Neuer Name:");
     }
     
     public GuiSettings sendMode() { return sendMode; }
@@ -58,6 +80,8 @@ public class GuiConfiguration {
     public GuiSettings playerSelection() { return playerSelection; }
     public GuiSettings targetSelection() { return targetSelection; }
     public GuiSettings socketSelection() { return socketSelection; }
+    public GuiSettings socketManagement() { return socketManagement; }
+    public GuiSettings socketEdit() { return socketEdit; }
     public String socketItemNameFormat() { return socketItemNameFormat; }
     public String socketItemOwnerFormat() { return socketItemOwnerFormat; }
     public String socketItemClickHint() { return socketItemClickHint; }
@@ -65,6 +89,13 @@ public class GuiConfiguration {
     public Material socketItemMaterial() { return socketItemMaterial; }
     public String playerHeadNameFormat() { return playerHeadNameFormat; }
     public List<String> playerHeadLore() { return playerHeadLore; }
+    public String socketManagementItemNameFormat() { return socketManagementItemNameFormat; }
+    public String socketManagementItemLocationFormat() { return socketManagementItemLocationFormat; }
+    public String socketManagementItemDeleteHint() { return socketManagementItemDeleteHint; }
+    public String socketManagementItemEmptyLine() { return socketManagementItemEmptyLine; }
+    public Material socketManagementItemMaterial() { return socketManagementItemMaterial; }
+    public String signRenameBorderLine() { return signRenameBorderLine; }
+    public String signRenameTitleLine() { return signRenameTitleLine; }
     
     private static GuiSettings parseGuiSettings(FileConfiguration cfg, String section, Map<String, GuiItem> defaultItems) {
         String title = cfg.getString(section + "title", "GUI");
@@ -87,15 +118,21 @@ public class GuiConfiguration {
             items.put(key, new GuiItem(position, material, name, lore));
         }
         
-        // Parse back item if it exists
+        // Parse back item if it exists in YAML
         String backSection = section + "back-item";
-        if (cfg.contains(backSection + ".position")) {
-            int backPosition = cfg.getInt(backSection + ".position");
-            Material backMaterial = parseMaterial(cfg.getString(backSection + ".material", "ARROW"), Material.ARROW);
-            String backName = cfg.getString(backSection + ".name", "<yellow>Zurück");
+        GuiItem defaultBackItem = defaultItems.get("back");
+        int defaultBackPosition = (defaultBackItem != null) ? defaultBackItem.position() : 18;
+        
+        // Check if back-item section exists in YAML
+        boolean hasBackItemInYaml = cfg.contains(backSection);
+        
+        if (hasBackItemInYaml) {
+            int backPosition = cfg.getInt(backSection + ".position", defaultBackPosition);
+            Material backMaterial = parseMaterial(cfg.getString(backSection + ".material", defaultBackItem != null ? defaultBackItem.material().name() : "ARROW"), defaultBackItem != null ? defaultBackItem.material() : Material.ARROW);
+            String backName = cfg.getString(backSection + ".name", defaultBackItem != null ? defaultBackItem.name() : "<yellow>Zurück");
             List<String> backLore = cfg.getStringList(backSection + ".lore");
             if (backLore.isEmpty()) {
-                backLore = List.of("<gray>Zurück");
+                backLore = defaultBackItem != null ? defaultBackItem.lore() : List.of("<gray>Zurück");
             }
             items.put("back", new GuiItem(backPosition, backMaterial, backName, backLore));
         }
@@ -130,18 +167,17 @@ public class GuiConfiguration {
         items.put("toggle", new GuiItem(13, Material.REDSTONE, "<yellow>Drohnen-Empfang umschalten", List.of("<gray>Schalte ein/aus ob du", "<gray>Drohnen empfangen möchtest")));
         items.put("decline", new GuiItem(15, Material.BARRIER, "<red>Eingehende Drohnen ablehnen", List.of("<gray>Lehne alle eingehenden", "<gray>Drohnen für dich ab")));
         items.put("preview", new GuiItem(22, Material.ENDER_EYE, "<aqua>Drohne-Vorschau", List.of("<gray>Zeige eine Vorschau deiner", "<gray>aktiven Drohnen")));
+        items.put("socket-manage", new GuiItem(24, Material.BEACON, "<yellow>Sockets Verwalten", List.of("<gray>Verwalte deine", "<gray>Lieferstationen")));
         return items;
     }
     
     private static Map<String, GuiItem> createDefaultPlayerSelectionItems() {
         Map<String, GuiItem> items = new HashMap<>();
-        items.put("back", new GuiItem(45, Material.ARROW, "<yellow>Zurück", List.of("<gray>Zurück zum Hauptmenü")));
         return items;
     }
     
     private static Map<String, GuiItem> createDefaultTargetSelectionItems() {
         Map<String, GuiItem> items = new HashMap<>();
-        items.put("back", new GuiItem(26, Material.ARROW, "<yellow>Zurück", List.of("<gray>Zurück zum Hauptmenü")));
         items.put("player", new GuiItem(11, Material.PLAYER_HEAD, "<green>Spieler auswählen", List.of("<gray>Wähle einen Spieler aus", "<gray>um ihm eine Drohne zu senden")));
         items.put("socket", new GuiItem(15, Material.BEACON, "<yellow>Socket auswählen", List.of("<gray>Wähle einen Socket aus", "<gray>um dort eine Drohne zu senden")));
         return items;
@@ -149,7 +185,20 @@ public class GuiConfiguration {
     
     private static Map<String, GuiItem> createDefaultSocketSelectionItems() {
         Map<String, GuiItem> items = new HashMap<>();
-        items.put("back", new GuiItem(45, Material.ARROW, "<yellow>Zurück", List.of("<gray>Zurück zur Zielauswahl")));
+        return items;
+    }
+    
+    private static Map<String, GuiItem> createDefaultSocketManagementItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        items.put("no-sockets-item", new GuiItem(22, Material.BARRIER, "<red>Keine Sockets", List.of("<gray>Du hast keine Sockets")));
+        return items;
+    }
+
+    private static Map<String, GuiItem> createDefaultSocketEditItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        items.put("rename", new GuiItem(11, Material.NAME_TAG, "<yellow>Rename", List.of("<gray>Click to rename the socket")));
+        items.put("relocate", new GuiItem(13, Material.COMPASS, "<yellow>Relocate", List.of("<gray>Click to change the position")));
+        items.put("delete", new GuiItem(15, Material.BARRIER, "<red>Delete", List.of("<gray>Click to delete the socket")));
         return items;
     }
 }

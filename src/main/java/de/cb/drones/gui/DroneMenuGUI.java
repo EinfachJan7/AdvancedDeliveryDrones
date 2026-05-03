@@ -8,6 +8,7 @@ import de.cb.drones.drone.GuiSettings;
 import de.cb.drones.drone.GuiItem;
 import de.cb.drones.socket.DeliverySocket;
 import de.cb.drones.socket.SocketRepository;
+// import de.cb.drones.socket.SocketBlacklistRepository;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -37,14 +38,16 @@ public class DroneMenuGUI {
     private final PlayerSettingsRepository settingsRepository;
     private DroneSettings droneSettings;
     private final SocketRepository socketRepository;
+    // private final SocketBlacklistRepository blacklistRepository;
     private final NamespacedKey guiItemKey;
 
-    public DroneMenuGUI(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, DroneSettings droneSettings, SocketRepository socketRepository, NamespacedKey guiItemKey) {
+    public DroneMenuGUI(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, DroneSettings droneSettings, SocketRepository socketRepository /*, SocketBlacklistRepository blacklistRepository */, NamespacedKey guiItemKey) {
         this.plugin = plugin;
         this.droneManager = droneManager;
         this.settingsRepository = settingsRepository;
         this.droneSettings = droneSettings;
         this.socketRepository = socketRepository;
+        // this.blacklistRepository = blacklistRepository;
         this.guiItemKey = guiItemKey;
     }
 
@@ -263,5 +266,133 @@ public class DroneMenuGUI {
             item.setItemMeta(meta);
         }
         return item;
+    }
+
+    public void openSocketManagementMenu(Player player) {
+        GuiSettings menuSettings = droneSettings.guiConfig().socketManagement();
+        List<DeliverySocket> playerSockets = socketRepository.getSocketsByOwner(player.getUniqueId());
+        int size = Math.max(menuSettings.size(), Math.min(54, ((playerSockets.size() + 8) / 9) * 9));
+
+        DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("socket_management");
+        Inventory menu = player.getServer().createInventory(holder, size,
+            MINI_MESSAGE.deserialize(menuSettings.title()));
+        holder.setInventory(menu);
+
+        // First, fill all slots with fill item if configured
+        if (menuSettings.fillItem() != null) {
+            ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
+                menuSettings.fillItem().name(), menuSettings.fillItem().lore());
+            for (int i = 0; i < size; i++) {
+                menu.setItem(i, filler);
+            }
+        }
+
+        // Add socket items
+        for (int i = 0; i < playerSockets.size() && i < size; i++) {
+            DeliverySocket socket = playerSockets.get(i);
+            ItemStack socketItem = createSocketManagementItem(socket);
+            menu.setItem(i, socketItem);
+        }
+
+        // If no sockets, show "no-sockets" item
+        if (playerSockets.isEmpty()) {
+            GuiItem noSocketsItem = menuSettings.items().get("no-sockets-item");
+            if (noSocketsItem != null && noSocketsItem.position() >= 0 && noSocketsItem.position() < size) {
+                ItemStack noSocketsButton = createMenuItem(noSocketsItem.material(), noSocketsItem.name(), noSocketsItem.lore());
+                menu.setItem(noSocketsItem.position(), noSocketsButton);
+            }
+        }
+
+        // Add back button if configured
+        GuiItem backItem = menuSettings.items().get("back");
+        if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
+            ItemStack backButton = createMenuItem(backItem.material(), backItem.name(), backItem.lore());
+            menu.setItem(backItem.position(), backButton);
+        }
+
+        player.openInventory(menu);
+    }
+
+    private ItemStack createSocketManagementItem(DeliverySocket socket) {
+        ItemStack item = new ItemStack(droneSettings.guiConfig().socketManagementItemMaterial());
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            // Store the actual socket name in persistent data for identification
+            if (meta.getPersistentDataContainer() != null) {
+                NamespacedKey socketNameKey = new NamespacedKey("advanced-delivery-drones", "socket_name");
+                meta.getPersistentDataContainer().set(socketNameKey, PersistentDataType.STRING, socket.name());
+            }
+
+            // Use configurable format for socket name
+            String nameFormat = droneSettings.guiConfig().socketManagementItemNameFormat()
+                .replace("<name>", socket.name());
+            meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
+
+            // Use configurable formats for lore
+            String locationFormat = droneSettings.guiConfig().socketManagementItemLocationFormat()
+                .replace("<world>", socket.location().getWorld().getName())
+                .replace("<x>", String.valueOf(socket.location().getBlockX()))
+                .replace("<y>", String.valueOf(socket.location().getBlockY()))
+                .replace("<z>", String.valueOf(socket.location().getBlockZ()));
+            String emptyLine = droneSettings.guiConfig().socketManagementItemEmptyLine();
+            String deleteHint = droneSettings.guiConfig().socketManagementItemDeleteHint();
+
+            List<Component> lore = List.of(
+                MINI_MESSAGE.deserialize(locationFormat),
+                MINI_MESSAGE.deserialize(emptyLine),
+                MINI_MESSAGE.deserialize(deleteHint)
+            );
+            meta.lore(lore);
+
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    public void openSocketEditMenu(Player player, String socketName) {
+        GuiSettings menuSettings = droneSettings.guiConfig().socketEdit();
+        int size = menuSettings.size();
+
+        DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("socket_edit:" + socketName);
+        Inventory menu = player.getServer().createInventory(holder, size,
+            MINI_MESSAGE.deserialize(menuSettings.title()));
+        holder.setInventory(menu);
+
+        // First, fill all slots with fill item if configured
+        if (menuSettings.fillItem() != null) {
+            ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
+                menuSettings.fillItem().name(), menuSettings.fillItem().lore());
+            for (int i = 0; i < size; i++) {
+                menu.setItem(i, filler);
+            }
+        }
+
+        // Add action items
+        GuiItem renameItem = menuSettings.items().get("rename");
+        if (renameItem != null && renameItem.position() >= 0 && renameItem.position() < size) {
+            ItemStack renameButton = createMenuItem(renameItem.material(), renameItem.name(), renameItem.lore());
+            menu.setItem(renameItem.position(), renameButton);
+        }
+
+        GuiItem relocateItem = menuSettings.items().get("relocate");
+        if (relocateItem != null && relocateItem.position() >= 0 && relocateItem.position() < size) {
+            ItemStack relocateButton = createMenuItem(relocateItem.material(), relocateItem.name(), relocateItem.lore());
+            menu.setItem(relocateItem.position(), relocateButton);
+        }
+
+        GuiItem deleteItem = menuSettings.items().get("delete");
+        if (deleteItem != null && deleteItem.position() >= 0 && deleteItem.position() < size) {
+            ItemStack deleteButton = createMenuItem(deleteItem.material(), deleteItem.name(), deleteItem.lore());
+            menu.setItem(deleteItem.position(), deleteButton);
+        }
+
+        // Add back button
+        GuiItem backItem = menuSettings.items().get("back");
+        if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
+            ItemStack backButton = createMenuItem(backItem.material(), backItem.name(), backItem.lore());
+            menu.setItem(backItem.position(), backButton);
+        }
+
+        player.openInventory(menu);
     }
 }

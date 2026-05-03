@@ -238,6 +238,11 @@ public final class DroneManager {
         return new ArrayList<>(activeDrones.values());
     }
 
+    public boolean isDroneFlyingToSocket(String socketName) {
+        return activeDrones.values().stream()
+            .anyMatch(drone -> drone.socketName() != null && drone.socketName().equals(socketName));
+    }
+
     public void destroyDrone(DeliveryDrone drone, boolean keepForPersistence) {
         if (drone == null) {
             return;

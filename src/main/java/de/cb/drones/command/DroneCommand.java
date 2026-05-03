@@ -7,6 +7,7 @@ import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.gui.DroneMenuHandler;
 import de.cb.drones.socket.DeliverySocket;
 import de.cb.drones.socket.SocketRepository;
+// import de.cb.drones.socket.SocketBlacklistRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collections;
@@ -45,14 +46,22 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private final PlayerSettingsRepository settingsRepository;
     private final DroneMenuHandler menuHandler;
     private final SocketRepository socketRepository;
+    // private final SocketBlacklistRepository blacklistRepository;
 
-    public DroneCommand(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, DroneSettings droneSettings, SocketRepository socketRepository) {
+    public DroneCommand(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, DroneSettings droneSettings, SocketRepository socketRepository /*, SocketBlacklistRepository blacklistRepository */) {
         this.plugin = plugin;
         this.droneManager = droneManager;
         this.settingsRepository = settingsRepository;
-        this.menuHandler = new DroneMenuHandler(plugin, droneManager, settingsRepository, droneSettings, socketRepository);
         this.socketRepository = socketRepository;
+        // this.blacklistRepository = blacklistRepository;
+        this.menuHandler = new DroneMenuHandler(plugin, droneManager, settingsRepository, droneSettings, socketRepository /*, blacklistRepository */);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
+    }
+    
+    public void updateMenuHandlerSettings(DroneSettings newSettings) {
+        if (menuHandler != null) {
+            menuHandler.updateSettings(newSettings);
+        }
     }
 
     @Override
@@ -224,6 +233,8 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "remove" -> executeSocketRemove(player, args);
             case "list" -> executeSocketList(player);
             case "send" -> executeSocketSend(player, args);
+            case "manage" -> executeSocketManage(player);
+            case "rename" -> executeSocketRename(player, args);
             default -> {
                 player.sendMessage(plugin.component("usage-socket"));
                 yield true;
@@ -257,8 +268,8 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         try {
             socketRepository.addSocket(player.getUniqueId(), player.getName(), socketName, loc);
         } catch (IllegalArgumentException e) {
-            if (e.getMessage().contains("Maximum 1 socket per player")) {
-                droneManager.sendMessage(player, "socket-limit-reached");
+            if (e.getMessage().contains("Maximum") && e.getMessage().contains("socket(s) per player")) {
+                droneManager.sendMessage(player, "socket-limit-reached", "<max>", String.valueOf(droneManager.settings().maxSocketsPerPlayer()));
                 return true;
             }
             throw e;
@@ -307,6 +318,42 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             );
             player.sendMessage(line);
         }
+        return true;
+    }
+
+    private boolean executeSocketManage(Player player) {
+        menuHandler.getMenuGUI().openSocketManagementMenu(player);
+        return true;
+    }
+
+    private boolean executeSocketRename(Player player, String[] args) {
+        if (args.length < 4) {
+            player.sendMessage("/drone socket rename <alter-name> <neuer-name>");
+            return true;
+        }
+        String oldName = args[2];
+        String newName = args[3];
+        
+        if (newName.length() > 32) {
+            droneManager.sendMessage(player, "socket-name-too-long");
+            return true;
+        }
+
+        DeliverySocket socket = socketRepository.getSocket(player.getUniqueId(), oldName);
+        if (socket == null) {
+            droneManager.sendMessage(player, "socket-not-found", "<name>", oldName);
+            return true;
+        }
+
+        if (socketRepository.socketNameExists(player.getUniqueId(), newName)) {
+            droneManager.sendMessage(player, "socket-exists", "<name>", newName);
+            return true;
+        }
+
+        Location loc = socket.location();
+        socketRepository.removeSocket(player.getUniqueId(), oldName);
+        socketRepository.addSocket(player.getUniqueId(), player.getName(), newName, loc);
+        droneManager.sendMessage(player, "socket-renamed", "<old>", oldName, "<new>", newName);
         return true;
     }
 
@@ -550,7 +597,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return results;
         }
         if (args.length == 2 && "socket".equalsIgnoreCase(args[0])) {
-            return List.of("place", "remove", "list", "send");
+            return List.of("place", "remove", "list", "send", "manage", "rename");
         }
         if (args.length == 3 && "socket".equalsIgnoreCase(args[0])) {
             if (sender instanceof Player player) {

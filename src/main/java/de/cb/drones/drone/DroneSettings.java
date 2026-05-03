@@ -30,6 +30,7 @@ public record DroneSettings(
         int maxActivePerSender,
         boolean carryLeashedAnimals,
         int maxLeashedAnimalsPerDrone,
+        int maxSocketsPerPlayer,
         List<String> blockedWorlds,
         boolean hologramEnabled,
         String hologramFormat,
@@ -38,7 +39,11 @@ public record DroneSettings(
         String bossbarFormat,
         org.bukkit.boss.BarColor bossbarColor,
         boolean collectionAnimationEnabled,
-        GuiConfiguration guiConfig
+        GuiConfiguration guiConfig,
+        boolean launchAnimationEnabled,
+        int launchAnimationSeconds,
+        Sound launchSound,
+        float launchSoundVolume
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg, FileConfiguration guiConfig) {
         String section = "settings.drone.";
@@ -60,6 +65,7 @@ public record DroneSettings(
         int maxActive = Math.max(1, cfg.getInt(section + "max-active-per-sender", 1));
         boolean carryLeashedAnimals = cfg.getBoolean(section + "carry-leashed-animals", false);
         int maxLeashedAnimalsPerDrone = Math.max(0, cfg.getInt(section + "max-leashed-animals-per-drone", 1));
+        int maxSocketsPerPlayer = Math.max(1, cfg.getInt(section + "max-sockets-per-player", 3));
         List<String> blockedWorlds = cfg.getStringList(section + "blocked-worlds").stream()
                 .map(String::toLowerCase)
                 .toList();
@@ -70,6 +76,10 @@ public record DroneSettings(
         String bossbarFormat = cfg.getString(section + "bossbar.format", "<gold>Distanz: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>");
         org.bukkit.boss.BarColor bossbarColor = parseBarColor(cfg.getString(section + "bossbar.color", "YELLOW"));
         boolean collectionAnimationEnabled = cfg.getBoolean(section + "collection-animation.enabled", true);
+        boolean launchAnimationEnabled = cfg.getBoolean(section + "launch-animation.enabled", true);
+        int launchAnimationSeconds = Math.max(1, cfg.getInt(section + "launch-animation.seconds", 3));
+        Sound launchSound = parseSound(cfg.getString(section + "launch-animation.sound", "entity.firework_rocket.launch"));
+        float launchSoundVolume = (float) cfg.getDouble(section + "launch-animation.sound-volume", 1.0D);
 
         // Create GUI configuration from separate file
         GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
@@ -93,6 +103,7 @@ public record DroneSettings(
                 maxActive,
                 carryLeashedAnimals,
                 maxLeashedAnimalsPerDrone,
+                maxSocketsPerPlayer,
                 blockedWorlds,
                 hologramEnabled,
                 hologramFormat,
@@ -101,7 +112,11 @@ public record DroneSettings(
                 bossbarFormat,
                 bossbarColor,
                 collectionAnimationEnabled,
-                guiConfigObj
+                guiConfigObj,
+                launchAnimationEnabled,
+                launchAnimationSeconds,
+                launchSound,
+                launchSoundVolume
         );
     }
 

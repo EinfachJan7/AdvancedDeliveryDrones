@@ -266,14 +266,140 @@ public final class DeliveryDrone {
 
     public void startFlight(DroneManager manager) {
         this.droneManager = manager;
+
+        if (settings.launchAnimationEnabled()) {
+            startLaunchAnimation(manager);
+        } else {
+            startFlightInternal(manager);
+        }
+    }
+
+    private void startLaunchAnimation(DroneManager manager) {
+        int duration = settings.launchAnimationSeconds();
+        int totalTicks = duration * 20;
+        Location startAnimLocation = stand.getLocation().clone();
+        float startYaw = stand.getYaw();
+
+        class LaunchAnimationTask extends org.bukkit.scheduler.BukkitRunnable {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                if (stand == null || stand.isDead()) {
+                    cancel();
+                    return;
+                }
+
+                double progress = (double) ticks / totalTicks;
+                
+                // Smooth ease-in-out for natural acceleration
+                double easedProgress = progress < 0.5 
+                    ? 4 * progress * progress * progress 
+                    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+                
+                // Calculate rise height (1.5 blocks total - more subtle)
+                double riseHeight = easedProgress * 1.5;
+                
+                // Update drone position - slowly rise up
+                Location newPos = startAnimLocation.clone();
+                newPos.setY(startAnimLocation.getY() + riseHeight);
+                
+                // Gentle hover effect (slower sine wave)
+                double hoverOffset = Math.sin(progress * Math.PI * 1.5) * 0.05;
+                newPos.setY(newPos.getY() + hoverOffset);
+                
+                // Slow steady rotation (1.5 rotations total)
+                float spinAngle = (float) (startYaw + (easedProgress * 360 * 1.5));
+                newPos.setYaw(spinAngle);
+                
+                stand.teleport(newPos);
+                
+                Location center = newPos.clone();
+
+                // Refined spiral particle effect
+                double angle = ticks * 0.3;
+                double radius = 2.0 * (1 - progress * 0.5); // Larger radius, slower shrink
+
+                for (int i = 0; i < 8; i++) {
+                    double particleAngle = angle + (i * Math.PI / 4);
+                    double x = center.getX() + Math.cos(particleAngle) * radius;
+                    double z = center.getZ() + Math.sin(particleAngle) * radius;
+                    // Gentler vertical wave
+                    double y = center.getY() + Math.sin(particleAngle * 1.5 + ticks * 0.1) * 0.2;
+
+                    Location particleLoc = new Location(center.getWorld(), x, y, z);
+                    
+                    // Subtle particle effects
+                    center.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, particleLoc, 1, 0.02, 0.02, 0.02, 0.005);
+                    center.getWorld().spawnParticle(org.bukkit.Particle.SMOKE, particleLoc, 1, 0.015, 0.015, 0.015, 0.003);
+                    
+                    // Occasional electric sparks
+                    if (ticks % 5 == 0 && i % 2 == 0) {
+                        center.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, particleLoc, 1, 0.03, 0.03, 0.03, 0.005);
+                    }
+                }
+
+                // Gentle rising clouds below
+                if (ticks % 3 == 0) {
+                    for (int i = 0; i < 2; i++) {
+                        double cloudAngle = Math.random() * Math.PI * 2;
+                        double dist = Math.random() * 0.3;
+                        Location below = center.clone().add(
+                            Math.cos(cloudAngle) * dist, 
+                            -0.3 - (Math.random() * 0.2), 
+                            Math.sin(cloudAngle) * dist
+                        );
+                        center.getWorld().spawnParticle(org.bukkit.Particle.CLOUD, below, 1, 0.03, 0.05, 0.03, 0.01);
+                    }
+                }
+
+                // Subtle glow particles
+                if (ticks % 12 == 0) {
+                    center.getWorld().spawnParticle(org.bukkit.Particle.END_ROD, center.clone().add(0, 0.3, 0), 3, 0.3, 0.3, 0.3, 0.01);
+                }
+
+                // Play launch sound at start
+                if (ticks == 0) {
+                    center.getWorld().playSound(center, settings.launchSound(), settings.launchSoundVolume() * 0.8f, 0.9f);
+                }
+
+                // Subtle rising sound
+                if (ticks % 15 == 0) {
+                    center.getWorld().playSound(center, settings.flightSound(), 0.05f, 0.9f + (float) progress * 0.2f);
+                }
+
+                ticks++;
+
+                // Animation complete - start the actual flight
+                if (ticks >= totalTicks) {
+                    cancel();
+
+                    // Subtle launch effect
+                    center.getWorld().spawnParticle(org.bukkit.Particle.EXPLOSION, center, 5, 0.4, 0.4, 0.4, 0.08);
+                    center.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, center, 25, 0.4, 0.4, 0.4, 0.25);
+                    center.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, center, 12, 0.5, 0.5, 0.5, 0.03);
+                    center.getWorld().playSound(center, org.bukkit.Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1.0f, 1.0f);
+
+                    // Update start location to current position
+                    startLocation.set(center.getX(), center.getY(), center.getZ());
+
+                    startFlightInternal(manager);
+                }
+            }
+        }
+
+        new LaunchAnimationTask().runTaskTimer(manager.plugin(), 0L, 1L);
+    }
+
+    private void startFlightInternal(DroneManager manager) {
         applySettings(settings, manager);
         initBossbar(manager);
-        
+
         // Register with performance optimizer
         if (droneManager != null && droneManager.getPerformanceOptimizer() != null) {
             droneManager.getPerformanceOptimizer().registerDrone(droneId);
         }
-        
+
         this.ticker = Bukkit.getScheduler().runTaskTimer(manager.plugin(), () -> tickFlight(manager), 1L, 1L);
     }
 

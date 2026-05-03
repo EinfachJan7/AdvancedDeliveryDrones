@@ -2,15 +2,14 @@
 # ADVANCED DELIVERY DRONES - GUI CONFIGURATION
 # =============================================================================
 # This file contains all GUI configurations for the drone plugin.
-# You can customize titles, sizes, items, positions, names, and lore for all GUIs.
-# Use <player> as a placeholder for player names in player head items.
-# Use MiniMessage formatting for colors and styles (e.g., <red>, <bold>, <italic>)
+# Style: Amethyst-Violet & Aqua-Cyan (Modern/Dark)
+# =============================================================================
 
 # =============================================================================
 # SEND MODE GUI - Choose between sending animals or items
 # =============================================================================
 send-mode:
-  title: "<!italic><#3a3a3a>✦ <gradient:#f0a500:#ffe066>sᴇɴᴅᴇ-ᴍᴏᴅᴜs</gradient> <#3a3a3a>✦"
+  title: "<!italic><#222222>✦ <gradient:#a855f7:#ec4899>sᴇɴᴅᴇ-ᴍᴏᴅᴜs</gradient> <#222222>✦"
   size: 27
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -19,80 +18,93 @@ send-mode:
     animals:
       position: 11
       material: "LEAD"
-      name: "<!italic><gradient:#f0a500:#ffe066><bold>🐾 ᴛɪᴇʀᴇ sᴇɴᴅᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>🐾 ᴛɪᴇʀᴇ sᴇɴᴅᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><#3a3a3a>┌────────────────────┐"
-        - "<!italic><#aaaaaa>  sᴇɴᴅᴇᴛ ᴀʟʟᴇ ᴀɴɢᴇʟᴇɪɴᴛᴇ"
-        - "<!italic><#aaaaaa>  ᴛɪᴇʀᴇ ᴢᴜ ᴇɪɴᴇᴍ sᴘɪᴇʟᴇʀ."
-        - "<!italic><#3a3a3a>└────────────────────┘"
-        - "<!italic><#f0a500>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
+        - "<!italic><#4b5563>┌────────────────────┐"
+        - "<!italic><#9ca3af>  sᴇɴᴅᴇᴛ ᴀʟʟᴇ ᴀɴɢᴇʟᴇɪɴᴛᴇ"
+        - "<!italic><#9ca3af>  ᴛɪᴇʀᴇ ᴢᴜ ᴇɪɴᴇᴍ sᴘɪᴇʟᴇʀ."
+        - "<!italic><#4b5563>└────────────────────┘"
+        - "<!italic><#a855f7>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
     items:
       position: 15
       material: "CHEST"
-      name: "<!italic><gradient:#00c9ff:#0057ff><bold>📦 ɪᴛᴇᴍs sᴇɴᴅᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#22d3ee:#3b82f6><bold>📦 ɪᴛᴇᴍs sᴇɴᴅᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><#3a3a3a>┌────────────────────┐"
-        - "<!italic><#aaaaaa>  öꜰꜰɴᴇᴛ ᴅᴀs ᴘᴀᴋᴇᴛ-ɪɴᴠᴇɴᴛᴀʀ"
-        - "<!italic><#aaaaaa>  ꜰüʀ ɪɴᴅɪᴠɪᴅᴜᴇʟʟᴇ sᴇɴᴅᴜɴɢᴇɴ."
-        - "<!italic><#3a3a3a>└────────────────────┘"
-        - "<!italic><#00c9ff>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
+        - "<!italic><#4b5563>┌────────────────────┐"
+        - "<!italic><#9ca3af>  öꜰꜰɴᴇᴛ ᴅᴀs ᴘᴀᴋᴇᴛ-ɪɴᴠᴇɴᴛᴀʀ"
+        - "<!italic><#9ca3af>  ꜰüʀ ɪɴᴅɪᴠɪᴅᴜᴇʟʟᴇ sᴇɴᴅᴜɴɢᴇɴ."
+        - "<!italic><#4b5563>└────────────────────┘"
+        - "<!italic><#22d3ee>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
 
 # =============================================================================
-# MAIN MENU GUI - Main drone menu with all options
+# MAIN MENU GUI - Optimized Structure
 # =============================================================================
 main-menu:
-  title: "<!italic><gradient:#00c9ff:#0057ff:#00c9ff>ᴅʀᴏʜɴᴇɴ-ᴍᴇɴü</gradient>"
-  size: 27
+  title: "<!italic><gradient:#3b82f6:#22d3ee:#3b82f6>ᴅʀᴏʜɴᴇɴ-ᴍᴇɴü</gradient>"
+  size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
     name: " "
   items:
+    # --- Haupt-Aktionen (Reihe 2) ---
     send:
-      position: 11
+      position: 20
       material: "PLAYER_HEAD"
-      name: "<!italic><gradient:#29e06a:#00a844><bold>✈ ᴅʀᴏʜɴᴇ sᴇɴᴅᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#4ade80:#22c55e><bold>✈ ᴅʀᴏʜɴᴇ sᴇɴᴅᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><#3a3a3a>┌────────────────────┐"
-        - "<!italic><#aaaaaa>  ᴡäʜʟᴇ ᴇɪɴᴇɴ sᴘɪᴇʟᴇʀ ᴀᴜs,"
-        - "<!italic><#aaaaaa>  ᴅᴇᴍ ᴅᴜ ᴇɪɴᴇ ᴅʀᴏʜɴᴇ sᴄʜɪᴄᴋsᴛ."
-        - "<!italic><#3a3a3a>└────────────────────┘"
-        - "<!italic><#29e06a>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴇɴᴅᴇɴ</italic>"
-    toggle:
-      position: 13
-      material: "REDSTONE"
-      name: "<!italic><gradient:#ffe066:#f0a500><bold>🔔 ᴇᴍᴘꜰᴀɴɢ ᴜᴍsᴄʜᴀʟᴛᴇɴ</bold></gradient>"
-      lore:
-        - "<!italic><#3a3a3a>┌────────────────────┐"
-        - "<!italic><#aaaaaa>  ᴀᴋᴛɪᴠɪᴇʀᴇ ᴏᴅᴇʀ ᴅᴇᴀᴋᴛɪᴠɪᴇʀᴇ"
-        - "<!italic><#aaaaaa>  ᴅᴇɴ ᴅʀᴏʜɴᴇɴ-ᴇᴍᴘꜰᴀɴɢ ꜰüʀ ᴅɪᴄʜ."
-        - "<!italic><#3a3a3a>└────────────────────┘"
-        - "<!italic><#ffe066>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴜᴍsᴄʜᴀʟᴛᴇɴ</italic>"
-    decline:
-      position: 15
-      material: "BARRIER"
-      name: "<!italic><gradient:#ff4f4f:#a80000><bold>✖ ᴅʀᴏʜɴᴇɴ ᴀʙʟᴇʜɴᴇɴ</bold></gradient>"
-      lore:
-        - "<!italic><#3a3a3a>┌────────────────────┐"
-        - "<!italic><#aaaaaa>  ʟᴇʜɴᴛ ᴀʟʟᴇ ᴇɪɴɢᴇʜᴇɴᴅᴇɴ"
-        - "<!italic><#aaaaaa>  ᴅʀᴏʜɴᴇɴ sᴏꜰᴏʀᴛ ᴀʙ."
-        - "<!italic><#3a3a3a>└────────────────────┘"
-        - "<!italic><#ff4f4f>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀʙʟᴇʜɴᴇɴ</italic>"
+        - "<!italic><#4b5563>┌────────────────────┐"
+        - "<!italic><#9ca3af>  sᴇɴᴅᴇ ᴇɪɴᴇ ᴅʀᴏʜɴᴇ ᴀɴ"
+        - "<!italic><#9ca3af>  ᴇɪɴᴇɴ sᴘɪᴇʟᴇʀ ᴏᴅᴇʀ sᴏᴄᴋᴇᴛ."
+        - "<!italic><#4b5563>└────────────────────┘"
+        - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴇɴᴅᴇɴ</italic>"
     preview:
       position: 22
       material: "ENDER_EYE"
-      name: "<!italic><gradient:#00c9ff:#0057ff><bold>👁 ᴅʀᴏʜɴᴇɴ-ᴠᴏʀsᴄʜᴀᴜ</bold></gradient>"
+      name: "<!italic><gradient:#22d3ee:#3b82f6><bold>👁 ᴅʀᴏʜɴᴇɴ-ᴠᴏʀsᴄʜᴀᴜ</bold></gradient>"
       lore:
-        - "<!italic><#3a3a3a>┌────────────────────┐"
-        - "<!italic><#aaaaaa>  ᴢᴇɪɢᴇ ᴇɪɴᴇ üʙᴇʀsɪᴄʜᴛ"
-        - "<!italic><#aaaaaa>  ᴅᴇɪɴᴇʀ ᴀᴋᴛɪᴠᴇɴ ᴅʀᴏʜɴᴇɴ."
-        - "<!italic><#3a3a3a>└────────────────────┘"
-        - "<!italic><#00c9ff>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜʀ ᴠᴏʀsᴄʜᴀᴜ</italic>"
+        - "<!italic><#4b5563>┌────────────────────┐"
+        - "<!italic><#9ca3af>  ᴢᴇɪɢᴇ ᴇɪɴᴇ üʙᴇʀsɪᴄʜᴛ"
+        - "<!italic><#9ca3af>  ᴅᴇɪɴᴇʀ ᴀᴋᴛɪᴠᴇɴ ᴅʀᴏʜɴᴇɴ."
+        - "<!italic><#4b5563>└────────────────────┘"
+        - "<!italic><#22d3ee>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜʀ ᴠᴏʀsᴄʜᴀᴜ</italic>"
+    socket-manage:
+      position: 32
+      material: "BEACON"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>📡 sᴏᴄᴋᴇᴛ-ᴠᴇʀᴡᴀʟᴛᴜɴɢ</bold></gradient>"
+      lore:
+        - "<!italic><#4b5563>┌────────────────────┐"
+        - "<!italic><#9ca3af>  ᴠᴇʀᴡᴀʟᴛᴇ ᴅᴇɪɴᴇ ᴇɪɢᴇɴᴇɴ"
+        - "<!italic><#9ca3af>  ʟɪᴇꜰᴇʀsᴛᴀᴛɪᴏɴᴇɴ."
+        - "<!italic><#4b5563>└────────────────────┘"
+        - "<!italic><#a855f7>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴠᴇʀᴡᴀʟᴛᴇɴ</italic>"
+
+    # --- Einstellungen (Reihe 3) ---
+    toggle:
+      position: 30
+      material: "REDSTONE"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>🔔 ᴇᴍᴘꜰᴀɴɢ ᴜᴍsᴄʜᴀʟᴛᴇɴ</bold></gradient>"
+      lore:
+        - "<!italic><#4b5563>┌────────────────────┐"
+        - "<!italic><#9ca3af>  ᴀᴋᴛɪᴠɪᴇʀᴇ ᴏᴅᴇʀ ᴅᴇᴀᴋᴛɪᴠɪᴇʀᴇ"
+        - "<!italic><#9ca3af>  ᴅᴇɴ ᴅʀᴏʜɴᴇɴ-ᴇᴍᴘꜰᴀɴɢ."
+        - "<!italic><#4b5563>└────────────────────┘"
+        - "<!italic><#a855f7>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴜᴍsᴄʜᴀʟᴛᴇɴ</italic>"
+    decline:
+      position: 24
+      material: "BARRIER"
+      name: "<!italic><gradient:#f87171:#ef4444><bold>✖ ᴅʀᴏʜɴᴇɴ ᴀʙʟᴇʜɴᴇɴ</bold></gradient>"
+      lore:
+        - "<!italic><#4b5563>┌────────────────────┐"
+        - "<!italic><#9ca3af>  ʟᴇʜɴᴛ ᴀʟʟᴇ ᴇɪɴɢᴇʜᴇɴᴅᴇɴ"
+        - "<!italic><#9ca3af>  ᴅʀᴏʜɴᴇɴ sᴏꜰᴏʀᴛ ᴀʙ."
+        - "<!italic><#4b5563>└────────────────────┘"
+        - "<!italic><#f87171>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀʙʟᴇʜɴᴇɴ</italic>"
 
 # =============================================================================
-# PLAYER SELECTION GUI - Select a player to send a drone to
+# PLAYER SELECTION GUI
 # =============================================================================
 player-selection:
-  title: "<!italic><#3a3a3a>👤 <gradient:#ffffff:#00c9ff>sᴘɪᴇʟᴇʀ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
+  title: "<!italic><#222222>👤 <gradient:#e0e7ff:#22d3ee>sᴘɪᴇʟᴇʀ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -100,23 +112,23 @@ player-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><gradient:#ffe066:#f0a500>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
     lore:
-      - "<!italic><#aaaaaa>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#ffffff>ʜᴀᴜᴘᴛᴍᴇɴü</#ffffff>"
+      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>ʜᴀᴜᴘᴛᴍᴇɴü</#f3f4f6>"
   player-head-item:
-    name-format: "<!italic><gradient:#ffffff:#00c9ff><bold><player></bold></gradient>"
+    name-format: "<!italic><gradient:#e0e7ff:#22d3ee><bold><player></bold></gradient>"
     lore:
-      - "<!italic><#3a3a3a>┌────────────────────┐"
-      - "<!italic><#aaaaaa>  ᴅʀᴏʜɴᴇ sᴇɴᴅᴇɴ ᴀɴ:"
-      - "<!italic><#ffffff>  ➤ <player>"
-      - "<!italic><#3a3a3a>└────────────────────┘"
-      - "<!italic><#29e06a>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
+      - "<!italic><#4b5563>┌────────────────────┐"
+      - "<!italic><#9ca3af>  ᴅʀᴏʜɴᴇ sᴇɴᴅᴇɴ ᴀɴ:"
+      - "<!italic><#f3f4f6>  ➤ <player>"
+      - "<!italic><#4b5563>└────────────────────┘"
+      - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴇɴᴅᴇɴ</italic>"
 
 # =============================================================================
-# TARGET SELECTION GUI - Choose between player or socket target
+# TARGET SELECTION GUI
 # =============================================================================
 target-selection:
-  title: "<!italic><#3a3a3a>🎯 <gradient:#00c9ff:#29e06a>ᴢɪᴇʟ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
+  title: "<!italic><#222222>🎯 <gradient:#22d3ee:#4ade80>ᴢɪᴇʟ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
   size: 27
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -124,36 +136,36 @@ target-selection:
   back-item:
     position: 26
     material: "ARROW"
-    name: "<!italic><gradient:#ffe066:#f0a500>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
     lore:
-      - "<!italic><#aaaaaa>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#ffffff>ʜᴀᴜᴘᴛᴍᴇɴü</#ffffff>"
+      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>ʜᴀᴜᴘᴛᴍᴇɴü</#f3f4f6>"
   items:
     player:
       position: 11
       material: "PLAYER_HEAD"
-      name: "<!italic><gradient:#29e06a:#00a844><bold>👤 sᴘɪᴇʟᴇʀ ᴀᴜsᴡäʜʟᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#4ade80:#22c55e><bold>👤 sᴘɪᴇʟᴇʀ ᴀᴜsᴡäʜʟᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><#3a3a3a>┌────────────────────┐"
-        - "<!italic><#aaaaaa>  sᴇɴᴅᴇ ᴅɪᴇ ᴅʀᴏʜɴᴇ ᴅɪʀᴇᴋᴛ"
-        - "<!italic><#aaaaaa>  ᴀɴ ᴇɪɴᴇɴ ᴏɴʟɪɴᴇ-sᴘɪᴇʟᴇʀ."
-        - "<!italic><#3a3a3a>└────────────────────┘"
-        - "<!italic><#29e06a>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
+        - "<!italic><#4b5563>┌────────────────────┐"
+        - "<!italic><#9ca3af>  sᴇɴᴅᴇ ᴅɪᴇ ᴅʀᴏʜɴᴇ ᴅɪʀᴇᴋᴛ"
+        - "<!italic><#9ca3af>  ᴀɴ ᴇɪɴᴇɴ ᴏɴʟɪɴᴇ-sᴘɪᴇʟᴇʀ."
+        - "<!italic><#4b5563>└────────────────────┘"
+        - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
     socket:
       position: 15
       material: "BEACON"
-      name: "<!italic><gradient:#ffe066:#f0a500><bold>📡 sᴏᴄᴋᴇᴛ ᴀᴜsᴡäʜʟᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>📡 sᴏᴄᴋᴇᴛ ᴀᴜsᴡäʜʟᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><#3a3a3a>┌────────────────────┐"
-        - "<!italic><#aaaaaa>  sᴇɴᴅᴇ ᴅɪᴇ ᴅʀᴏʜɴᴇ ᴢᴜ ᴇɪɴᴇʀ"
-        - "<!italic><#aaaaaa>  ꜰᴇsᴛᴇɴ ʟɪᴇꜰᴇʀsᴛᴀᴛɪᴏɴ."
-        - "<!italic><#3a3a3a>└────────────────────┘"
-        - "<!italic><#ffe066>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
+        - "<!italic><#4b5563>┌────────────────────┐"
+        - "<!italic><#9ca3af>  sᴇɴᴅᴇ ᴅɪᴇ ᴅʀᴏʜɴᴇ ᴢᴜ ᴇɪɴᴇʀ"
+        - "<!italic><#9ca3af>  ꜰᴇsᴛᴇɴ ʟɪᴇꜰᴇʀsᴛᴀᴛɪᴏɴ."
+        - "<!italic><#4b5563>└────────────────────┘"
+        - "<!italic><#a855f7>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
 
 # =============================================================================
-# SOCKET SELECTION GUI - Select a delivery socket
+# SOCKET SELECTION
 # =============================================================================
 socket-selection:
-  title: "<!italic><#3a3a3a>📡 <gradient:#ffe066:#f0a500>sᴏᴄᴋᴇᴛ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
+  title: "<!italic><#222222>📡 <gradient:#a855f7:#ec4899>sᴏᴄᴋᴇᴛ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -161,16 +173,90 @@ socket-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><gradient:#ffe066:#f0a500>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
     lore:
-      - "<!italic><#aaaaaa>  ᴢᴜʀüᴄᴋ ᴢᴜʀ <#ffffff>ᴢɪᴇʟᴀᴜsᴡᴀʜʟ</#ffffff>"
+      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜʀ <#f3f4f6>ᴢɪᴇʟᴀᴜsᴡᴀʜʟ</#f3f4f6>"
 
-# =============================================================================
-# SOCKET ITEM FORMATTING - Dynamic formatting for socket items
-# =============================================================================
 socket-item-format:
-  name-format: "<!italic><gradient:#ffe066:#f0a500><bold>📡 <name></bold></gradient>"
-  owner-format: "<!italic><#aaaaaa>  ʙᴇsɪᴛᴢᴇʀ: <#ffffff><owner>"
-  click-hint: "<!italic><#29e06a>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴇɴᴅᴇɴ</italic>"
+  name-format: "<!italic><gradient:#a855f7:#ec4899><bold>📡 <name></bold></gradient>"
+  owner-format: "<!italic><#9ca3af>  ʙᴇsɪᴛᴢᴇʀ: <#f3f4f6><owner>"
+  click-hint: "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴇɴᴅᴇɴ</italic>"
   empty-line: " "
   material: "BEACON"
+
+# =============================================================================
+# SOCKET MANAGEMENT
+# =============================================================================
+socket-management:
+  title: "<!italic><#222222>📡 <gradient:#a855f7:#ec4899>sᴏᴄᴋᴇᴛ-ᴠᴇʀᴡᴀʟᴛᴜɴɢ</gradient>"
+  size: 54
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+  back-item:
+    position: 45
+    material: "ARROW"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    lore:
+      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>ʜᴀᴜᴘᴛᴍᴇɴü</#f3f4f6>"
+  socket-management-item:
+    name-format: "<!italic><gradient:#a855f7:#ec4899><bold>📡 <name></bold></gradient>"
+    location-format: "<!italic><#9ca3af>  ᴏʀᴛ: <#f3f4f6><world>, <x>, <y>, <z>"
+    delete-hint: "<!italic><#f87171>⬥ <italic>ʀᴇᴄʜᴛs ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ʟösᴄʜᴇɴ</italic>"
+    empty-line: " "
+    material: "BEACON"
+  no-sockets-item:
+    position: 22
+    material: "BARRIER"
+    name: "<!italic><gradient:#f87171:#ef4444><bold>✖ ᴋᴇɪɴᴇ sᴏᴄᴋᴇᴛs</bold></gradient>"
+    lore:
+      - "<!italic><#4b5563>┌────────────────────┐"
+      - "<!italic><#9ca3af>  ᴅᴜ ʜᴀsᴛ ɴᴏᴄʜ ᴋᴇɪɴᴇ"
+      - "<!italic><#9ca3af>  sᴏᴄᴋᴇᴛs ᴇʀsᴛᴇʟʟᴛ."
+      - "<!italic><#9ca3af>  ɴᴜᴛᴢᴇ <#f3f4f6>/drone socket place</#f3f4f6>"
+      - "<!italic><#4b5563>└────────────────────┘"
+
+# =============================================================================
+# SOCKET EDIT GUI
+# =============================================================================
+socket-edit:
+  title: "<!italic><#222222>✏️ <gradient:#a855f7:#ec4899>sᴏᴄᴋᴇᴛ-ᴇᴅɪᴛᴏʀ</gradient>"
+  size: 27
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+  back-item:
+    position: 18
+    material: "ARROW"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    lore:
+      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜʀ <#f3f4f6>ᴠᴇʀᴡᴀʟᴛᴜɴɢ</#f3f4f6>"
+  items:
+    rename:
+      position: 11
+      material: "NAME_TAG"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>✏️ ᴜᴍʙᴇɴᴇɴᴇɴ</bold></gradient>"
+      lore:
+        - "<!italic><#9ca3af>  ᴋʟɪᴄᴋᴇ ᴜᴍ ᴅᴇɴ"
+        - "<!italic><#9ca3af>  ɴᴀᴍᴇɴ ᴢᴜ äɴᴅᴇʀɴ"
+    relocate:
+      position: 13
+      material: "COMPASS"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>📍 ɴᴇᴜ sᴇᴛᴢᴇɴ</bold></gradient>"
+      lore:
+        - "<!italic><#9ca3af>  ᴋʟɪᴄᴋᴇ ᴜᴍ ᴅɪᴇ"
+        - "<!italic><#9ca3af>  ᴘᴏsɪᴛɪᴏɴ ᴢᴜ ᴀᴋᴛᴜᴀʟɪsɪᴇʀᴇɴ"
+    delete:
+      position: 15
+      material: "BARRIER"
+      name: "<!italic><gradient:#f87171:#ef4444><bold>✖ ʟösᴄʜᴇɴ</bold></gradient>"
+      lore:
+        - "<!italic><#9ca3af>  ᴋʟɪᴄᴋᴇ ᴜᴍ ᴅɪᴇsᴇɴ"
+        - "<!italic><#9ca3af>  sᴏᴄᴋᴇᴛ ᴢᴜ ᴇɴᴛꜰᴇʀɴᴇɴ"
+
+# =============================================================================
+# SIGN RENAME CONFIGURATION
+# =============================================================================
+sign-rename:
+  border-line: "⚡────────────⚡"
+  title-line: "Neuer Name:"

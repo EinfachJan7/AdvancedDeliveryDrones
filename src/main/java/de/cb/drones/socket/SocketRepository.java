@@ -19,11 +19,21 @@ public final class SocketRepository {
     private final JavaPlugin plugin;
     private final File file;
     private YamlConfiguration config;
+    private int maxSocketsPerPlayer;
 
-    public SocketRepository(JavaPlugin plugin) {
+    public SocketRepository(JavaPlugin plugin, int maxSocketsPerPlayer) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "sockets.yml");
+        this.maxSocketsPerPlayer = maxSocketsPerPlayer;
         reload();
+    }
+
+    public void setMaxSocketsPerPlayer(int maxSocketsPerPlayer) {
+        this.maxSocketsPerPlayer = maxSocketsPerPlayer;
+    }
+
+    public int getMaxSocketsPerPlayer() {
+        return maxSocketsPerPlayer;
     }
 
     public void reload() {
@@ -46,10 +56,10 @@ public final class SocketRepository {
             throw new IllegalArgumentException("Location cannot be null");
         }
 
-        // Max 1 socket per player
+        // Max sockets per player (configurable)
         List<DeliverySocket> existingSockets = getSocketsByOwner(ownerId);
-        if (!existingSockets.isEmpty()) {
-            throw new IllegalArgumentException("Player already has a socket. Maximum 1 socket per player.");
+        if (existingSockets.size() >= maxSocketsPerPlayer) {
+            throw new IllegalArgumentException("Player already has " + existingSockets.size() + " socket(s). Maximum " + maxSocketsPerPlayer + " socket(s) per player.");
         }
 
         String socketPath = SOCKETS_PATH + "." + ownerId + "." + name;
