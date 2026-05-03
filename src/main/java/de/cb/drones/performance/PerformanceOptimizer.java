@@ -172,15 +172,41 @@ public class PerformanceOptimizer {
     }
 
     private boolean hasNearbyPlayers(Location location, double radius) {
-        return location.getWorld().getNearbyEntities(location, radius, radius, radius).stream()
-                .anyMatch(entity -> entity instanceof org.bukkit.entity.Player);
+        // Optimized: Use getPlayers() instead of getNearbyEntities() to avoid creating entity lists
+        World world = location.getWorld();
+        if (world == null) return false;
+        
+        double radiusSq = radius * radius;
+        for (org.bukkit.entity.Player player : world.getPlayers()) {
+            if (player.getLocation().distanceSquared(location) <= radiusSq) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private double getNearestPlayerDistance(Location location) {
-        return location.getWorld().getPlayers().stream()
-                .mapToDouble(player -> player.getLocation().distance(location))
-                .min()
-                .orElse(Double.MAX_VALUE);
+        // Optimized: Avoid creating intermediate location objects
+        World world = location.getWorld();
+        if (world == null) return Double.MAX_VALUE;
+        
+        double minDistance = Double.MAX_VALUE;
+        double locX = location.getX();
+        double locY = location.getY();
+        double locZ = location.getZ();
+        
+        for (org.bukkit.entity.Player player : world.getPlayers()) {
+            Location playerLoc = player.getLocation();
+            double distance = Math.sqrt(
+                Math.pow(playerLoc.getX() - locX, 2) +
+                Math.pow(playerLoc.getY() - locY, 2) +
+                Math.pow(playerLoc.getZ() - locZ, 2)
+            );
+            if (distance < minDistance) {
+                minDistance = distance;
+            }
+        }
+        return minDistance;
     }
 
     private boolean isChunkLoaded(Location location) {

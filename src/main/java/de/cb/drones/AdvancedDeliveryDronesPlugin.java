@@ -93,6 +93,15 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         return miniMessage.serialize(miniMessage.deserialize(prefix + body));
     }
 
+    public Component componentMessage(String key, String placeholder, String value) {
+        String prefix = getConfig().getString("messages.prefix", "");
+        String body = getConfig().getString("messages." + key, key);
+        if (placeholder != null && value != null) {
+            body = body.replace(placeholder, value);
+        }
+        return miniMessage.deserialize(prefix + body);
+    }
+
     public DiscordWebhookManager getDiscordWebhookManager() {
         return discordWebhookManager;
     }

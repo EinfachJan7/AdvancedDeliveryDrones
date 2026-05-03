@@ -15,6 +15,8 @@ public record DroneSettings(
         double speed,
         double startupSpeed,
         int startupSeconds,
+        double approachSpeed,
+        double approachDistance,
         double deliveryRadius,
         long despawnTicks,
         DespawnMode despawnMode,
@@ -43,6 +45,8 @@ public record DroneSettings(
         double speed = cfg.getDouble(section + "speed", 0.3D);
         double startupSpeed = Math.max(0.01D, cfg.getDouble(section + "startup-speed", Math.min(0.2D, speed)));
         int startupSeconds = Math.max(0, cfg.getInt(section + "startup-seconds", 3));
+        double approachSpeed = Math.max(0.01D, cfg.getDouble(section + "approach-speed", 0.2D));
+        double approachDistance = Math.max(50.0D, cfg.getDouble(section + "approach-distance", 150.0D));
         double deliveryRadius = cfg.getDouble(section + "delivery-radius", 50.0D);
         long despawnTicks = Math.max(1L, cfg.getLong(section + "despawn-time-minutes", 10L) * 60L * 20L);
         DespawnMode despawnMode = DespawnMode.fromName(cfg.getString(section + "despawn-mode", "COLLECT"));
@@ -53,7 +57,7 @@ public record DroneSettings(
         Sound sound = parseSound(cfg.getString(section + "flight-sound", "entity.elytra.flying"));
         int size = normalizeSize(cfg.getInt(section + "inventory-size", 54));
         String texture = cfg.getString(section + "skull-texture", "");
-        int maxActive = Math.max(1, cfg.getInt(section + "max-active-per-sender", 3));
+        int maxActive = Math.max(1, cfg.getInt(section + "max-active-per-sender", 1));
         boolean carryLeashedAnimals = cfg.getBoolean(section + "carry-leashed-animals", false);
         int maxLeashedAnimalsPerDrone = Math.max(0, cfg.getInt(section + "max-leashed-animals-per-drone", 1));
         List<String> blockedWorlds = cfg.getStringList(section + "blocked-worlds").stream()
@@ -74,6 +78,8 @@ public record DroneSettings(
                 speed,
                 startupSpeed,
                 startupSeconds,
+                approachSpeed,
+                approachDistance,
                 deliveryRadius,
                 despawnTicks,
                 despawnMode,

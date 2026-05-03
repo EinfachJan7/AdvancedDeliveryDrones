@@ -66,6 +66,25 @@ public final class DroneManager {
         return plugin.message(key, placeholder, value);
     }
 
+    public Component componentMessage(String key, String placeholder, String value) {
+        return plugin.componentMessage(key, placeholder, value);
+    }
+
+    public void sendMessage(Player player, String key, String placeholder, String value) {
+        player.sendMessage(componentMessage(key, placeholder, value));
+    }
+
+    public void sendMessage(Player player, String key) {
+        player.sendMessage(componentMessage(key, null, null));
+    }
+
+    public void sendMessage(Player player, String key, String placeholder1, String value1, String placeholder2, String value2) {
+        String prefix = plugin.getConfig().getString("messages.prefix", "");
+        String body = plugin.getConfig().getString("messages." + key, key);
+        body = body.replace(placeholder1, value1).replace(placeholder2, value2);
+        player.sendMessage(miniMessage.deserialize(prefix + body));
+    }
+
     public void start() {
         // Clean up any old drone ArmorStands from previous sessions
         cleanupAllOldDrones();
@@ -307,7 +326,7 @@ public final class DroneManager {
                 overflow.values().forEach(item -> sender.getWorld().dropItemNaturally(sender.getLocation(), item));
             }
         }
-        sender.sendMessage(message("return-delivered", null, null));
+        sendMessage(sender, "return-delivered");
     }
 
     private void returnItemsToSender(DeliveryDrone drone) {
@@ -326,7 +345,7 @@ public final class DroneManager {
                 overflow.values().forEach(stack -> sender.getWorld().dropItemNaturally(sender.getLocation(), stack));
             }
         }
-        sender.sendMessage(message("decline-sender-notify", "<player>", drone.receiverName()));
+        sendMessage(sender, "decline-sender-notify", "<player>", drone.receiverName());
     }
 
     private void returnItemsToSenderOffline(DeliveryDrone drone) {
@@ -345,7 +364,7 @@ public final class DroneManager {
                 overflow.values().forEach(stack -> sender.getWorld().dropItemNaturally(sender.getLocation(), stack));
             }
         }
-        sender.sendMessage(message("receiver-offline-return", "<player>", drone.receiverName()));
+        sendMessage(sender, "receiver-offline-return", "<player>", drone.receiverName());
     }
 
     private void returnItemsToSenderDimensionChange(DeliveryDrone drone) {
@@ -364,7 +383,7 @@ public final class DroneManager {
                 overflow.values().forEach(stack -> sender.getWorld().dropItemNaturally(sender.getLocation(), stack));
             }
         }
-        sender.sendMessage(message("receiver-dimension-return", "<player>", drone.receiverName()));
+        sendMessage(sender, "receiver-dimension-return", "<player>", drone.receiverName());
     }
 
     public Component renderHologram(DeliveryDrone drone, long currentTick) {
@@ -403,7 +422,7 @@ public final class DroneManager {
                 discordWebhookManager.sendDeliveryExpired(sender, receiver, drone);
             }
             
-            destroyDrone(drone, true);
+            destroyDrone(drone, false);
         }
     }
 
@@ -553,7 +572,7 @@ public final class DroneManager {
             }
         }
         
-        sender.sendMessage(message("restart-return-items", "<player>", drone.receiverName()));
+        sendMessage(sender, "restart-return-items", "<player>", drone.receiverName());
     }
     
     private void returnAnimalsToOriginalLocation(DeliveryDrone drone) {

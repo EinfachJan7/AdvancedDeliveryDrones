@@ -10,7 +10,7 @@
 # SEND MODE GUI - Choose between sending animals or items
 # =============================================================================
 send-mode:
-  title: "<!italic>Sende-Modus"
+  title: "<!italic><#3a3a3a>✦ <gradient:#f0a500:#ffe066>sᴇɴᴅᴇ-ᴍᴏᴅᴜs</gradient> <#3a3a3a>✦"
   size: 27
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -19,21 +19,29 @@ send-mode:
     animals:
       position: 11
       material: "LEAD"
-      name: "<!italic><gold>Tiere senden</gold>"
+      name: "<!italic><gradient:#f0a500:#ffe066><bold>🐾 ᴛɪᴇʀᴇ sᴇɴᴅᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><gray>Sendet nur angeleinte Tiere.</gray>"
+        - "<!italic><#3a3a3a>┌────────────────────┐"
+        - "<!italic><#aaaaaa>  sᴇɴᴅᴇᴛ ᴀʟʟᴇ ᴀɴɢᴇʟᴇɪɴᴛᴇ"
+        - "<!italic><#aaaaaa>  ᴛɪᴇʀᴇ ᴢᴜ ᴇɪɴᴇᴍ sᴘɪᴇʟᴇʀ."
+        - "<!italic><#3a3a3a>└────────────────────┘"
+        - "<!italic><#f0a500>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
     items:
       position: 15
       material: "CHEST"
-      name: "<!italic><gold>Items senden</gold>"
+      name: "<!italic><gradient:#00c9ff:#0057ff><bold>📦 ɪᴛᴇᴍs sᴇɴᴅᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><gray>Öffnet das Paket-Inventar.</gray>"
+        - "<!italic><#3a3a3a>┌────────────────────┐"
+        - "<!italic><#aaaaaa>  öꜰꜰɴᴇᴛ ᴅᴀs ᴘᴀᴋᴇᴛ-ɪɴᴠᴇɴᴛᴀʀ"
+        - "<!italic><#aaaaaa>  ꜰüʀ ɪɴᴅɪᴠɪᴅᴜᴇʟʟᴇ sᴇɴᴅᴜɴɢᴇɴ."
+        - "<!italic><#3a3a3a>└────────────────────┘"
+        - "<!italic><#00c9ff>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
 
 # =============================================================================
 # MAIN MENU GUI - Main drone menu with all options
 # =============================================================================
 main-menu:
-  title: "<!italic>Drone Menü"
+  title: "<!italic><gradient:#00c9ff:#0057ff:#00c9ff>ᴅʀᴏʜɴᴇɴ-ᴍᴇɴü</gradient>"
   size: 27
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -42,37 +50,49 @@ main-menu:
     send:
       position: 11
       material: "PLAYER_HEAD"
-      name: "<!italic><green>Drohne senden</green>"
+      name: "<!italic><gradient:#29e06a:#00a844><bold>✈ ᴅʀᴏʜɴᴇ sᴇɴᴅᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><gray>Wähle einen Spieler aus"
-        - "<!italic><gray>um ihm eine Drohne zu senden"
+        - "<!italic><#3a3a3a>┌────────────────────┐"
+        - "<!italic><#aaaaaa>  ᴡäʜʟᴇ ᴇɪɴᴇɴ sᴘɪᴇʟᴇʀ ᴀᴜs,"
+        - "<!italic><#aaaaaa>  ᴅᴇᴍ ᴅᴜ ᴇɪɴᴇ ᴅʀᴏʜɴᴇ sᴄʜɪᴄᴋsᴛ."
+        - "<!italic><#3a3a3a>└────────────────────┘"
+        - "<!italic><#29e06a>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴇɴᴅᴇɴ</italic>"
     toggle:
       position: 13
       material: "REDSTONE"
-      name: "<!italic><yellow>Drohnen-Empfang umschalten</yellow>"
+      name: "<!italic><gradient:#ffe066:#f0a500><bold>🔔 ᴇᴍᴘꜰᴀɴɢ ᴜᴍsᴄʜᴀʟᴛᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><gray>Schalte ein/aus ob du"
-        - "<!italic><gray>Drohnen empfangen möchtest"
+        - "<!italic><#3a3a3a>┌────────────────────┐"
+        - "<!italic><#aaaaaa>  ᴀᴋᴛɪᴠɪᴇʀᴇ ᴏᴅᴇʀ ᴅᴇᴀᴋᴛɪᴠɪᴇʀᴇ"
+        - "<!italic><#aaaaaa>  ᴅᴇɴ ᴅʀᴏʜɴᴇɴ-ᴇᴍᴘꜰᴀɴɢ ꜰüʀ ᴅɪᴄʜ."
+        - "<!italic><#3a3a3a>└────────────────────┘"
+        - "<!italic><#ffe066>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴜᴍsᴄʜᴀʟᴛᴇɴ</italic>"
     decline:
       position: 15
       material: "BARRIER"
-      name: "<!italic><red>Eingehende Drohnen ablehnen</red>"
+      name: "<!italic><gradient:#ff4f4f:#a80000><bold>✖ ᴅʀᴏʜɴᴇɴ ᴀʙʟᴇʜɴᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><gray>Lehne alle eingehenden"
-        - "<!italic><gray>Drohnen für dich ab"
+        - "<!italic><#3a3a3a>┌────────────────────┐"
+        - "<!italic><#aaaaaa>  ʟᴇʜɴᴛ ᴀʟʟᴇ ᴇɪɴɢᴇʜᴇɴᴅᴇɴ"
+        - "<!italic><#aaaaaa>  ᴅʀᴏʜɴᴇɴ sᴏꜰᴏʀᴛ ᴀʙ."
+        - "<!italic><#3a3a3a>└────────────────────┘"
+        - "<!italic><#ff4f4f>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀʙʟᴇʜɴᴇɴ</italic>"
     preview:
       position: 22
       material: "ENDER_EYE"
-      name: "<!italic><aqua>Drohne-Vorschau</aqua>"
+      name: "<!italic><gradient:#00c9ff:#0057ff><bold>👁 ᴅʀᴏʜɴᴇɴ-ᴠᴏʀsᴄʜᴀᴜ</bold></gradient>"
       lore:
-        - "<!italic><gray>Zeige eine Vorschau deiner"
-        - "<!italic><gray>aktiven Drohnen"
+        - "<!italic><#3a3a3a>┌────────────────────┐"
+        - "<!italic><#aaaaaa>  ᴢᴇɪɢᴇ ᴇɪɴᴇ üʙᴇʀsɪᴄʜᴛ"
+        - "<!italic><#aaaaaa>  ᴅᴇɪɴᴇʀ ᴀᴋᴛɪᴠᴇɴ ᴅʀᴏʜɴᴇɴ."
+        - "<!italic><#3a3a3a>└────────────────────┘"
+        - "<!italic><#00c9ff>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜʀ ᴠᴏʀsᴄʜᴀᴜ</italic>"
 
 # =============================================================================
 # PLAYER SELECTION GUI - Select a player to send a drone to
 # =============================================================================
 player-selection:
-  title: "<!italic>Spieler auswählen"
+  title: "<!italic><#3a3a3a>👤 <gradient:#ffffff:#00c9ff>sᴘɪᴇʟᴇʀ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -80,20 +100,23 @@ player-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><yellow>Zurück</yellow>"
+    name: "<!italic><gradient:#ffe066:#f0a500>⟵ ᴢᴜʀüᴄᴋ</gradient>"
     lore:
-      - "<!italic><gray>Zurück zum Hauptmenü"
+      - "<!italic><#aaaaaa>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#ffffff>ʜᴀᴜᴘᴛᴍᴇɴü</#ffffff>"
   player-head-item:
-    name-format: "<!italic><white><player></white>"
+    name-format: "<!italic><gradient:#ffffff:#00c9ff><bold><player></bold></gradient>"
     lore:
-      - "<!italic><gray>Klicke um eine Drohne</gray>"
-      - "<!italic><gray>an <white><player></white> zu senden</gray>"
+      - "<!italic><#3a3a3a>┌────────────────────┐"
+      - "<!italic><#aaaaaa>  ᴅʀᴏʜɴᴇ sᴇɴᴅᴇɴ ᴀɴ:"
+      - "<!italic><#ffffff>  ➤ <player>"
+      - "<!italic><#3a3a3a>└────────────────────┘"
+      - "<!italic><#29e06a>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
 
 # =============================================================================
 # TARGET SELECTION GUI - Choose between player or socket target
 # =============================================================================
 target-selection:
-  title: "<!italic>Ziel auswählen"
+  title: "<!italic><#3a3a3a>🎯 <gradient:#00c9ff:#29e06a>ᴢɪᴇʟ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
   size: 27
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -101,30 +124,36 @@ target-selection:
   back-item:
     position: 26
     material: "ARROW"
-    name: "<!italic><yellow>Zurück</yellow>"
+    name: "<!italic><gradient:#ffe066:#f0a500>⟵ ᴢᴜʀüᴄᴋ</gradient>"
     lore:
-      - "<!italic><gray>Zurück zum Hauptmenü"
+      - "<!italic><#aaaaaa>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#ffffff>ʜᴀᴜᴘᴛᴍᴇɴü</#ffffff>"
   items:
     player:
       position: 11
       material: "PLAYER_HEAD"
-      name: "<!italic><green>Spieler auswählen</green>"
+      name: "<!italic><gradient:#29e06a:#00a844><bold>👤 sᴘɪᴇʟᴇʀ ᴀᴜsᴡäʜʟᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><gray>Wähle einen Spieler aus"
-        - "<!italic><gray>um ihm eine Drohne zu senden"
+        - "<!italic><#3a3a3a>┌────────────────────┐"
+        - "<!italic><#aaaaaa>  sᴇɴᴅᴇ ᴅɪᴇ ᴅʀᴏʜɴᴇ ᴅɪʀᴇᴋᴛ"
+        - "<!italic><#aaaaaa>  ᴀɴ ᴇɪɴᴇɴ ᴏɴʟɪɴᴇ-sᴘɪᴇʟᴇʀ."
+        - "<!italic><#3a3a3a>└────────────────────┘"
+        - "<!italic><#29e06a>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
     socket:
       position: 15
       material: "BEACON"
-      name: "<!italic><yellow>Socket auswählen</yellow>"
+      name: "<!italic><gradient:#ffe066:#f0a500><bold>📡 sᴏᴄᴋᴇᴛ ᴀᴜsᴡäʜʟᴇɴ</bold></gradient>"
       lore:
-        - "<!italic><gray>Wähle einen Socket aus"
-        - "<!italic><gray>um dort eine Drohne zu senden"
+        - "<!italic><#3a3a3a>┌────────────────────┐"
+        - "<!italic><#aaaaaa>  sᴇɴᴅᴇ ᴅɪᴇ ᴅʀᴏʜɴᴇ ᴢᴜ ᴇɪɴᴇʀ"
+        - "<!italic><#aaaaaa>  ꜰᴇsᴛᴇɴ ʟɪᴇꜰᴇʀsᴛᴀᴛɪᴏɴ."
+        - "<!italic><#3a3a3a>└────────────────────┘"
+        - "<!italic><#ffe066>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
 
 # =============================================================================
 # SOCKET SELECTION GUI - Select a delivery socket
 # =============================================================================
 socket-selection:
-  title: "<!italic>Socket auswählen"
+  title: "<!italic><#3a3a3a>📡 <gradient:#ffe066:#f0a500>sᴏᴄᴋᴇᴛ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -132,16 +161,16 @@ socket-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><yellow>Zurück</yellow>"
+    name: "<!italic><gradient:#ffe066:#f0a500>⟵ ᴢᴜʀüᴄᴋ</gradient>"
     lore:
-      - "<!italic><gray>Zurück zur Zielauswahl"
+      - "<!italic><#aaaaaa>  ᴢᴜʀüᴄᴋ ᴢᴜʀ <#ffffff>ᴢɪᴇʟᴀᴜsᴡᴀʜʟ</#ffffff>"
 
 # =============================================================================
 # SOCKET ITEM FORMATTING - Dynamic formatting for socket items
 # =============================================================================
 socket-item-format:
-  name-format: "<!italic><white><name></white>"
-  owner-format: "<!italic><gray>Besitzer: <white><owner></white></gray>"
-  click-hint: "<!italic><green>Klicke um Drohne zu senden</green>"
-  empty-line: "<!italic><gray></gray>"
+  name-format: "<!italic><gradient:#ffe066:#f0a500><bold>📡 <name></bold></gradient>"
+  owner-format: "<!italic><#aaaaaa>  ʙᴇsɪᴛᴢᴇʀ: <#ffffff><owner>"
+  click-hint: "<!italic><#29e06a>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴇɴᴅᴇɴ</italic>"
+  empty-line: " "
   material: "BEACON"

@@ -48,7 +48,11 @@ public final class DroneInteractionListener implements Listener {
             return false;
         }
         if (!drone.receiverId().equals(player.getUniqueId())) {
-            player.sendMessage(droneManager.message("wrong-user", null, null));
+            droneManager.sendMessage(player, "wrong-user");
+            return true;
+        }
+        if (drone.isFlying()) {
+            droneManager.sendMessage(player, "drone-flying");
             return true;
         }
         if (droneManager.settings().carryLeashedAnimals() && drone.animalsOnlyDelivery()) {
@@ -124,7 +128,7 @@ public final class DroneInteractionListener implements Listener {
                 event.setCancelled(true);
                 if (event.getWhoClicked() instanceof Player) {
                     Player player = (Player) event.getWhoClicked();
-                    player.sendMessage(droneManager.message("drone-helmet-remove", null, null));
+                    droneManager.sendMessage(player, "drone-helmet-remove");
                 }
                 return;
             }
@@ -145,7 +149,7 @@ public final class DroneInteractionListener implements Listener {
                         event.setCancelled(true);
                         if (event.getWhoClicked() instanceof Player) {
                             Player player = (Player) event.getWhoClicked();
-                            player.sendMessage(droneManager.message("drone-helmet-manipulate", null, null));
+                            droneManager.sendMessage(player, "drone-helmet-manipulate");
                         }
                         return;
                     }
@@ -161,7 +165,7 @@ public final class DroneInteractionListener implements Listener {
         
         if (drone != null && drone.isFlying()) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(droneManager.message("drone-armor-manipulate", null, null));
+            droneManager.sendMessage(event.getPlayer(), "drone-armor-manipulate");
         }
     }
 }

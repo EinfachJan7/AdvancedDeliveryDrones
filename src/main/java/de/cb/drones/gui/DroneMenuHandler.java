@@ -110,15 +110,15 @@ public class DroneMenuHandler implements Listener {
         } else if (toggleItem != null && slot == toggleItem.position()) { // Toggle
             boolean current = settingsRepository.canReceive(player.getUniqueId());
             settingsRepository.setCanReceive(player.getUniqueId(), !current);
-            player.sendMessage(droneManager.message(current ? "toggle-off" : "toggle-on", null, null));
+            droneManager.sendMessage(player, current ? "toggle-off" : "toggle-on");
             player.closeInventory();
             menuGUI.openMainMenu(player); // Refresh menu
         } else if (declineItem != null && slot == declineItem.position()) { // Decline
             int declined = droneManager.declineIncoming(player);
             if (declined <= 0) {
-                player.sendMessage(droneManager.message("decline-none", null, null));
+                droneManager.sendMessage(player, "decline-none");
             } else {
-                player.sendMessage(droneManager.message("decline-success", "<count>", String.valueOf(declined)));
+                droneManager.sendMessage(player, "decline-success", "<count>", String.valueOf(declined));
             }
             player.closeInventory();
         } else if (previewItem != null && slot == previewItem.position()) { // Preview (if available)
@@ -192,7 +192,18 @@ public class DroneMenuHandler implements Listener {
         org.bukkit.inventory.meta.ItemMeta meta = clicked.getItemMeta();
         if (meta == null) return;
 
-        String socketName = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
+        // Try to get socket name from persistent data first
+        String socketName = null;
+        if (meta.getPersistentDataContainer() != null) {
+            NamespacedKey socketNameKey = new NamespacedKey("advanced-delivery-drones", "socket_name");
+            socketName = meta.getPersistentDataContainer().get(socketNameKey, org.bukkit.persistence.PersistentDataType.STRING);
+        }
+        
+        // Fallback to display name if persistent data is not available
+        if (socketName == null) {
+            socketName = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
+        }
+        
         player.closeInventory();
         // Execute the socket send command
         player.performCommand("drone socket send " + socketName);

@@ -14,13 +14,14 @@ import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataContainer;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.NamespacedKey;
 
 import java.util.ArrayList;
@@ -235,6 +236,12 @@ public class DroneMenuGUI {
         ItemStack item = new ItemStack(droneSettings.guiConfig().socketItemMaterial());
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
+            // Store the actual socket name in persistent data for identification
+            if (meta.getPersistentDataContainer() != null) {
+                NamespacedKey socketNameKey = new NamespacedKey("advanced-delivery-drones", "socket_name");
+                meta.getPersistentDataContainer().set(socketNameKey, PersistentDataType.STRING, socket.name());
+            }
+            
             // Use configurable format for socket name
             String nameFormat = droneSettings.guiConfig().socketItemNameFormat()
                 .replace("<name>", socket.name());

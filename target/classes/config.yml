@@ -3,13 +3,15 @@ settings:
     speed: 5.0
     startup-speed: 0.2
     startup-seconds: 3
+    approach-speed: 0.2
+    approach-distance: 100.0
     skull-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzM1YWEzZTJiZjE4NTQ0Zjc1ZTZlMTViMDI2Zjc0N2I1OTllMThmOTZhOWVjNTQ1N2JkNTFhZDhkZjA0YTE2YiJ9fX0="
     delivery-radius: 10.0
     despawn-time-minutes: 10
     despawn-mode: "DELETE"
-    max-active-per-sender: 3
+    max-active-per-sender: 1
     carry-leashed-animals: true
-    max-leashed-animals-per-drone: 5
+    max-leashed-animals-per-drone: 1
     blocked-worlds:
       - "world_nether"
       - "world_the_end"
@@ -25,12 +27,12 @@ settings:
     hologram:
       enabled: true
       offset-y: 1.0
-      format: "<yellow>Paket fuer <white><receiver></white> <gray>(Despawn: <minutes>m <seconds>s)</gray>"
+      format: "<gradient:#ffcc33:#ffaa00><bold>ᴘᴀᴋᴇᴛ ғᴜᴇʀ</bold></gradient> <white><receiver> <dark_gray>» <gray>ᴅᴇsᴘᴀᴡɴ: <#ffcc33><minutes>ᴍ <#ffcc33><seconds>s"
     bossbar:
       enabled: true
       format: "<gold>Distanz zur Drone: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>"
       # Available colors: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
-      color: "YELLOW"
+      color: "RED"
     collection-animation:
       enabled: true
 
@@ -77,6 +79,16 @@ messages:
   toggle-off: "<red>Du hast den Drohnen-Empfang deaktiviert.</red>"
   reload: "<green>Config erfolgreich neu geladen.</green>"
   open-inventory: "<gold>Öffne Paket für <white><player></white> ...</gold>"
+  open-inventory-socket: "<gold>Öffne Paket für Socket <yellow><socket></yellow> (<white><player></white>) ...</gold>"
+  socket-limit-reached: "<red>Du hast bereits einen Socket. Maximal 1 Socket pro Spieler. Entferne ihn zuerst mit /drone socket remove <name>.</red>"
+  drone-inventory-title: "<gold>Delivery Drone</gold>"
+  drone-preview-title: "<gold>Drone Vorschau</gold>"
+  animal-display-name: "<gold>Tier: <type></gold>"
+  animal-display-count: "<gray>Anzahl: <count></gray>"
+  drone-head-name: "<gold>Drone</gold>"
+  drone-title-player: "<gold>Drone > <player></gold>"
+  drone-title-socket: "<gold>Drone > <socket></gold>"
+  drone-title-admin: "<gold>Socket Drone > <player></gold>"
   incoming-drone: "<gold><white><player></white> hat dir eine Drohne geschickt.</gold>"
   preview-unavailable: "<red>Für diese Drohne ist keine Vorschau verfügbar.</red>"
   too-many-leashed-animals: "<red>Du hast zu viele angeleinte Tiere. Maximum pro Drohne: <max>.</red>"
@@ -118,6 +130,7 @@ messages:
   drone-helmet-remove: "<red>Du kannst den Helm einer fliegenden Drohne nicht entfernen!</red>"
   drone-helmet-manipulate: "<red>Du kannst den Helm einer fliegenden Drohne nicht manipulieren!</red>"
   drone-armor-manipulate: "<red>Du kannst die Rüstung einer fliegenden Drohne nicht manipulieren!</red>"
+  drone-flying: "<red>Die Drohne ist noch unterwegs. Du kannst sie erst öffnen, wenn sie gelandet ist!</red>"
   only-players: "<red>Nur Spieler können diesen Befehl verwenden.</red>"
   usage-send: "<gray>/drone send <Spieler></gray>"
   usage-admin: "<gray>/drone admin send <x> <y> <z> [world]</gray>"

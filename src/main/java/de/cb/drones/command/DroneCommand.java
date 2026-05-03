@@ -84,7 +84,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
     private boolean executeSend(Player sender, String[] args) {
         if (!sender.hasPermission("drone.send")) {
-            sender.sendMessage(droneManager.message("no-permission", null, null));
+            droneManager.sendMessage(sender, "no-permission");
             return true;
         }
         if (args.length < 2) {
@@ -93,19 +93,19 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         Player target = Bukkit.getPlayerExact(args[1]);
         if (target == null || !target.isOnline()) {
-            sender.sendMessage(droneManager.message("player-offline", null, null));
+            droneManager.sendMessage(sender, "player-offline");
             return true;
         }
         if (droneManager.isBlockedWorld(sender.getWorld().getName())) {
-            sender.sendMessage(droneManager.message("world-blocked", "<world>", sender.getWorld().getName()));
+            droneManager.sendMessage(sender, "world-blocked", "<world>", sender.getWorld().getName());
             return true;
         }
         if (!settingsRepository.canReceive(target.getUniqueId())) {
-            sender.sendMessage(droneManager.message("toggled-off", null, null));
+            droneManager.sendMessage(sender, "toggled-off");
             return true;
         }
         if (!droneManager.canSenderLaunch(sender.getUniqueId())) {
-            sender.sendMessage(droneManager.message("sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender())));
+            droneManager.sendMessage(sender, "sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender()));
             return true;
         }
 
@@ -115,7 +115,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
     private boolean executeAdmin(Player player, String[] args) {
         if (!player.hasPermission("drone.admin")) {
-            player.sendMessage(droneManager.message("no-permission", null, null));
+            droneManager.sendMessage(player, "no-permission");
             return true;
         }
         if (args.length < 2 || !"send".equalsIgnoreCase(args[1]) || args.length < 5) {
@@ -128,15 +128,15 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (droneManager.isBlockedWorld(player.getWorld().getName())) {
-            player.sendMessage(droneManager.message("world-blocked", "<world>", player.getWorld().getName()));
+            droneManager.sendMessage(player, "world-blocked", "<world>", player.getWorld().getName());
             return true;
         }
         if (droneManager.isBlockedWorld(targetLocation.getWorld().getName())) {
-            player.sendMessage(droneManager.message("world-blocked", "<world>", targetLocation.getWorld().getName()));
+            droneManager.sendMessage(player, "world-blocked", "<world>", targetLocation.getWorld().getName());
             return true;
         }
         if (!droneManager.canSenderLaunch(player.getUniqueId())) {
-            player.sendMessage(droneManager.message("sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender())));
+            droneManager.sendMessage(player, "sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender()));
             return true;
         }
         prepareSendFlow(player, player, targetLocation);
@@ -145,30 +145,30 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
     private boolean executeToggle(Player player) {
         if (!player.hasPermission("drone.use")) {
-            player.sendMessage(droneManager.message("no-permission", null, null));
+            droneManager.sendMessage(player, "no-permission");
             return true;
         }
         boolean current = settingsRepository.canReceive(player.getUniqueId());
         settingsRepository.setCanReceive(player.getUniqueId(), !current);
-        player.sendMessage(droneManager.message(current ? "toggle-off" : "toggle-on", null, null));
+        droneManager.sendMessage(player, current ? "toggle-off" : "toggle-on");
         return true;
     }
 
     private boolean executeReload(Player player) {
         if (!player.hasPermission("drone.admin")) {
-            player.sendMessage(droneManager.message("no-permission", null, null));
+            droneManager.sendMessage(player, "no-permission");
             return true;
         }
         plugin.reloadPlugin();
         menuHandler.updateSettings(droneManager.settings());
-        player.sendMessage(droneManager.message("reload", null, null));
+        droneManager.sendMessage(player, "reload");
         return true;
     }
 
     
     private boolean executeList(Player player) {
         if (!player.hasPermission("drone.admin")) {
-            player.sendMessage(droneManager.message("no-permission", null, null));
+            droneManager.sendMessage(player, "no-permission");
             return true;
         }
         List<de.cb.drones.drone.DeliveryDrone> drones = droneManager.activeDronesSnapshot();
@@ -176,7 +176,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             player.sendMessage(plugin.component("no-active-drones"));
             return true;
         }
-        player.sendMessage(droneManager.message("active-drones-count", "<count>", String.valueOf(drones.size())));
+        droneManager.sendMessage(player, "active-drones-count", "<count>", String.valueOf(drones.size()));
         for (de.cb.drones.drone.DeliveryDrone drone : drones) {
             Location loc = drone.currentLocation();
             String command = "/tp " + loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ();
@@ -197,21 +197,21 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
     private boolean executeDecline(Player player) {
         if (!player.hasPermission("drone.use")) {
-            player.sendMessage(droneManager.message("no-permission", null, null));
+            droneManager.sendMessage(player, "no-permission");
             return true;
         }
         int declined = droneManager.declineIncoming(player);
         if (declined <= 0) {
-            player.sendMessage(droneManager.message("decline-none", null, null));
+            droneManager.sendMessage(player, "decline-none");
             return true;
         }
-        player.sendMessage(droneManager.message("decline-success", "<count>", String.valueOf(declined)));
+        droneManager.sendMessage(player, "decline-success", "<count>", String.valueOf(declined));
         return true;
     }
 
     private boolean executeSocket(Player player, String[] args) {
         if (!player.hasPermission("drone.socket")) {
-            player.sendMessage(droneManager.message("no-permission", null, null));
+            droneManager.sendMessage(player, "no-permission");
             return true;
         }
         if (args.length < 2) {
@@ -238,26 +238,34 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         String socketName = args[2];
         if (socketName.length() > 32) {
-            player.sendMessage(droneManager.message("socket-name-too-long", null, null));
+            droneManager.sendMessage(player, "socket-name-too-long");
             return true;
         }
 
         if (socketRepository.getSocketsByOwner(player.getUniqueId()).stream()
                 .anyMatch(s -> s.name().equals(socketName))) {
-            player.sendMessage(droneManager.message("socket-exists", "<name>", socketName));
+            droneManager.sendMessage(player, "socket-exists", "<name>", socketName);
             return true;
         }
 
         if (droneManager.isBlockedWorld(player.getWorld().getName())) {
-            player.sendMessage(droneManager.message("world-blocked", "<world>", player.getWorld().getName()));
+            droneManager.sendMessage(player, "world-blocked", "<world>", player.getWorld().getName());
             return true;
         }
 
         Location loc = player.getLocation();
-        socketRepository.addSocket(player.getUniqueId(), socketName, player.getName(), loc);
+        try {
+            socketRepository.addSocket(player.getUniqueId(), player.getName(), socketName, loc);
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("Maximum 1 socket per player")) {
+                droneManager.sendMessage(player, "socket-limit-reached");
+                return true;
+            }
+            throw e;
+        }
 
-        player.sendMessage(droneManager.message("socket-placed", "<name>", socketName));
-        player.sendMessage(droneManager.message("socket-location", "<coords>", loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ()));
+        droneManager.sendMessage(player, "socket-placed", "<name>", socketName);
+        droneManager.sendMessage(player, "socket-location", "<coords>", loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ());
         return true;
     }
 
@@ -268,14 +276,14 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         String name = args[2];
         if (!socketRepository.socketNameExists(player.getUniqueId(), name)) {
-            player.sendMessage(droneManager.message("socket-not-found", "<name>", name));
+            droneManager.sendMessage(player, "socket-not-found", "<name>", name);
             return true;
         }
         boolean removed = socketRepository.removeSocket(player.getUniqueId(), name);
         if (removed) {
-            player.sendMessage(droneManager.message("socket-removed", "<name>", name));
+            droneManager.sendMessage(player, "socket-removed", "<name>", name);
         } else {
-            player.sendMessage(droneManager.message("socket-remove-failed", "<name>", name));
+            droneManager.sendMessage(player, "socket-remove-failed", "<name>", name);
         }
         return true;
     }
@@ -283,10 +291,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private boolean executeSocketList(Player player) {
         List<DeliverySocket> sockets = socketRepository.getSocketsByOwner(player.getUniqueId());
         if (sockets.isEmpty()) {
-            player.sendMessage(droneManager.message("socket-none", null, null));
+            droneManager.sendMessage(player, "socket-none");
             return true;
         }
-        player.sendMessage(droneManager.message("socket-list-header", "<count>", String.valueOf(sockets.size())));
+        droneManager.sendMessage(player, "socket-list-header", "<count>", String.valueOf(sockets.size()));
         for (DeliverySocket socket : sockets) {
             Component line = MINI_MESSAGE.deserialize(
                     "<gray>- <yellow><name></yellow> <dark_gray>|</dark_gray> "
@@ -319,27 +327,28 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
 
         if (targetSocket == null) {
-            player.sendMessage(droneManager.message("socket-not-found", "<name>", socketName));
+            droneManager.sendMessage(player, "socket-not-found", "<name>", socketName);
             return true;
         }
 
         // Get socket owner
         Player socketOwner = Bukkit.getPlayer(targetSocket.ownerId());
         if (socketOwner == null || !socketOwner.isOnline()) {
-            player.sendMessage(droneManager.message("player-offline", null, null));
+            droneManager.sendMessage(player, "player-offline");
             return true;
         }
 
         if (droneManager.isBlockedWorld(player.getWorld().getName())) {
-            player.sendMessage(droneManager.message("world-blocked", "<world>", player.getWorld().getName()));
+            droneManager.sendMessage(player, "world-blocked", "<world>", player.getWorld().getName());
             return true;
         }
         if (droneManager.isBlockedWorld(targetSocket.getWorldName())) {
-            player.sendMessage(droneManager.message("world-blocked", "<world>", targetSocket.getWorldName()));
+            droneManager.sendMessage(player, "world-blocked", "<world>", targetSocket.getWorldName());
             return true;
         }
+                
         if (!droneManager.canSenderLaunch(player.getUniqueId())) {
-            player.sendMessage(droneManager.message("sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender())));
+            droneManager.sendMessage(player, "sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender()));
             return true;
         }
 
@@ -364,7 +373,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             Inventory deliveryInventory = Bukkit.createInventory(
                     new DroneInventoryHolder(holder.senderId(), holder.receiverId()),
                     droneManager.settings().inventorySize(),
-                    Component.text("Delivery Drone")
+                    MINI_MESSAGE.deserialize(plugin.getConfig().getString("messages.drone-inventory-title", "<gold>Delivery Drone</gold>"))
             );
             spawnDroneFromSelection(sender, holder, deliveryInventory);
             return;
@@ -374,13 +383,13 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         Player receiver = Bukkit.getPlayer(holder.receiverId());
         if (receiver == null || !receiver.isOnline()) {
-            sender.sendMessage(droneManager.message("player-offline", null, null));
+            droneManager.sendMessage(sender, "player-offline");
             return;
         }
         Inventory deliveryInventory = Bukkit.createInventory(
                 new DroneInventoryHolder(holder.senderId(), holder.receiverId()),
                 inv.getSize(),
-                Component.text("Delivery Drone")
+                MINI_MESSAGE.deserialize(plugin.getConfig().getString("messages.drone-inventory-title", "<gold>Delivery Drone</gold>"))
         );
         deliveryInventory.setContents(inv.getContents());
         inv.clear();
@@ -428,30 +437,30 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
     private boolean executePreview(Player player, String[] args) {
         if (!player.hasPermission("drone.use")) {
-            player.sendMessage(droneManager.message("no-permission", null, null));
+            droneManager.sendMessage(player, "no-permission");
             return true;
         }
         if (args.length < 2) {
-            player.sendMessage("/drone preview <id>");
+            player.sendMessage("/drone preview <drone-id>");
             return true;
         }
         UUID droneId;
         try {
             droneId = UUID.fromString(args[1]);
         } catch (IllegalArgumentException ex) {
-            player.sendMessage(droneManager.message("preview-unavailable", null, null));
+            droneManager.sendMessage(player, "preview-unavailable");
             return true;
         }
         de.cb.drones.drone.DeliveryDrone drone = droneManager.findByDroneId(droneId);
         if (drone == null || !drone.receiverId().equals(player.getUniqueId())) {
-            player.sendMessage(droneManager.message("preview-unavailable", null, null));
+            droneManager.sendMessage(player, "preview-unavailable");
             return true;
         }
         int previewSize = drone.animalsOnlyDelivery() ? 9 : drone.inventory().getSize();
         Inventory preview = Bukkit.createInventory(
                 new PreviewInventoryHolder(drone.droneId(), player.getUniqueId()),
                 previewSize,
-                Component.text("Drone Vorschau")
+                MINI_MESSAGE.deserialize(plugin.getConfig().getString("messages.drone-preview-title", "<gold>Drone Vorschau</gold>"))
         );
         if (drone.animalsOnlyDelivery()) {
             populateAnimalPreview(preview, drone.attachedAnimalTypes());
@@ -479,8 +488,12 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             ItemStack stack = new ItemStack(egg, Math.min(64, entry.getValue()));
             ItemMeta meta = stack.getItemMeta();
             if (meta != null) {
-                meta.displayName(Component.text("Tier: " + entry.getKey().name()));
-                meta.lore(List.of(Component.text("Anzahl: " + entry.getValue())));
+                String animalName = plugin.getConfig().getString("messages.animal-display-name", "<gold>Tier: <type></gold>")
+                    .replace("<type>", entry.getKey().name());
+                String animalCount = plugin.getConfig().getString("messages.animal-display-count", "<gray>Anzahl: <count></gray>")
+                    .replace("<count>", String.valueOf(entry.getValue()));
+                meta.displayName(MINI_MESSAGE.deserialize(animalName));
+                meta.lore(List.of(MINI_MESSAGE.deserialize(animalCount)));
                 stack.setItemMeta(meta);
             }
             preview.setItem(slot, stack);
@@ -633,7 +646,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             if (!leashedAnimals.isEmpty()) {
                 int maxAnimals = droneManager.settings().maxLeashedAnimalsPerDrone();
                 if (maxAnimals > 0 && leashedAnimals.size() > maxAnimals) {
-                    sender.sendMessage(droneManager.message("too-many-leashed-animals", "<max>", String.valueOf(maxAnimals)));
+                    droneManager.sendMessage(sender, "too-many-leashed-animals", "<max>", String.valueOf(maxAnimals));
                     return;
                 }
                 Inventory selector = Bukkit.createInventory(
@@ -677,16 +690,23 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private void openComposeInventory(Player sender, UUID receiverId, Location fixedTarget, boolean animalsOnly, boolean exactSocketTarget, String socketName) {
         Player receiver = Bukkit.getPlayer(receiverId);
         if (receiver == null || !receiver.isOnline()) {
-            sender.sendMessage(droneManager.message("player-offline", null, null));
+            droneManager.sendMessage(sender, "player-offline");
             return;
         }
         int size = droneManager.settings().inventorySize();
         boolean adminSend = fixedTarget != null && sender.getUniqueId().equals(receiverId);
         ComposeInventoryHolder holder = new ComposeInventoryHolder(sender.getUniqueId(), receiverId, fixedTarget, animalsOnly, adminSend, List.of(), exactSocketTarget, socketName);
-        String title = socketName != null ? "Drone > " + socketName : (fixedTarget == null ? "Drone > " + receiver.getName() : "Socket Drone > " + receiver.getName());
-        Inventory compose = Bukkit.createInventory(holder, size, Component.text(title));
+        String titleKey = socketName != null ? "drone-title-socket" : (fixedTarget == null ? "drone-title-player" : "drone-title-admin");
+        String placeholder = socketName != null ? "<socket>" : "<player>";
+        String value = socketName != null ? socketName : receiver.getName();
+        Component titleComponent = getComponentMessageWithoutPrefix(titleKey, placeholder, value);
+        Inventory compose = Bukkit.createInventory(holder, size, titleComponent);
         sender.openInventory(compose);
-        sender.sendMessage(droneManager.message("open-inventory", "<player>", receiver.getName()));
+        if (socketName != null) {
+            droneManager.sendMessage(sender, "open-inventory-socket", "<socket>", socketName, "<player>", receiver.getName());
+        } else {
+            droneManager.sendMessage(sender, "open-inventory", "<player>", receiver.getName());
+        }
     }
 
     private ItemStack createModeItem(Material material, String title, List<String> loreLines) {
@@ -706,11 +726,19 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         return stack;
     }
 
+    private Component getComponentMessageWithoutPrefix(String key, String placeholder, String value) {
+        String body = plugin.getConfig().getString("messages." + key, key);
+        if (placeholder != null && value != null) {
+            body = body.replace(placeholder, value);
+        }
+        return MINI_MESSAGE.deserialize(body);
+    }
+
     private void sendAnimalsOnly(Player sender, SendModeInventoryHolder holder) {
         Inventory deliveryInventory = Bukkit.createInventory(
                 new DroneInventoryHolder(holder.senderId(), holder.receiverId()),
                 droneManager.settings().inventorySize(),
-                Component.text("Delivery Drone")
+                MINI_MESSAGE.deserialize(plugin.getConfig().getString("messages.drone-inventory-title", "<gold>Delivery Drone</gold>"))
         );
         ComposeInventoryHolder composeHolder = new ComposeInventoryHolder(
                 holder.senderId(),
@@ -729,7 +757,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private void spawnDroneFromSelection(Player sender, ComposeInventoryHolder holder, Inventory deliveryInventory) {
         Player receiver = Bukkit.getPlayer(holder.receiverId());
         if (receiver == null || !receiver.isOnline()) {
-            sender.sendMessage(droneManager.message("player-offline", null, null));
+            droneManager.sendMessage(sender, "player-offline");
             return;
         }
         List<LivingEntity> attachedAnimals = holder.animalsOnly()
@@ -750,7 +778,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (drone == null) {
             return;
         }
-        sender.sendMessage(droneManager.message("sent-success", "<player>", holder.socketName() != null ? holder.socketName() : receiver.getName()));
+        droneManager.sendMessage(sender, "sent-success", "<player>", holder.socketName() != null ? holder.socketName() : receiver.getName());
         Component incoming = MINI_MESSAGE.deserialize(
                 droneManager.message("incoming-drone", "<player>", sender.getName())
                         + " <click:run_command:'/drone preview " + drone.droneId() + "'>"

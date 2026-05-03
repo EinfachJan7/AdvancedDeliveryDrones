@@ -45,7 +45,13 @@ public final class SocketRepository {
         if (location == null) {
             throw new IllegalArgumentException("Location cannot be null");
         }
-        
+
+        // Max 1 socket per player
+        List<DeliverySocket> existingSockets = getSocketsByOwner(ownerId);
+        if (!existingSockets.isEmpty()) {
+            throw new IllegalArgumentException("Player already has a socket. Maximum 1 socket per player.");
+        }
+
         String socketPath = SOCKETS_PATH + "." + ownerId + "." + name;
         if (config.contains(socketPath)) {
             throw new IllegalArgumentException("Socket with name '" + name + "' already exists");

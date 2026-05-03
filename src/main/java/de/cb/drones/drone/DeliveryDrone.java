@@ -7,7 +7,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -68,8 +67,19 @@ public final class DeliveryDrone {
     private long collectionAnimationStartTick;
     private final int collectionAnimationDuration = 40; // 2 seconds at 20 ticks
     private long lastBossBarUpdate = 0L;
-    private static final long BOSSBAR_UPDATE_INTERVAL = 5L; // Update every 5 ticks (0.25 seconds)
-
+    private static final long BOSSBAR_UPDATE_INTERVAL = 10L; // Update every 10 ticks (0.5 seconds) - doubled
+    private long approachPhaseStartTick = -1L; // -1 means not in approach phase yet
+    
+    // Performance caches
+    private long lastTraveledDistanceTick = -1L;
+    private double cachedTraveledDistance = 0.0;
+    private long lastParticleUpdateTick = -1L;
+    private static final long PARTICLE_UPDATE_INTERVAL = 2L; // Particles every 2 ticks instead of every tick
+    private long lastHologramUpdateTick = -1L;
+    private static final long HOLOGRAM_UPDATE_INTERVAL = 40L; // Hologram every 2 seconds (40 ticks) instead of every second
+    private long lastExpectedLocationTick = -1L;
+    private Location cachedExpectedLocation = null;
+    
     public DeliveryDrone(
             UUID droneId,
             UUID senderId,
@@ -150,6 +160,10 @@ public final class DeliveryDrone {
     }
 
     public boolean isExpired(long currentTick) {
+        // Despawn timer only starts after landing
+        if (!landed) {
+            return false;
+        }
         return currentTick - lastInteractionTick > settings.despawnTicks();
     }
 
@@ -237,7 +251,7 @@ public final class DeliveryDrone {
     public void applySettings(DroneSettings settings, DroneManager manager) {
         this.settings = settings;
         if (stand != null && !stand.isDead()) {
-            stand.getEquipment().setHelmet(createSkull(settings.skullTexture()));
+            stand.getEquipment().setHelmet(createSkullStatic(settings.skullTexture()));
         }
         if (landed) {
             if (stand != null && !stand.isDead()) {
@@ -292,6 +306,8 @@ public final class DeliveryDrone {
             }
             if (isChunkLoaded(pendingLanding)) {
                 Location landingSpot = exactSocketTarget ? pendingLanding.clone() : computeLandingFrom(pendingLanding);
+                
+                // Always use smooth landing - no instant teleportation
                 if (!smoothLanding) {
                     // Start smooth landing animation
                     smoothLanding = true;
@@ -312,9 +328,9 @@ public final class DeliveryDrone {
                             Player receiver = Bukkit.getPlayer(receiverId);
                             if (receiver != null && receiver.isOnline()) {
                                 if (socketName != null) {
-                                    receiver.sendMessage(manager.message("landing-notif-socket", "<socket>", socketName));
+                                    manager.sendMessage(receiver, "landing-notif-socket", "<socket>", socketName);
                                 } else {
-                                    receiver.sendMessage(manager.message("landing-notif", "<radius>", String.valueOf((int) settings.deliveryRadius())));
+                                    manager.sendMessage(receiver, "landing-notif", "<radius>", String.valueOf((int) settings.deliveryRadius()));
                                 }
                             }
                         }
@@ -332,31 +348,37 @@ public final class DeliveryDrone {
                             );
                         }
                     } else {
-                        // Animate smooth descent
+                        // Animate smooth descent with improved easing
                         double progress = (double) elapsedTicks / smoothLandingDuration;
-                        // Use ease-in-out cubic function for smooth animation
-                        double easedProgress = progress < 0.5 
-                            ? 4 * progress * progress * progress 
-                            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+                        // Use ease-out cubic function for more natural landing
+                        double easedProgress = 1 - Math.pow(1 - progress, 3);
+                        
+                        // Add slight hover effect at the beginning
+                        double hoverEffect = Math.sin(progress * Math.PI) * 0.2;
                         
                         Vector startVec = smoothLandingStart.toVector();
                         Vector endVec = landingSpot.toVector();
                         Vector current = startVec.add(endVec.subtract(startVec).multiply(easedProgress));
                         
+                        // Apply hover effect only to Y coordinate
+                        current.setY(current.getY() + hoverEffect);
+                        
                         Location animatedPos = new Location(landingSpot.getWorld(), current.getX(), current.getY(), current.getZ());
                         ensureStandPresent(manager, animatedPos);
                         if (stand != null && !stand.isDead()) {
                             stand.teleport(animatedPos);
-                            tickAttachedAnimalFollow(animatedPos);
-                            updateParticleTrail();
-                            stand.getWorld().playSound(stand.getLocation(), settings.flightSound(), 0.05f, 1.3f);
                         }
+                        
+                        tickAttachedAnimalFollow(animatedPos);
+                        updateParticleTrail();
+                        stand.getWorld().playSound(stand.getLocation(), settings.flightSound(), 0.05f, 1.3f);
                     }
                 }
             }
         }
 
-        if (!landed) {
+        // Only continue normal flight if not in landing phase
+        if (!landed && !smoothLanding) {
             if (!isChunkLoaded(expected)) {
                 if (standAvailable) {
                     parkStandUntilChunkLoads(manager);
@@ -403,7 +425,6 @@ public final class DeliveryDrone {
         // Animate upward spiral and shrink
         Location current = stand.getLocation().clone();
         double height = easedProgress * 3.0; // Rise 3 blocks
-        double scale = 1.0 - (easedProgress * 0.8); // Shrink to 20% size
         double rotation = elapsedTicks * 0.3; // Rotation speed
 
         Location newPos = current.add(0, height * 0.1, 0); // Gradual rise
@@ -445,6 +466,9 @@ public final class DeliveryDrone {
         this.lastKnownLocation = landing.clone();
         stand.setGlowing(true);
         this.landed = true;
+        this.approachPhaseStartTick = -1L;
+        // Start despawn timer on landing
+        this.lastInteractionTick = Bukkit.getCurrentTick();
         spawnTransportedAnimalsAtLanding();
         updateHologram(Bukkit.getCurrentTick(), manager);
         initBossbar(manager);
@@ -455,25 +479,139 @@ public final class DeliveryDrone {
         if (world == null) {
             return at;
         }
-        int x = at.getBlockX();
-        int z = at.getBlockZ();
-        int y = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
-        y = Math.max(y, world.getMinHeight() + 1);
-        return new Location(world, x + 0.5, y + 0.1, z + 0.5);
+        
+        if (exactSocketTarget) {
+            // For sockets, use exact position + 1 block height
+            int x = at.getBlockX();
+            int z = at.getBlockZ();
+            int y = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
+            y = Math.max(y, world.getMinHeight() + 1);
+            return new Location(world, x + 0.5, y + 0.1, z + 0.5);
+        }
+        
+        // For player targets, scan for highest safe position in radius
+        double scanRadius = settings.deliveryRadius(); // Use configured delivery radius
+        int centerX = at.getBlockX();
+        int centerZ = at.getBlockZ();
+        
+        int bestY = world.getMinHeight();
+        double bestDistance = Double.MAX_VALUE;
+        int bestX = centerX;
+        int bestZ = centerZ;
+        
+        // Scan in a square around the target for best landing spot
+        int scanRange = (int) Math.ceil(scanRadius);
+        for (int dx = -scanRange; dx <= scanRange; dx++) {
+            for (int dz = -scanRange; dz <= scanRange; dz++) {
+                int x = centerX + dx;
+                int z = centerZ + dz;
+                
+                // Check if within radius
+                double distance = Math.sqrt(dx * dx + dz * dz);
+                if (distance > scanRadius) continue;
+                
+                // Get highest safe block at this position
+                int y = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
+                y = Math.max(y, world.getMinHeight() + 1);
+                
+                // Check if this spot is better (higher and closer to target)
+                if (y > bestY || (y == bestY && distance < bestDistance)) {
+                    bestY = y;
+                    bestDistance = distance;
+                    bestX = x;
+                    bestZ = z;
+                }
+            }
+        }
+        
+        return new Location(world, bestX + 0.5, bestY + 0.1, bestZ + 0.5);
     }
 
     private Location expectedLocation(long nowTick) {
+        // Cache result for same tick to avoid redundant calculations
+        if (nowTick == lastExpectedLocationTick && cachedExpectedLocation != null) {
+            return cachedExpectedLocation.clone();
+        }
+        
         Location target = fixedTarget.clone().add(0.0, 0.1, 0.0);
         Vector delta = target.toVector().subtract(startLocation.toVector());
         double distance = delta.length();
         if (distance <= 0.001D) {
+            lastExpectedLocationTick = nowTick;
+            cachedExpectedLocation = target;
             return target;
         }
         delta.normalize();
-        double traveled = traveledDistance(nowTick);
+        double traveled = calculateTraveledDistance(nowTick);
         double factor = Math.min(1.0D, traveled / distance);
         Vector pos = startLocation.toVector().add(delta.multiply(distance * factor));
-        return new Location(startLocation.getWorld(), pos.getX(), pos.getY(), pos.getZ(), target.getYaw(), target.getPitch());
+        Location result = new Location(startLocation.getWorld(), pos.getX(), pos.getY(), pos.getZ(), target.getYaw(), target.getPitch());
+        
+        // Cache the result
+        lastExpectedLocationTick = nowTick;
+        cachedExpectedLocation = result.clone();
+        return result;
+    }
+
+    private double calculateTraveledDistance(long nowTick) {
+        // Cache result for same tick to avoid redundant calculations
+        if (nowTick == lastTraveledDistanceTick) {
+            return cachedTraveledDistance;
+        }
+        
+        long elapsedTicks = Math.max(0L, nowTick - flightStartTick);
+        long startupTicks = settings.startupSeconds() * 20L;
+        long startupPart = Math.min(elapsedTicks, startupTicks);
+        long cruisePart = Math.max(0L, elapsedTicks - startupPart);
+        
+        // Calculate total distance to target (can be cached per flight)
+        Location target = fixedTarget.clone().add(0.0, 0.1, 0.0);
+        double totalDistance = startLocation.distance(target);
+        
+        // Calculate distance traveled during startup phase
+        double startupDistance = startupPart * settings.startupSpeed();
+        
+        // Calculate distance already covered in cruise phase at normal speed
+        double cruiseDistanceCovered = cruisePart * settings.speed();
+        
+        // Calculate total distance covered so far (hypothetical, at normal speed)
+        double totalDistanceCovered = startupDistance + cruiseDistanceCovered;
+        
+        // Calculate remaining distance to target
+        double remainingDistanceToTarget = Math.max(0.0, totalDistance - totalDistanceCovered);
+        
+        double result;
+        
+        // Check if we're within approach distance of target
+        if (remainingDistanceToTarget <= settings.approachDistance()) {
+            // We should be in approach phase
+            
+            // If we just entered approach phase, record the start tick
+            if (approachPhaseStartTick < 0) {
+                approachPhaseStartTick = nowTick;
+            }
+            
+            // Calculate how many ticks we've been in approach phase
+            long approachPhaseTicks = nowTick - approachPhaseStartTick;
+            
+            // Calculate the distance we should have covered at approach speed
+            double approachDistanceCovered = approachPhaseTicks * settings.approachSpeed();
+            
+            // Distance covered before approach phase = total - approachDistance - remaining
+            double distanceBeforeApproach = Math.max(0.0, totalDistance - settings.approachDistance());
+            
+            result = distanceBeforeApproach + approachDistanceCovered;
+        } else {
+            // Not in approach phase yet, reset the tracker
+            approachPhaseStartTick = -1L;
+            // Normal case: all cruise phase at normal speed
+            result = startupDistance + cruiseDistanceCovered;
+        }
+        
+        // Cache the result
+        lastTraveledDistanceTick = nowTick;
+        cachedTraveledDistance = result;
+        return result;
     }
 
     private boolean isChunkLoaded(Location location) {
@@ -488,14 +626,11 @@ public final class DeliveryDrone {
         if (!landed) {
             return;
         }
-        // Don't show hologram for socket drones
-        if (exactSocketTarget) {
-            if (hologramStand != null && !hologramStand.isDead()) {
-                hologramStand.remove();
-            }
-            hologramStand = null;
+        // Check hologram update interval
+        if (currentTick - lastHologramUpdateTick < HOLOGRAM_UPDATE_INTERVAL) {
             return;
         }
+        lastHologramUpdateTick = currentTick;
         if (!settings.hologramEnabled()) {
             if (hologramStand != null && !hologramStand.isDead()) {
                 hologramStand.remove();
@@ -549,6 +684,13 @@ public final class DeliveryDrone {
         if (stand == null || stand.isDead()) {
             return;
         }
+        
+        // Check particle update interval to reduce processing
+        long currentTick = Bukkit.getCurrentTick();
+        if (currentTick - lastParticleUpdateTick < PARTICLE_UPDATE_INTERVAL) {
+            return;
+        }
+        lastParticleUpdateTick = currentTick;
         
         // Check performance optimization
         if (droneManager != null && droneManager.getPerformanceOptimizer() != null) {
@@ -695,15 +837,15 @@ public final class DeliveryDrone {
         stand.setPersistent(true);
         stand.setCollidable(false);
         stand.setCustomNameVisible(false);
-        stand.getEquipment().setHelmet(createSkull(skullTexture));
+        stand.getEquipment().setHelmet(createSkullStatic(skullTexture));
         return stand;
     }
 
-    private static ItemStack createSkull(String texture) {
+    private static ItemStack createSkullStatic(String texture) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         SkullMeta meta = (SkullMeta) head.getItemMeta();
         if (meta != null) {
-            meta.displayName(Component.text("Drone"));
+            meta.displayName(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize("<gold>Drone</gold>"));
             applyTexture(meta, texture);
             head.setItemMeta(meta);
         }
@@ -767,48 +909,59 @@ public final class DeliveryDrone {
         if (landed) {
             return 0L;
         }
-        Location target = fixedTarget.clone().add(0.0, 0.1, 0.0);
-        Vector delta = target.toVector().subtract(startLocation.toVector());
-        double totalDistance = delta.length();
-        double traveled = traveledDistance(nowTick);
-        double remainingToRadius = Math.max(0.0D, (totalDistance - traveled) - settings.deliveryRadius());
-        return estimateEtaSeconds(remainingToRadius, nowTick);
-    }
-
-    private double traveledDistance(long nowTick) {
-        long elapsedTicks = Math.max(0L, nowTick - flightStartTick);
-        long startupTicks = settings.startupSeconds() * 20L;
-        long startupPart = Math.min(elapsedTicks, startupTicks);
-        long cruisePart = Math.max(0L, elapsedTicks - startupTicks);
-        return (startupPart * settings.startupSpeed()) + (cruisePart * settings.speed());
-    }
-
-    private long estimateEtaSeconds(double remainingDistance, long nowTick) {
-        if (remainingDistance <= 0.0D) {
+        
+        // Get current position and target
+        Location current = currentLocation();
+        if (current == null) {
             return 0L;
         }
-        long elapsedTicks = Math.max(0L, nowTick - flightStartTick);
-        long startupTicks = settings.startupSeconds() * 20L;
-        long startupTicksLeft = Math.max(0L, startupTicks - elapsedTicks);
-        double startupDistanceLeft = startupTicksLeft * settings.startupSpeed();
-
-        double seconds = 0.0D;
-        if (startupDistanceLeft > 0.0D) {
-            if (remainingDistance <= startupDistanceLeft) {
-                seconds += remainingDistance / (settings.startupSpeed() * 20.0D);
-                return (long) Math.ceil(seconds);
-            }
-            seconds += startupTicksLeft / 20.0D;
-            remainingDistance -= startupDistanceLeft;
+        
+        Location target = fixedTarget.clone().add(0.0, 0.1, 0.0);
+        double remainingDistance = current.distance(target);
+        
+        // Add landing animation time if within delivery radius
+        double deliveryRadius = exactSocketTarget ? 0.5 : settings.deliveryRadius();
+        if (remainingDistance <= deliveryRadius) {
+            return 3L; // 3 seconds for landing animation
         }
-
-        double cruisePerSecond = settings.speed() * 20.0D;
-        if (cruisePerSecond <= 0.0001D) {
+        
+        // Calculate ETA based on current speed
+        double currentSpeed = getCurrentSpeed(nowTick);
+        if (currentSpeed <= 0.001) {
             return Long.MAX_VALUE;
         }
-        seconds += remainingDistance / cruisePerSecond;
-        return (long) Math.ceil(seconds);
+        
+        double etaSeconds = remainingDistance / (currentSpeed * 20.0); // Convert blocks/tick to blocks/second
+        return (long) Math.ceil(etaSeconds) + 3L; // Add landing time
     }
+
+    private double getCurrentSpeed(long nowTick) {
+        long elapsedTicks = Math.max(0L, nowTick - flightStartTick);
+        long startupTicks = settings.startupSeconds() * 20L;
+        
+        // Still in startup phase
+        if (elapsedTicks < startupTicks) {
+            return settings.startupSpeed();
+        }
+        
+        // Check if we should use approach speed (regardless of chunk loading)
+        Location current = currentLocation();
+        if (current == null) {
+            return settings.speed();
+        }
+        
+        Location target = fixedTarget.clone().add(0.0, 0.1, 0.0);
+        double distanceToTarget = current.distance(target);
+        
+        // Use approach speed when close to target (even if chunk not loaded)
+        if (distanceToTarget <= settings.approachDistance()) {
+            return settings.approachSpeed();
+        }
+        
+        // Normal cruise speed
+        return settings.speed();
+    }
+
 
     private ArmorStand spawnHologramStand() {
         if (stand == null || stand.isDead()) {
