@@ -47,7 +47,7 @@ public final class SocketRepository {
         this.config = YamlConfiguration.loadConfiguration(file);
     }
 
-    public DeliverySocket addSocket(UUID ownerId, String ownerName, String name, Location location, String structureName) {
+    public DeliverySocket addSocket(UUID ownerId, String ownerName, String name, Location location) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Socket name cannot be null or blank");
         }
@@ -55,7 +55,6 @@ public final class SocketRepository {
             throw new IllegalArgumentException("Location cannot be null");
         }
 
-        // Max sockets per player (configurable)
         List<DeliverySocket> existingSockets = getSocketsByOwner(ownerId);
         if (existingSockets.size() >= maxSocketsPerPlayer) {
             throw new IllegalArgumentException("Player already has " + existingSockets.size() + " socket(s). Maximum " + maxSocketsPerPlayer + " socket(s) per player.");
@@ -66,13 +65,9 @@ public final class SocketRepository {
             throw new IllegalArgumentException("Socket with name '" + name + "' already exists");
         }
 
-        DeliverySocket socket = DeliverySocket.create(ownerId, ownerName, name, location, structureName);
+        DeliverySocket socket = DeliverySocket.create(ownerId, ownerName, name, location);
         saveSocket(socket);
         return socket;
-    }
-
-    public DeliverySocket addSocket(UUID ownerId, String ownerName, String name, Location location) {
-        return addSocket(ownerId, ownerName, name, location, null);
     }
 
     public boolean removeSocket(UUID ownerId, String name) {
@@ -244,8 +239,7 @@ public final class SocketRepository {
                 socket.location(),
                 socket.createdTimestamp(),
                 socket.trustedPlayers(),
-                socket.blacklistedPlayers(),
-                socket.structureName()
+                socket.blacklistedPlayers()
         );
         saveSocket(renamed);
         return true;
@@ -270,8 +264,7 @@ public final class SocketRepository {
         config.set(socketPath + ".yaw", socket.location().getYaw());
         config.set(socketPath + ".pitch", socket.location().getPitch());
         config.set(socketPath + ".created", socket.createdTimestamp());
-        config.set(socketPath + ".structure-name", socket.structureName());
-        
+
         // Save trusted players
         List<String> trustedPlayerStrings = socket.trustedPlayers().stream()
                 .map(UUID::toString)
@@ -299,8 +292,7 @@ public final class SocketRepository {
                 location,
                 socket.createdTimestamp(),
                 trustedPlayers,
-                blacklistedPlayers,
-                socket.structureName()
+                blacklistedPlayers
         );
     }
 
@@ -314,7 +306,6 @@ public final class SocketRepository {
         float yaw = (float) config.getDouble(socketPath + ".yaw");
         float pitch = (float) config.getDouble(socketPath + ".pitch");
         long created = config.getLong(socketPath + ".created");
-        String structureName = config.getString(socketPath + ".structure-name");
 
         // Load trusted players
         List<UUID> trustedPlayers = new ArrayList<>();
@@ -346,7 +337,7 @@ public final class SocketRepository {
             }
         }
 
-        return new DeliverySocket(socketId, ownerId, ownerName, name, location, created, trustedPlayers, blacklistedPlayers, structureName);
+        return new DeliverySocket(socketId, ownerId, ownerName, name, location, created, trustedPlayers, blacklistedPlayers);
     }
 
     private void save() {

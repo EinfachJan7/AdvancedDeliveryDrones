@@ -59,11 +59,6 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 - Exact landing on socket coordinates
 - Pending returns if the socket owner is unreachable (`socket-pending-returns.yml`)
 
-### 🧱 Socket structures (builder tool)
-- Select a region with the structure tool (`/drone socket select`, corner clicks with carrot on a stick)
-- Save templates: `create` → `confirm <name>` / `cancel`
-- Stored in `socket_structures.yml` (preview via block displays)
-
 ### 🐾 Animal transport
 - Optional leashed-animal delivery (`carry-leashed-animals`)
 - Send-mode GUI: animals only vs items
@@ -141,10 +136,6 @@ Root command: **`/drone`** (players only — opens the main GUI when run without
 | `/drone socket blacklist add <socket> [player]` | Block sender for a socket | `drone.socket` |
 | `/drone socket blacklist remove <socket> [player]` | Unblock sender | `drone.socket` |
 | `/drone socket blacklist list <socket>` | List socket blacklist | `drone.socket` |
-| `/drone socket select` | Get structure selection tool | `drone.socket` |
-| `/drone socket create` | Capture selected region | `drone.socket` |
-| `/drone socket confirm <name>` | Save structure template | `drone.socket` |
-| `/drone socket cancel` | Cancel structure capture | `drone.socket` |
 
 ### 🛠 Admin
 
@@ -164,7 +155,7 @@ Current permission nodes (more granular permissions are planned):
 |------------|-------------|---------|
 | `drone.send` | Send and cancel drones | `true` |
 | `drone.use` | Toggle, decline, preview, player blacklist | `true` |
-| `drone.socket` | All socket commands and structure tools | `true` |
+| `drone.socket` | All `/drone socket` subcommands | `true` |
 | `drone.admin` | Admin send, list, reload | OP |
 
 ---
@@ -179,7 +170,6 @@ Current permission nodes (more granular permissions are planned):
 | `blacklists.yml` | Player blacklists (auto-generated) |
 | `sockets.yml` | Sockets, trust, socket blacklists (auto-generated) |
 | `socket-pending-returns.yml` | Pending socket returns (auto-generated) |
-| `socket_structures.yml` | Saved structure templates (auto-generated) |
 
 Key `settings.drone` options: `speed`, `startup-speed`, `startup-seconds`, `approach-speed`, `approach-distance`, `delivery-radius`, `despawn-time-minutes`, `despawn-mode`, `max-active-per-sender`, `carry-leashed-animals`, `max-leashed-animals-per-drone`, `max-sockets-per-player`, `blocked-worlds`, particles, `flight-sound`, `inventory-size`, `hologram.*`, `bossbar.*`, `collection-animation.enabled`, `launch-animation.*`.
 

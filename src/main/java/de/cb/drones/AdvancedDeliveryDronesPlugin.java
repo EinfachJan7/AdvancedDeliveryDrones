@@ -9,9 +9,6 @@ import de.cb.drones.drone.DroneInteractionListener;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.socket.SocketRepository;
-import de.cb.drones.socket.SocketStructureRepository;
-import de.cb.drones.socket.SocketStructureListener;
-import de.cb.drones.socket.SocketPreviewManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.PluginCommand;
@@ -29,9 +26,6 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private DroneManager droneManager;
     private DiscordWebhookManager discordWebhookManager;
     private SocketRepository socketRepository;
-    private SocketStructureRepository structureRepository;
-    private SocketStructureListener structureListener;
-    private SocketPreviewManager previewManager;
     private FileConfiguration guiConfig;
     private DroneCommand droneCommand;
     
@@ -46,9 +40,6 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         this.socketRepository = new SocketRepository(this, maxSockets);
         this.discordWebhookManager = new DiscordWebhookManager(this);
         this.guiConfig = loadGuiConfig();
-        this.structureRepository = new SocketStructureRepository(getDataFolder());
-        this.structureListener = new SocketStructureListener(this);
-        this.previewManager = new SocketPreviewManager(this);
         this.droneManager = new DroneManager(
                 this,
                 DroneSettings.fromConfig(getConfig(), guiConfig),
@@ -58,7 +49,14 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         );
         this.droneManager.start();
 
-        this.droneCommand = new DroneCommand(this, droneManager, playerSettings, blacklistRepository, droneManager.settings(), socketRepository, structureRepository, structureListener, previewManager);
+        this.droneCommand = new DroneCommand(
+                this,
+                droneManager,
+                playerSettings,
+                blacklistRepository,
+                droneManager.settings(),
+                socketRepository
+        );
         PluginCommand drone = getCommand("drone");
         if (drone != null) {
             drone.setExecutor(droneCommand);
@@ -76,8 +74,8 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     }
 
     public void reloadPlugin() {
-        saveDefaultConfig(); // Create config if it doesn't exist
-        saveGuiConfig(); // Ensure GUI config exists
+        saveDefaultConfig();
+        saveGuiConfig();
         reloadConfig();
         playerSettings.reload();
         blacklistRepository.reload();
@@ -105,13 +103,11 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         if (!guiConfigFile.exists()) {
             saveResource("gui.yml", false);
         }
-        // Always create a fresh FileConfiguration to avoid caching issues
         YamlConfiguration config = new YamlConfiguration();
         try {
             config.load(guiConfigFile);
         } catch (Exception e) {
             getLogger().warning("Could not load gui.yml: " + e.getMessage());
-            // Return empty config as fallback
         }
         return config;
     }

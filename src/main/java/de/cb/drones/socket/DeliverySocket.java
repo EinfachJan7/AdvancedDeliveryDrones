@@ -13,8 +13,7 @@ public record DeliverySocket(
         Location location,
         long createdTimestamp,
         List<UUID> trustedPlayers,
-        List<UUID> blacklistedPlayers,
-        String structureName
+        List<UUID> blacklistedPlayers
 ) {
     public DeliverySocket {
         if (socketId == null) {
@@ -31,7 +30,7 @@ public record DeliverySocket(
         }
     }
 
-    public static DeliverySocket create(UUID ownerId, String ownerName, String name, Location location, String structureName) {
+    public static DeliverySocket create(UUID ownerId, String ownerName, String name, Location location) {
         return new DeliverySocket(
                 UUID.randomUUID(),
                 ownerId,
@@ -40,13 +39,8 @@ public record DeliverySocket(
                 location.clone(),
                 System.currentTimeMillis(),
                 List.of(),
-                List.of(),
-                structureName
+                List.of()
         );
-    }
-    
-    public static DeliverySocket create(UUID ownerId, String ownerName, String name, Location location) {
-        return create(ownerId, ownerName, name, location, null);
     }
 
     public String getWorldName() {

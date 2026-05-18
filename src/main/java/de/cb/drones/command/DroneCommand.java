@@ -8,13 +8,9 @@ import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.gui.DroneMenuHandler;
 import de.cb.drones.socket.DeliverySocket;
 import de.cb.drones.socket.SocketRepository;
-import de.cb.drones.socket.SocketStructure;
-import de.cb.drones.socket.SocketStructureRepository;
-import de.cb.drones.socket.SocketStructureListener;
-import de.cb.drones.socket.SocketPreviewManager;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -52,19 +48,20 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private final PlayerBlacklistRepository blacklistRepository;
     private final DroneMenuHandler menuHandler;
     private final SocketRepository socketRepository;
-    private final SocketStructureRepository structureRepository;
-    private final SocketStructureListener structureListener;
-    private final SocketPreviewManager previewManager;
-    private final Map<UUID, SocketStructure> pendingStructures = new HashMap<>();
-    public DroneCommand(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, PlayerBlacklistRepository blacklistRepository, DroneSettings droneSettings, SocketRepository socketRepository, SocketStructureRepository structureRepository, SocketStructureListener structureListener, SocketPreviewManager previewManager) {
+
+    public DroneCommand(
+            AdvancedDeliveryDronesPlugin plugin,
+            DroneManager droneManager,
+            PlayerSettingsRepository settingsRepository,
+            PlayerBlacklistRepository blacklistRepository,
+            DroneSettings droneSettings,
+            SocketRepository socketRepository
+    ) {
         this.plugin = plugin;
         this.droneManager = droneManager;
         this.settingsRepository = settingsRepository;
         this.blacklistRepository = blacklistRepository;
         this.socketRepository = socketRepository;
-        this.structureRepository = structureRepository;
-        this.structureListener = structureListener;
-        this.previewManager = previewManager;
         this.menuHandler = new DroneMenuHandler(plugin, droneManager, settingsRepository, blacklistRepository, droneSettings, socketRepository);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
@@ -377,10 +374,6 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "trust" -> executeSocketTrust(player, args);
             case "untrust" -> executeSocketUntrust(player, args);
             case "blacklist" -> executeSocketBlacklist(player, args);
-            case "select" -> executeStructureSelect(player, args);
-            case "create" -> executeStructureCreate(player);
-            case "confirm" -> executeStructureConfirm(player, args);
-            case "cancel" -> executeStructureCancel(player);
             default -> {
                 player.sendMessage(plugin.component("usage-socket"));
                 yield true;
@@ -1217,132 +1210,6 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                         + "<green><bold>[Vorschau]</bold></green></click>"
         );
         receiver.sendMessage(incoming);
-    }
-
-    // === Socket Structure Commands ===
-    
-    private boolean executeStructureSelect(Player player, String[] args) {
-        if (args.length < 3) {
-            player.sendMessage(Component.text("Usage: /drone socket select <structureName>"));
-            return true;
-        }
-        
-        String structureName = args[2];
-        if (!structureRepository.exists(structureName)) {
-            player.sendMessage(Component.text("Structure not found: " + structureName));
-            return true;
-        }
-        
-        ItemStack tool = new ItemStack(Material.CARROT_ON_A_STICK);
-        ItemMeta meta = tool.getItemMeta();
-        if (meta != null) {
-            meta.displayName(Component.text("Structure Selection Tool"));
-            tool.setItemMeta(meta);
-        }
-        
-        player.getInventory().addItem(tool);
-        player.sendMessage(Component.text("Left-click to mark corner 1, right-click to mark corner 2"));
-        return true;
-    }
-    
-    private boolean executeStructureCreate(Player player) {
-        UUID playerId = player.getUniqueId();
-        Location corner1 = structureListener.getCorner1(playerId);
-        Location corner2 = structureListener.getCorner2(playerId);
-        
-        if (corner1 == null || corner2 == null) {
-            player.sendMessage(Component.text("Both corners must be marked first!"));
-            return true;
-        }
-        
-        try {
-            // Calculate structure bounds
-            int minX = Math.min(corner1.getBlockX(), corner2.getBlockX());
-            int maxX = Math.max(corner1.getBlockX(), corner2.getBlockX());
-            int minY = Math.min(corner1.getBlockY(), corner2.getBlockY());
-            int maxY = Math.max(corner1.getBlockY(), corner2.getBlockY());
-            int minZ = Math.min(corner1.getBlockZ(), corner2.getBlockZ());
-            int maxZ = Math.max(corner1.getBlockZ(), corner2.getBlockZ());
-            
-            int sizeX = maxX - minX + 1;
-            int sizeY = maxY - minY + 1;
-            int sizeZ = maxZ - minZ + 1;
-            
-            // Read blocks with relative coordinates
-            Map<String, String> blockData = new HashMap<>();
-            for (int x = minX; x <= maxX; x++) {
-                for (int y = minY; y <= maxY; y++) {
-                    for (int z = minZ; z <= maxZ; z++) {
-                        int relX = x - minX;
-                        int relY = y - minY;
-                        int relZ = z - minZ;
-                        org.bukkit.block.Block block = corner1.getWorld().getBlockAt(x, y, z);
-                        String blockDataStr = block.getBlockData().getAsString();
-                        blockData.put(relX + "," + relY + "," + relZ, blockDataStr);
-                    }
-                }
-            }
-            
-            // Show preview
-            Location previewLoc = player.getLocation().clone().add(0, 2, 0);
-            Map<String, String> tempBlockData = new HashMap<>();
-            for (int i = 0; i < 3; i++) {
-                tempBlockData.put("0," + i + ",0", "minecraft:smooth_stone_slab");
-            }
-            SocketStructure preview = new SocketStructure("preview", 1, 3, 1, tempBlockData);
-            previewManager.showPreview(playerId, previewLoc, preview);
-            
-            // Store pending structure
-            SocketStructure structure = new SocketStructure("pending", sizeX, sizeY, sizeZ, blockData);
-            pendingStructures.put(playerId, structure);
-            
-            player.sendMessage(Component.text("Structure captured! Use /drone socket confirm <name> to save"));
-            return true;
-        } catch (Exception e) {
-            player.sendMessage(Component.text("Error creating structure: " + e.getMessage()));
-            plugin.getLogger().severe("Error creating structure: " + e.getMessage());
-            return true;
-        }
-    }
-    
-    private boolean executeStructureConfirm(Player player, String[] args) {
-        if (args.length < 3) {
-            player.sendMessage(Component.text("Usage: /drone socket confirm <name>"));
-            return true;
-        }
-        
-        UUID playerId = player.getUniqueId();
-        SocketStructure pending = pendingStructures.get(playerId);
-        
-        if (pending == null) {
-            player.sendMessage(Component.text("No pending structure! Use /drone socket create first"));
-            return true;
-        }
-        
-        String structureName = args[2];
-        
-        try {
-            SocketStructure finalStructure = new SocketStructure(structureName, pending.sizeX(), pending.sizeY(), pending.sizeZ(), pending.blockData());
-            structureRepository.saveStructure(finalStructure);
-            
-            previewManager.clearPreview(playerId);
-            pendingStructures.remove(playerId);
-            structureListener.clearCorners(playerId);
-            
-            player.sendMessage(Component.text("Structure '" + structureName + "' saved successfully!"));
-            return true;
-        } catch (Exception e) {
-            player.sendMessage(Component.text("Error saving structure: " + e.getMessage()));
-            return true;
-        }
-    }
-    
-    private boolean executeStructureCancel(Player player) {
-        UUID playerId = player.getUniqueId();
-        previewManager.clearPreview(playerId);
-        pendingStructures.remove(playerId);
-        player.sendMessage(Component.text("Structure creation cancelled"));
-        return true;
     }
 
     private record ComposeInventoryHolder(
