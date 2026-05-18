@@ -1205,7 +1205,12 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (drone == null) {
             return;
         }
-        droneManager.sendMessage(sender, "sent-success", "<player>", holder.socketName() != null ? holder.socketName() : receiver.getName());
+        String targetName = holder.socketName() != null ? holder.socketName() : receiver.getName();
+        Component sent = MINI_MESSAGE.deserialize(
+                droneManager.message("sent-success", "<player>", targetName)
+                        + droneManager.message("sent-cancel-button", null, null)
+        );
+        sender.sendMessage(sent);
         Component incoming = MINI_MESSAGE.deserialize(
                 droneManager.message("incoming-drone", "<player>", sender.getName())
                         + " <click:run_command:'/drone preview " + drone.droneId() + "'>"

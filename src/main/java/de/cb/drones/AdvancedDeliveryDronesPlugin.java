@@ -3,6 +3,7 @@ package de.cb.drones;
 import de.cb.drones.command.DroneCommand;
 import de.cb.drones.config.PlayerBlacklistRepository;
 import de.cb.drones.config.PlayerSettingsRepository;
+import de.cb.drones.config.SocketPendingReturnsRepository;
 import de.cb.drones.discord.DiscordWebhookManager;
 import de.cb.drones.drone.DroneInteractionListener;
 import de.cb.drones.drone.DroneManager;
@@ -24,6 +25,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private PlayerSettingsRepository playerSettings;
     private PlayerBlacklistRepository blacklistRepository;
+    private SocketPendingReturnsRepository socketPendingReturns;
     private DroneManager droneManager;
     private DiscordWebhookManager discordWebhookManager;
     private SocketRepository socketRepository;
@@ -39,6 +41,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         saveGuiConfig();
         this.playerSettings = new PlayerSettingsRepository(this);
         this.blacklistRepository = new PlayerBlacklistRepository(this);
+        this.socketPendingReturns = new SocketPendingReturnsRepository(this);
         int maxSockets = getConfig().getInt("settings.drone.max-sockets-per-player", 3);
         this.socketRepository = new SocketRepository(this, maxSockets);
         this.discordWebhookManager = new DiscordWebhookManager(this);
@@ -46,7 +49,13 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         this.structureRepository = new SocketStructureRepository(getDataFolder());
         this.structureListener = new SocketStructureListener(this);
         this.previewManager = new SocketPreviewManager(this);
-        this.droneManager = new DroneManager(this, DroneSettings.fromConfig(getConfig(), guiConfig), discordWebhookManager, socketRepository);
+        this.droneManager = new DroneManager(
+                this,
+                DroneSettings.fromConfig(getConfig(), guiConfig),
+                discordWebhookManager,
+                socketRepository,
+                socketPendingReturns
+        );
         this.droneManager.start();
 
         this.droneCommand = new DroneCommand(this, droneManager, playerSettings, blacklistRepository, droneManager.settings(), socketRepository, structureRepository, structureListener, previewManager);
@@ -72,6 +81,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         reloadConfig();
         playerSettings.reload();
         blacklistRepository.reload();
+        socketPendingReturns.reload();
         int maxSockets = getConfig().getInt("settings.drone.max-sockets-per-player", 3);
         this.socketRepository.setMaxSocketsPerPlayer(maxSockets);
         this.socketRepository.reload();

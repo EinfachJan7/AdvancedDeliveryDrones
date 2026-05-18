@@ -1,6 +1,7 @@
 package de.cb.drones.drone;
 
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
+import de.cb.drones.config.SocketPendingReturnsRepository;
 import de.cb.drones.discord.DiscordWebhookManager;
 import de.cb.drones.performance.PerformanceOptimizer;
 import de.cb.drones.socket.DeliverySocket;
@@ -35,6 +36,7 @@ public final class DroneManager {
     private final DiscordWebhookManager discordWebhookManager;
     private final PerformanceOptimizer performanceOptimizer;
     private final SocketRepository socketRepository;
+    private final SocketPendingReturnsRepository socketPendingReturns;
     private final Map<UUID, DeliveryDrone> activeDrones = new HashMap<>();
     private final Map<UUID, DeliveryDrone> byEntityUuid = new HashMap<>();
     private final Map<Inventory, DeliveryDrone> byInventory = new HashMap<>();
@@ -43,11 +45,18 @@ public final class DroneManager {
     private DroneSettings settings;
     private BukkitTask cleanupTask;
 
-    public DroneManager(AdvancedDeliveryDronesPlugin plugin, DroneSettings settings, DiscordWebhookManager discordWebhookManager, SocketRepository socketRepository) {
+    public DroneManager(
+            AdvancedDeliveryDronesPlugin plugin,
+            DroneSettings settings,
+            DiscordWebhookManager discordWebhookManager,
+            SocketRepository socketRepository,
+            SocketPendingReturnsRepository socketPendingReturns
+    ) {
         this.plugin = plugin;
         this.settings = settings;
         this.discordWebhookManager = discordWebhookManager;
         this.socketRepository = socketRepository;
+        this.socketPendingReturns = socketPendingReturns;
         this.performanceOptimizer = new PerformanceOptimizer(plugin);
     }
 
@@ -361,14 +370,12 @@ public final class DroneManager {
             return 0;
         }
         for (DeliveryDrone drone : incoming) {
-            // Send Discord notification for declined delivery
             Player sender = Bukkit.getPlayer(drone.senderId());
             if (sender != null) {
                 discordWebhookManager.sendDeliveryDeclined(sender, receiver, drone);
             }
-            
             returnItemsToSender(drone);
-            destroyDrone(drone, false);
+            destroyDroneAfterReturn(drone);
         }
         return incoming.size();
     }
@@ -381,52 +388,147 @@ public final class DroneManager {
             return 0;
         }
         for (DeliveryDrone drone : outgoing) {
+            notifyReceiverOfCancel(sender, drone);
             returnItemsToSenderOnCancel(drone);
-            destroyDrone(drone, false);
+            destroyDroneAfterReturn(drone);
         }
         return outgoing.size();
     }
 
+    public void handlePlayerUnavailable(UUID playerId, boolean dimensionChange) {
+        for (DeliveryDrone drone : findDronesAffectedByPlayerUnavailable(playerId)) {
+            if (drone.socketName() != null) {
+                DeliverySocket socket = findSocketForDrone(drone);
+                if (socket == null) {
+                    continue;
+                }
+                if (canReceiveSocketDelivery(socket)) {
+                    continue;
+                }
+                if (drone.wasOpenedByReceiver() || drone.isExpired(currentTick())) {
+                    continue;
+                }
+                cancelAbandonedSocketDrone(drone, socket);
+            } else if (drone.receiverId().equals(playerId)) {
+                if (dimensionChange) {
+                    returnItemsToSenderDimensionChange(drone);
+                } else {
+                    returnItemsToSenderOffline(drone);
+                }
+                destroyDroneAfterReturn(drone);
+            }
+        }
+    }
+
     public int receiverWentOffline(UUID receiverId) {
-        List<DeliveryDrone> incoming = activeDrones.values().stream()
-                .filter(drone -> drone.receiverId().equals(receiverId))
-                .toList();
-        if (incoming.isEmpty()) {
-            return 0;
-        }
-        for (DeliveryDrone drone : incoming) {
-            returnItemsToSenderOffline(drone);
-            destroyDrone(drone, false);
-        }
-        return incoming.size();
+        handlePlayerUnavailable(receiverId, false);
+        return 0;
     }
 
     public int receiverChangedDimension(UUID receiverId) {
-        List<DeliveryDrone> incoming = activeDrones.values().stream()
-                .filter(drone -> drone.receiverId().equals(receiverId))
-                .toList();
-        if (incoming.isEmpty()) {
-            return 0;
-        }
-        for (DeliveryDrone drone : incoming) {
-            returnItemsToSenderDimensionChange(drone);
-            destroyDrone(drone, false);
-        }
-        return incoming.size();
+        handlePlayerUnavailable(receiverId, true);
+        return 0;
     }
 
-    public void deliverPendingReturns(Player sender) {
-        List<ItemStack> returns = pendingReturns.remove(sender.getUniqueId());
-        if (returns == null || returns.isEmpty()) {
+    public void deliverPendingReturns(Player player) {
+        List<ItemStack> returns = pendingReturns.remove(player.getUniqueId());
+        if (returns != null && !returns.isEmpty()) {
+            giveItems(player, returns);
+            sendMessage(player, "return-delivered");
+        }
+        deliverSocketPendingReturns(player);
+    }
+
+    public void deliverSocketPendingReturns(Player player) {
+        List<ItemStack> returns = socketPendingReturns.takeReturns(player.getUniqueId());
+        if (returns.isEmpty()) {
             return;
         }
-        for (ItemStack stack : returns) {
-            Map<Integer, ItemStack> overflow = sender.getInventory().addItem(stack);
+        giveItems(player, returns);
+        sendMessage(player, "socket-pending-return-delivered");
+    }
+
+    private void giveItems(Player player, List<ItemStack> items) {
+        for (ItemStack stack : items) {
+            Map<Integer, ItemStack> overflow = player.getInventory().addItem(stack);
             if (!overflow.isEmpty()) {
-                overflow.values().forEach(item -> sender.getWorld().dropItemNaturally(sender.getLocation(), item));
+                overflow.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
             }
         }
-        sendMessage(sender, "return-delivered");
+    }
+
+    private void destroyDroneAfterReturn(DeliveryDrone drone) {
+        drone.clearItems();
+        destroyDrone(drone, false);
+    }
+
+    private void notifyReceiverOfCancel(Player sender, DeliveryDrone drone) {
+        Player receiver = Bukkit.getPlayer(drone.receiverId());
+        if (receiver == null || !receiver.isOnline()) {
+            return;
+        }
+        if (drone.socketName() != null) {
+            sendMessage(receiver, "cancel-receiver-notify-socket",
+                    "<player>", sender.getName(),
+                    "<socket>", drone.socketName());
+        } else {
+            sendMessage(receiver, "cancel-receiver-notify", "<player>", sender.getName());
+        }
+    }
+
+    private List<DeliveryDrone> findDronesAffectedByPlayerUnavailable(UUID playerId) {
+        List<DeliveryDrone> affected = new ArrayList<>();
+        for (DeliveryDrone drone : activeDrones.values()) {
+            if (drone.socketName() != null) {
+                DeliverySocket socket = findSocketForDrone(drone);
+                if (socket != null
+                        && (socket.ownerId().equals(playerId) || socket.trustedPlayers().contains(playerId))) {
+                    affected.add(drone);
+                }
+            } else if (drone.receiverId().equals(playerId)) {
+                affected.add(drone);
+            }
+        }
+        return affected;
+    }
+
+    private DeliverySocket findSocketForDrone(DeliveryDrone drone) {
+        if (drone.socketName() == null) {
+            return null;
+        }
+        return socketRepository.getSocket(drone.receiverId(), drone.socketName());
+    }
+
+    private boolean canReceiveSocketDelivery(DeliverySocket socket) {
+        Player owner = Bukkit.getPlayer(socket.ownerId());
+        if (owner != null && owner.isOnline()) {
+            return true;
+        }
+        for (UUID trustedId : socket.trustedPlayers()) {
+            Player trusted = Bukkit.getPlayer(trustedId);
+            if (trusted != null && trusted.isOnline()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void cancelAbandonedSocketDrone(DeliveryDrone drone, DeliverySocket socket) {
+        if (!activeDrones.containsKey(drone.droneId())) {
+            return;
+        }
+        List<ItemStack> items = drone.snapshotItems();
+        Player sender = Bukkit.getPlayer(drone.senderId());
+        if (sender != null && sender.isOnline()) {
+            sendMessage(sender, "socket-abandoned-sender-notify",
+                    "<socket>", socket.name(),
+                    "<owner>", socket.ownerName());
+        }
+        drone.clearItems();
+        destroyDrone(drone, false);
+        if (!items.isEmpty()) {
+            socketPendingReturns.addReturns(socket.ownerId(), items);
+        }
     }
 
     private void returnItemsToSender(DeliveryDrone drone) {
@@ -446,6 +548,7 @@ public final class DroneManager {
             }
         }
         sendMessage(sender, "decline-sender-notify", "<player>", drone.receiverName());
+        drone.clearItems();
     }
 
     private void returnItemsToSenderOnCancel(DeliveryDrone drone) {
@@ -483,6 +586,7 @@ public final class DroneManager {
             }
         }
         sendMessage(sender, "receiver-offline-return", "<player>", drone.receiverName());
+        drone.clearItems();
     }
 
     private void returnItemsToSenderDimensionChange(DeliveryDrone drone) {
