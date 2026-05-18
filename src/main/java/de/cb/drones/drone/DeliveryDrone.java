@@ -31,7 +31,7 @@ public final class DeliveryDrone {
     private final String receiverName;
     private final Location fixedTarget;
     private final Location startLocation;
-    private final long flightStartTick;
+    private long flightStartTick;
     private final Inventory inventory;
     private final List<EntityType> attachedAnimalTypes;
     private final boolean animalsOnlyDelivery;
@@ -67,23 +67,32 @@ public final class DeliveryDrone {
     private long collectionAnimationStartTick;
     private final int collectionAnimationDuration = 40; // 2 seconds at 20 ticks
     private long lastBossBarUpdate = 0L;
-    private static final long BOSSBAR_UPDATE_INTERVAL = 20L; // Update every 20 ticks (1 second) - increased for performance
+    private static final long BOSSBAR_UPDATE_INTERVAL = 20L;
+    private int lastBossBarDistanceM = -1;
+    private long lastBossBarEta = -1L;
     private long approachPhaseStartTick = -1L; // -1 means not in approach phase yet
     
     // Performance caches
     private long lastTraveledDistanceTick = -1L;
     private double cachedTraveledDistance = 0.0;
     private long lastParticleUpdateTick = -1L;
-    private static final long PARTICLE_UPDATE_INTERVAL = 2L; // Particles every 2 ticks for better visual quality
+    private static final long PARTICLE_UPDATE_INTERVAL = 4L;
     private long lastHologramUpdateTick = -1L;
     private static final long HOLOGRAM_UPDATE_INTERVAL = 60L; // Hologram every 3 seconds (60 ticks)
     private long lastExpectedLocationTick = -1L;
     private Location cachedExpectedLocation = null;
     private long lastTeleportTick = -1L;
-    private static final long TELEPORT_INTERVAL = 1L; // Teleport every tick for smooth movement
+    private static final long TELEPORT_INTERVAL = 2L;
     private long lastSoundTick = -1L;
     private static final long SOUND_INTERVAL = 10L; // Sound every 10 ticks to reduce audio overhead
     
+    // Precomputed flight path (rebuilt when cruise flight starts or startLocation changes)
+    private double pathDeltaX;
+    private double pathDeltaY;
+    private double pathDeltaZ;
+    private double pathTotalDistance;
+    private boolean pathComputed;
+
     // Socket pickup tracking
     private UUID socketPickupPlayerId;
     private String socketPickupSocketName;
@@ -355,28 +364,23 @@ public final class DeliveryDrone {
                 double angle = ticks * 0.3;
                 double radius = 2.0 * (1 - progress * 0.5); // Larger radius, slower shrink
 
-                for (int i = 0; i < 8; i++) {
-                    double particleAngle = angle + (i * Math.PI / 4);
-                    double x = center.getX() + Math.cos(particleAngle) * radius;
-                    double z = center.getZ() + Math.sin(particleAngle) * radius;
-                    // Gentler vertical wave
-                    double y = center.getY() + Math.sin(particleAngle * 1.5 + ticks * 0.1) * 0.2;
-
-                    Location particleLoc = new Location(center.getWorld(), x, y, z);
-                    
-                    // Subtle particle effects
-                    center.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, particleLoc, 1, 0.02, 0.02, 0.02, 0.005);
-                    center.getWorld().spawnParticle(org.bukkit.Particle.SMOKE, particleLoc, 1, 0.015, 0.015, 0.015, 0.003);
-                    
-                    // Occasional electric sparks
-                    if (ticks % 5 == 0 && i % 2 == 0) {
-                        center.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, particleLoc, 1, 0.03, 0.03, 0.03, 0.005);
+                if (ticks % 2 == 0) {
+                    for (int i = 0; i < 4; i++) {
+                        double particleAngle = angle + (i * Math.PI / 2);
+                        double x = center.getX() + Math.cos(particleAngle) * radius;
+                        double z = center.getZ() + Math.sin(particleAngle) * radius;
+                        double y = center.getY() + Math.sin(particleAngle * 1.5 + ticks * 0.1) * 0.2;
+                        Location particleLoc = new Location(center.getWorld(), x, y, z);
+                        center.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, particleLoc, 1, 0.02, 0.02, 0.02, 0.005);
+                        if (ticks % 6 == 0) {
+                            center.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, particleLoc, 1, 0.03, 0.03, 0.03, 0.005);
+                        }
                     }
                 }
 
                 // Gentle rising clouds below
-                if (ticks % 3 == 0) {
-                    for (int i = 0; i < 2; i++) {
+                if (ticks % 6 == 0) {
+                    for (int i = 0; i < 1; i++) {
                         double cloudAngle = Math.random() * Math.PI * 2;
                         double dist = Math.random() * 0.3;
                         Location below = center.clone().add(
@@ -415,8 +419,9 @@ public final class DeliveryDrone {
                     center.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, center, 12, 0.5, 0.5, 0.5, 0.03);
                     center.getWorld().playSound(center, org.bukkit.Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1.0f, 1.0f);
 
-                    // Update start location to current position
                     startLocation.set(center.getX(), center.getY(), center.getZ());
+                    startLocation.setYaw(center.getYaw());
+                    startLocation.setPitch(center.getPitch());
 
                     startFlightInternal(manager);
                 }
@@ -427,6 +432,12 @@ public final class DeliveryDrone {
     }
 
     private void startFlightInternal(DroneManager manager) {
+        long nowTick = Bukkit.getCurrentTick();
+        this.flightStartTick = nowTick;
+        this.approachPhaseStartTick = -1L;
+        invalidateMovementCache();
+        recomputeFlightPath();
+
         applySettings(settings, manager);
         initBossbar(manager);
 
@@ -582,12 +593,12 @@ public final class DeliveryDrone {
             Location landedRef = landedLocation != null ? landedLocation : (stand != null && !stand.isDead() ? stand.getLocation() : lastKnownLocation);
             tickAttachedAnimalFollow(landedRef);
         }
-        if (Bukkit.getCurrentTick() % 20L == 0L) {
-            if (landed && standAvailable && isChunkLoaded(stand.getLocation())) {
-                updateHologram(Bukkit.getCurrentTick(), manager);
+        if (landed && standAvailable && nowTick - lastHologramUpdateTick >= HOLOGRAM_UPDATE_INTERVAL) {
+            if (isChunkLoaded(stand.getLocation())) {
+                updateHologram(nowTick, manager);
             }
-            updateBossBar(manager, bossbarRef);
         }
+        updateBossBar(manager, bossbarRef, nowTick);
 
         // Handle collection animation
         if (collectionAnimation && stand != null && !stand.isDead()) {
@@ -715,47 +726,60 @@ public final class DeliveryDrone {
         return new Location(world, bestX + 0.5, bestY + 0.1, bestZ + 0.5);
     }
 
-    private Location expectedLocation(long nowTick) {
-        // Cache result for same tick to avoid redundant calculations
-        if (nowTick == lastExpectedLocationTick && cachedExpectedLocation != null) {
-            return cachedExpectedLocation;
-        }
-        
-        // Calculate deltas directly to avoid Location.clone() and Vector operations
+    private void recomputeFlightPath() {
         double targetX = fixedTarget.getX();
         double targetY = fixedTarget.getY() + 0.1;
         double targetZ = fixedTarget.getZ();
-        
-        double deltaX = targetX - startLocation.getX();
-        double deltaY = targetY - startLocation.getY();
-        double deltaZ = targetZ - startLocation.getZ();
-        
-        // Calculate distance without Vector object
-        double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-        
-        if (distance <= 0.001D) {
+        pathDeltaX = targetX - startLocation.getX();
+        pathDeltaY = targetY - startLocation.getY();
+        pathDeltaZ = targetZ - startLocation.getZ();
+        pathTotalDistance = Math.sqrt(pathDeltaX * pathDeltaX + pathDeltaY * pathDeltaY + pathDeltaZ * pathDeltaZ);
+        pathComputed = true;
+        invalidateMovementCache();
+    }
+
+    private void invalidateMovementCache() {
+        lastTraveledDistanceTick = -1L;
+        cachedTraveledDistance = 0.0;
+        lastExpectedLocationTick = -1L;
+        cachedExpectedLocation = null;
+    }
+
+    private Location expectedLocation(long nowTick) {
+        if (nowTick == lastExpectedLocationTick && cachedExpectedLocation != null) {
+            return cachedExpectedLocation;
+        }
+
+        if (!pathComputed) {
+            recomputeFlightPath();
+        }
+
+        double targetX = fixedTarget.getX();
+        double targetY = fixedTarget.getY() + 0.1;
+        double targetZ = fixedTarget.getZ();
+
+        if (pathTotalDistance <= 0.001D) {
             lastExpectedLocationTick = nowTick;
             if (cachedExpectedLocation == null) {
-                cachedExpectedLocation = new Location(startLocation.getWorld(), targetX, targetY, targetZ, 
-                    fixedTarget.getYaw(), fixedTarget.getPitch());
+                cachedExpectedLocation = new Location(
+                        startLocation.getWorld(), targetX, targetY, targetZ,
+                        fixedTarget.getYaw(), fixedTarget.getPitch());
             }
             return cachedExpectedLocation;
         }
-        
+
         double traveled = calculateTraveledDistance(nowTick);
-        double factor = Math.min(1.0D, traveled / distance);
-        
-        // Apply factor directly without Vector multiplication
+        double factor = Math.min(1.0D, traveled / pathTotalDistance);
+
         Location result = new Location(
-            startLocation.getWorld(),
-            startLocation.getX() + deltaX * factor,
-            startLocation.getY() + deltaY * factor,
-            startLocation.getZ() + deltaZ * factor,
-            fixedTarget.getYaw(),
-            fixedTarget.getPitch()
+                startLocation.getWorld(),
+                startLocation.getX() + pathDeltaX * factor,
+                startLocation.getY() + pathDeltaY * factor,
+                startLocation.getZ() + pathDeltaZ * factor,
+                fixedTarget.getYaw(),
+                fixedTarget.getPitch()
         );
-        
-        // Cache the result
+
         lastExpectedLocationTick = nowTick;
         cachedExpectedLocation = result;
         return result;
@@ -771,21 +795,12 @@ public final class DeliveryDrone {
         long startupTicks = settings.startupSeconds() * 20L;
         long startupPart = Math.min(elapsedTicks, startupTicks);
         long cruisePart = Math.max(0L, elapsedTicks - startupPart);
-        
-        // Calculate total distance to target directly (avoid Location.distance)
-        double targetX = fixedTarget.getX();
-        double targetY = fixedTarget.getY() + 0.1;
-        double targetZ = fixedTarget.getZ();
-        
-        double startX = startLocation.getX();
-        double startY = startLocation.getY();
-        double startZ = startLocation.getZ();
-        
-        double deltaX = targetX - startX;
-        double deltaY = targetY - startY;
-        double deltaZ = targetZ - startZ;
-        double totalDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-        
+
+        if (!pathComputed) {
+            recomputeFlightPath();
+        }
+        double totalDistance = pathTotalDistance;
+
         // Calculate distance traveled during startup phase
         double startupDistance = startupPart * settings.startupSpeed();
         
@@ -1120,10 +1135,10 @@ public final class DeliveryDrone {
         }
         bossBar.addPlayer(receiver);
         bossBar.setVisible(true);
-        updateBossBar(manager, landed ? (landedLocation != null ? landedLocation : stand.getLocation()) : stand.getLocation());
+        updateBossBar(manager, landed ? (landedLocation != null ? landedLocation : stand.getLocation()) : stand.getLocation(), Bukkit.getCurrentTick());
     }
 
-    private void updateBossBar(DroneManager manager, Location droneRefLocation) {
+    private void updateBossBar(DroneManager manager, Location droneRefLocation, long currentTick) {
         if (!settings.bossbarEnabled()) {
             if (bossBar != null) {
                 bossBar.removeAll();
@@ -1131,20 +1146,31 @@ public final class DeliveryDrone {
             }
             return;
         }
-        long currentTick = Bukkit.getCurrentTick();
-        // Only update boss bar every BOSSBAR_UPDATE_INTERVAL ticks to reduce performance impact
         if (currentTick - lastBossBarUpdate < BOSSBAR_UPDATE_INTERVAL) {
             return;
         }
         lastBossBarUpdate = currentTick;
-        
+
         Player receiver = Bukkit.getPlayer(receiverId);
-        if (receiver == null || bossBar == null) {
+        if (receiver == null || bossBar == null || droneRefLocation.getWorld() == null) {
             return;
         }
-        double distance = receiver.getLocation().distance(droneRefLocation);
+        Location receiverLoc = receiver.getLocation();
+        if (!receiverLoc.getWorld().equals(droneRefLocation.getWorld())) {
+            return;
+        }
+        double dx = receiverLoc.getX() - droneRefLocation.getX();
+        double dy = receiverLoc.getY() - droneRefLocation.getY();
+        double dz = receiverLoc.getZ() - droneRefLocation.getZ();
+        int distanceM = (int) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        long eta = etaSeconds(currentTick);
+        if (distanceM == lastBossBarDistanceM && eta == lastBossBarEta) {
+            return;
+        }
+        lastBossBarDistanceM = distanceM;
+        lastBossBarEta = eta;
         bossBar.setProgress(1.0D);
-        bossBar.setTitle(manager.renderBossbar(distance, etaSeconds(currentTick)));
+        bossBar.setTitle(manager.renderBossbar(distanceM, eta));
     }
 
     private long etaSeconds(long nowTick) {
