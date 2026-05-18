@@ -82,7 +82,10 @@ public final class DeliveryDrone {
     private long lastExpectedLocationTick = -1L;
     private Location cachedExpectedLocation = null;
     private long lastTeleportTick = -1L;
-    private static final long TELEPORT_INTERVAL = 2L;
+    private static final long TELEPORT_INTERVAL = 1L;
+    private long lastChunkPreloadCheckTick = -1L;
+    private static final long CHUNK_PRELOAD_CHECK_INTERVAL = 20L;
+    private double deliveryRadiusSq;
     private long lastSoundTick = -1L;
     private static final long SOUND_INTERVAL = 10L; // Sound every 10 ticks to reduce audio overhead
     
@@ -128,6 +131,7 @@ public final class DeliveryDrone {
         this.exactSocketTarget = exactSocketTarget;
         this.socketName = socketName;
         this.settings = settings;
+        refreshDerivedSettings();
         this.stand = stand;
         this.standId = stand.getUniqueId();
         this.lastKnownLocation = stand.getLocation().clone();
@@ -294,6 +298,7 @@ public final class DeliveryDrone {
 
     public void applySettings(DroneSettings settings, DroneManager manager) {
         this.settings = settings;
+        refreshDerivedSettings();
         if (stand != null && !stand.isDead()) {
             stand.getEquipment().setHelmet(createSkullStatic(settings.skullTexture()));
         }
@@ -481,8 +486,7 @@ public final class DeliveryDrone {
                 ? (landedLocation != null ? landedLocation : (standLocation != null ? standLocation : lastKnownLocation))
                 : expected;
 
-        double deliveryRadius = exactSocketTarget ? 0.5 : settings.deliveryRadius();
-        if (!landed && expected.distanceSquared(fixedTarget) <= deliveryRadius * deliveryRadius) {
+        if (!landed && distanceSquaredToTarget(expected) <= deliveryRadiusSq) {
             if (pendingLanding == null) {
                 pendingLanding = fixedTarget.clone();
             }
@@ -540,7 +544,7 @@ public final class DeliveryDrone {
 
                         Vector startVec = smoothLandingStart.toVector();
                         Vector endVec = landingSpot.toVector();
-                        Vector current = startVec.add(endVec.subtract(startVec).multiply(easedProgress));
+                        Vector current = startVec.clone().add(endVec.clone().subtract(startVec).multiply(easedProgress));
 
                         // Apply hover effect only to Y coordinate
                         current.setY(current.getY() + hoverEffect);
@@ -572,8 +576,7 @@ public final class DeliveryDrone {
                     standAvailable = false;
                 }
             } else if (standAvailable) {
-                boolean shouldTeleport = nowTick - lastTeleportTick >= TELEPORT_INTERVAL;
-                if (shouldTeleport) {
+                if (nowTick - lastTeleportTick >= TELEPORT_INTERVAL) {
                     stand.teleport(expected);
                     lastTeleportTick = nowTick;
                 }
@@ -598,7 +601,9 @@ public final class DeliveryDrone {
                 updateHologram(nowTick, manager);
             }
         }
-        updateBossBar(manager, bossbarRef, nowTick);
+        if (nowTick - lastBossBarUpdate >= BOSSBAR_UPDATE_INTERVAL) {
+            updateBossBar(manager, bossbarRef, nowTick);
+        }
 
         // Handle collection animation
         if (collectionAnimation && stand != null && !stand.isDead()) {
@@ -736,6 +741,18 @@ public final class DeliveryDrone {
         pathTotalDistance = Math.sqrt(pathDeltaX * pathDeltaX + pathDeltaY * pathDeltaY + pathDeltaZ * pathDeltaZ);
         pathComputed = true;
         invalidateMovementCache();
+    }
+
+    private void refreshDerivedSettings() {
+        double radius = exactSocketTarget ? 0.5D : settings.deliveryRadius();
+        deliveryRadiusSq = radius * radius;
+    }
+
+    private double distanceSquaredToTarget(Location from) {
+        double dx = from.getX() - fixedTarget.getX();
+        double dy = from.getY() - (fixedTarget.getY() + 0.1);
+        double dz = from.getZ() - fixedTarget.getZ();
+        return dx * dx + dy * dy + dz * dz;
     }
 
     private void invalidateMovementCache() {
@@ -1146,9 +1163,6 @@ public final class DeliveryDrone {
             }
             return;
         }
-        if (currentTick - lastBossBarUpdate < BOSSBAR_UPDATE_INTERVAL) {
-            return;
-        }
         lastBossBarUpdate = currentTick;
 
         Player receiver = Bukkit.getPlayer(receiverId);
@@ -1177,66 +1191,38 @@ public final class DeliveryDrone {
         if (landed) {
             return 0L;
         }
-        
-        // Get current position and target
-        Location current = currentLocation();
-        if (current == null) {
-            return 0L;
+
+        if (!pathComputed) {
+            recomputeFlightPath();
         }
-        
-        // Calculate distance directly without Location.clone()
-        double targetX = fixedTarget.getX();
-        double targetY = fixedTarget.getY() + 0.1;
-        double targetZ = fixedTarget.getZ();
-        
-        double dx = current.getX() - targetX;
-        double dy = current.getY() - targetY;
-        double dz = current.getZ() - targetZ;
-        double remainingDistance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        
-        // Add landing animation time if within delivery radius
-        double deliveryRadius = exactSocketTarget ? 0.5 : settings.deliveryRadius();
-        if (remainingDistance <= deliveryRadius) {
-            return 3L; // 3 seconds for landing animation
+
+        double traveled = calculateTraveledDistance(nowTick);
+        double remainingDistance = Math.max(0.0D, pathTotalDistance - traveled);
+
+        if (remainingDistance * remainingDistance <= deliveryRadiusSq) {
+            return 3L;
         }
-        
-        // Calculate ETA based on current speed
-        double currentSpeed = getCurrentSpeed(nowTick);
+
+        double currentSpeed = getCurrentSpeed(nowTick, remainingDistance);
         if (currentSpeed <= 0.001) {
             return Long.MAX_VALUE;
         }
-        
-        double etaSeconds = remainingDistance / (currentSpeed * 20.0); // Convert blocks/tick to blocks/second
-        return (long) Math.ceil(etaSeconds) + 3L; // Add landing time
+
+        return (long) Math.ceil(remainingDistance / (currentSpeed * 20.0D)) + 3L;
     }
 
-    private double getCurrentSpeed(long nowTick) {
+    private double getCurrentSpeed(long nowTick, double remainingPathDistance) {
         long elapsedTicks = Math.max(0L, nowTick - flightStartTick);
         long startupTicks = settings.startupSeconds() * 20L;
-        
-        // Still in startup phase
+
         if (elapsedTicks < startupTicks) {
             return settings.startupSpeed();
         }
-        
-        // Check if we should use approach speed (regardless of chunk loading)
-        Location current = currentLocation();
-        if (current == null) {
-            return settings.speed();
-        }
-        
-        // Calculate distance directly without Location.clone()
-        double dx = current.getX() - fixedTarget.getX();
-        double dy = current.getY() - (fixedTarget.getY() + 0.1);
-        double dz = current.getZ() - fixedTarget.getZ();
-        double distanceToTarget = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        
-        // Use approach speed when close to target (even if chunk not loaded)
-        if (distanceToTarget <= settings.approachDistance()) {
+
+        if (remainingPathDistance <= settings.approachDistance()) {
             return settings.approachSpeed();
         }
-        
-        // Normal cruise speed
+
         return settings.speed();
     }
 
@@ -1301,12 +1287,17 @@ public final class DeliveryDrone {
         if (!forceTargetChunkLoad || targetChunkPreloaded || landed) {
             return;
         }
+        long nowTick = Bukkit.getCurrentTick();
+        if (nowTick - lastChunkPreloadCheckTick < CHUNK_PRELOAD_CHECK_INTERVAL) {
+            return;
+        }
+        lastChunkPreloadCheckTick = nowTick;
         World world = fixedTarget.getWorld();
         if (world == null) {
             return;
         }
         double triggerDistance = Math.max(settings.deliveryRadius() * 4.0D, 64.0D);
-        if (expected.distanceSquared(fixedTarget) > triggerDistance * triggerDistance) {
+        if (distanceSquaredToTarget(expected) > triggerDistance * triggerDistance) {
             return;
         }
         int chunkX = fixedTarget.getBlockX() >> 4;
