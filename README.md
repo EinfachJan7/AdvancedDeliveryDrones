@@ -1,5 +1,5 @@
 # 📦 Advanced Delivery Drones
-# Made by AI
+# MADE BY AI
 A physical drone delivery system for Minecraft Paper servers.
 
 ---
@@ -132,3 +132,14 @@ A physical drone delivery system for Minecraft Paper servers.
 | `drone.use` | Receive management (`/drone toggle`, `/drone decline`, `/drone preview`, `/drone blacklist`) | `true` |
 | `drone.socket` | All `/drone socket` subcommands | `true` |
 | `drone.admin` | Admin commands (`/drone admin`, `/drone list`, `/drone reload`) | OP |
+
+---
+
+## 🧩 Compatibility
+
+| Requirement | Version |
+|---|---|
+| Minecraft | 1.21.4 |
+| Server Software | Paper (or fork) |
+| Java | 21+ |
+| API | Paper API 1.21.4-R0.1-SNAPSHOT |
