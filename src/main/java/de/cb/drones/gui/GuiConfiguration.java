@@ -21,8 +21,15 @@ public class GuiConfiguration {
     private final GuiSettings socketSelection;
     private final GuiSettings socketManagement;
     private final GuiSettings socketEdit;
+    private final GuiSettings socketTrustMenu;
+    private final GuiSettings socketBlacklistMenu;
     private final GuiSettings trustPlayerSelection;
     private final GuiSettings untrustPlayerSelection;
+    private final GuiSettings blacklistManagement;
+    private final GuiSettings blacklistPlayerAddSelection;
+    private final GuiSettings blacklistPlayerRemoveSelection;
+    private final GuiSettings blacklistSocketAddSelection;
+    private final GuiSettings blacklistSocketRemoveSelection;
     private final String socketItemNameFormat;
     private final String socketItemOwnerFormat;
     private final String socketItemClickHint;
@@ -34,6 +41,10 @@ public class GuiConfiguration {
     private final List<String> trustPlayerHeadLore;
     private final String untrustPlayerHeadNameFormat;
     private final List<String> untrustPlayerHeadLore;
+    private final String blacklistAddPlayerHeadNameFormat;
+    private final List<String> blacklistAddPlayerHeadLore;
+    private final String blacklistRemovePlayerHeadNameFormat;
+    private final List<String> blacklistRemovePlayerHeadLore;
     private final String socketManagementItemNameFormat;
     private final String socketManagementItemLocationFormat;
     private final String socketManagementItemDeleteHint;
@@ -50,8 +61,15 @@ public class GuiConfiguration {
         this.socketSelection = parseGuiSettings(guiConfig, "socket-selection.", createDefaultSocketSelectionItems());
         this.socketManagement = parseGuiSettings(guiConfig, "socket-management.", createDefaultSocketManagementItems());
         this.socketEdit = parseGuiSettings(guiConfig, "socket-edit.", createDefaultSocketEditItems());
+        this.socketTrustMenu = parseGuiSettings(guiConfig, "socket-trust-menu.", createDefaultSocketTrustMenuItems());
+        this.socketBlacklistMenu = parseGuiSettings(guiConfig, "socket-blacklist-menu.", createDefaultSocketBlacklistMenuItems());
         this.trustPlayerSelection = parseGuiSettings(guiConfig, "trust-player-selection.", createDefaultPlayerSelectionItems());
         this.untrustPlayerSelection = parseGuiSettings(guiConfig, "untrust-player-selection.", createDefaultPlayerSelectionItems());
+        this.blacklistManagement = parseGuiSettings(guiConfig, "blacklist-management.", createDefaultBlacklistManagementItems());
+        this.blacklistPlayerAddSelection = parseGuiSettings(guiConfig, "blacklist-player-add-selection.", createDefaultPlayerSelectionItems());
+        this.blacklistPlayerRemoveSelection = parseGuiSettings(guiConfig, "blacklist-player-remove-selection.", createDefaultPlayerSelectionItems());
+        this.blacklistSocketAddSelection = parseGuiSettings(guiConfig, "blacklist-socket-add-selection.", createDefaultPlayerSelectionItems());
+        this.blacklistSocketRemoveSelection = parseGuiSettings(guiConfig, "blacklist-socket-remove-selection.", createDefaultPlayerSelectionItems());
 
         // Socket item format
         this.socketItemNameFormat = guiConfig.getString("socket-item-format.name-format", "<!italic><white><name></white>");
@@ -92,6 +110,28 @@ public class GuiConfiguration {
             );
         }
         this.untrustPlayerHeadLore = tempUntrustPlayerHeadLore;
+
+        this.blacklistAddPlayerHeadNameFormat = guiConfig.getString(
+                "blacklist-player-add-selection.player-head-item.name-format",
+                "<!italic><gradient:#f87171:#ef4444><bold><player></bold></gradient>");
+        List<String> tempBlacklistAddLore = guiConfig.getStringList("blacklist-player-add-selection.player-head-item.lore");
+        if (tempBlacklistAddLore.isEmpty()) {
+            tempBlacklistAddLore = List.of(
+                    "<!italic><gray>Klicke um den Spieler zu sperren</gray>"
+            );
+        }
+        this.blacklistAddPlayerHeadLore = tempBlacklistAddLore;
+
+        this.blacklistRemovePlayerHeadNameFormat = guiConfig.getString(
+                "blacklist-player-remove-selection.player-head-item.name-format",
+                "<!italic><gradient:#4ade80:#22c55e><bold><player></bold></gradient>");
+        List<String> tempBlacklistRemoveLore = guiConfig.getStringList("blacklist-player-remove-selection.player-head-item.lore");
+        if (tempBlacklistRemoveLore.isEmpty()) {
+            tempBlacklistRemoveLore = List.of(
+                    "<!italic><gray>Klicke um die Sperre aufzuheben</gray>"
+            );
+        }
+        this.blacklistRemovePlayerHeadLore = tempBlacklistRemoveLore;
         
         // Socket management item format
         this.socketManagementItemNameFormat = guiConfig.getString("socket-management.socket-management-item.name-format", "<!italic><white><name></white>");
@@ -112,8 +152,15 @@ public class GuiConfiguration {
     public GuiSettings socketSelection() { return socketSelection; }
     public GuiSettings socketManagement() { return socketManagement; }
     public GuiSettings socketEdit() { return socketEdit; }
+    public GuiSettings socketTrustMenu() { return socketTrustMenu; }
+    public GuiSettings socketBlacklistMenu() { return socketBlacklistMenu; }
     public GuiSettings trustPlayerSelection() { return trustPlayerSelection; }
     public GuiSettings untrustPlayerSelection() { return untrustPlayerSelection; }
+    public GuiSettings blacklistManagement() { return blacklistManagement; }
+    public GuiSettings blacklistPlayerAddSelection() { return blacklistPlayerAddSelection; }
+    public GuiSettings blacklistPlayerRemoveSelection() { return blacklistPlayerRemoveSelection; }
+    public GuiSettings blacklistSocketAddSelection() { return blacklistSocketAddSelection; }
+    public GuiSettings blacklistSocketRemoveSelection() { return blacklistSocketRemoveSelection; }
     public String socketItemNameFormat() { return socketItemNameFormat; }
     public String socketItemOwnerFormat() { return socketItemOwnerFormat; }
     public String socketItemClickHint() { return socketItemClickHint; }
@@ -125,6 +172,10 @@ public class GuiConfiguration {
     public List<String> trustPlayerHeadLore() { return trustPlayerHeadLore; }
     public String untrustPlayerHeadNameFormat() { return untrustPlayerHeadNameFormat; }
     public List<String> untrustPlayerHeadLore() { return untrustPlayerHeadLore; }
+    public String blacklistAddPlayerHeadNameFormat() { return blacklistAddPlayerHeadNameFormat; }
+    public List<String> blacklistAddPlayerHeadLore() { return blacklistAddPlayerHeadLore; }
+    public String blacklistRemovePlayerHeadNameFormat() { return blacklistRemovePlayerHeadNameFormat; }
+    public List<String> blacklistRemovePlayerHeadLore() { return blacklistRemovePlayerHeadLore; }
     public String socketManagementItemNameFormat() { return socketManagementItemNameFormat; }
     public String socketManagementItemLocationFormat() { return socketManagementItemLocationFormat; }
     public String socketManagementItemDeleteHint() { return socketManagementItemDeleteHint; }
@@ -204,6 +255,14 @@ public class GuiConfiguration {
         items.put("decline", new GuiItem(15, Material.BARRIER, "<red>Eingehende Drohnen ablehnen", List.of("<gray>Lehne alle eingehenden", "<gray>Drohnen für dich ab")));
         items.put("preview", new GuiItem(22, Material.ENDER_EYE, "<aqua>Drohne-Vorschau", List.of("<gray>Zeige eine Vorschau deiner", "<gray>aktiven Drohnen")));
         items.put("socket-manage", new GuiItem(24, Material.BEACON, "<yellow>Sockets Verwalten", List.of("<gray>Verwalte deine", "<gray>Lieferstationen")));
+        items.put("blacklist", new GuiItem(34, Material.IRON_BARS, "<red>Blacklist", List.of("<gray>Spieler sperren")));
+        return items;
+    }
+
+    private static Map<String, GuiItem> createDefaultBlacklistManagementItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        items.put("player-add", new GuiItem(11, Material.PLAYER_HEAD, "<red>Spieler sperren", List.of("<gray>Drohnen von Spielern blockieren")));
+        items.put("player-remove", new GuiItem(15, Material.BARRIER, "<green>Sperre aufheben", List.of("<gray>Spieler entsperren")));
         return items;
     }
     
@@ -234,10 +293,26 @@ public class GuiConfiguration {
         Map<String, GuiItem> items = new HashMap<>();
         items.put("rename", new GuiItem(10, Material.NAME_TAG, "<yellow>Umbenennen", List.of("<gray>Klicke um den Namen zu ändern")));
         items.put("relocate", new GuiItem(12, Material.COMPASS, "<yellow>Neu setzen", List.of("<gray>Klicke um die Position zu aktualisieren")));
-        items.put("trust", new GuiItem(14, Material.EMERALD, "<green>Spieler vertrauen", List.of("<gray>Klicke um einen Spieler zu vertrauen")));
-        items.put("untrust", new GuiItem(16, Material.REDSTONE, "<red>Vertrauen entfernen", List.of("<gray>Klicke um einen Spieler zu entfernen")));
+        items.put("trust-management", new GuiItem(14, Material.EMERALD, "<green>Vertrauen", List.of("<gray>Spieler vertrauen oder entfernen")));
+        items.put("blacklist-management", new GuiItem(16, Material.IRON_BARS, "<red>Sperre", List.of("<gray>Spieler sperren oder entsperren")));
         items.put("delete", new GuiItem(22, Material.BARRIER, "<red>Löschen", List.of("<gray>Klicke um diesen Socket zu entfernen")));
         items.put("back", new GuiItem(18, Material.ARROW, "<purple>Zurück", List.of("<gray>Zurück zur Verwaltung")));
+        return items;
+    }
+
+    private static Map<String, GuiItem> createDefaultSocketTrustMenuItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        items.put("trust", new GuiItem(11, Material.EMERALD, "<green>Spieler vertrauen", List.of("<gray>Spieler zu diesem Socket hinzufügen")));
+        items.put("untrust", new GuiItem(15, Material.REDSTONE, "<red>Vertrauen entfernen", List.of("<gray>Vertrauen eines Spielers entfernen")));
+        items.put("back", new GuiItem(18, Material.ARROW, "<purple>Zurück", List.of("<gray>Zurück zum Socket-Editor")));
+        return items;
+    }
+
+    private static Map<String, GuiItem> createDefaultSocketBlacklistMenuItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        items.put("blacklist-add", new GuiItem(11, Material.IRON_BARS, "<red>Spieler sperren", List.of("<gray>Spieler für diesen Socket sperren")));
+        items.put("blacklist-remove", new GuiItem(15, Material.BARRIER, "<green>Sperre aufheben", List.of("<gray>Socket-Sperre entfernen")));
+        items.put("back", new GuiItem(18, Material.ARROW, "<purple>Zurück", List.of("<gray>Zurück zum Socket-Editor")));
         return items;
     }
 }

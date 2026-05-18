@@ -1,13 +1,17 @@
 package de.cb.drones.command;
 
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
+import de.cb.drones.config.PlayerBlacklistRepository;
 import de.cb.drones.config.PlayerSettingsRepository;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.gui.DroneMenuHandler;
 import de.cb.drones.socket.DeliverySocket;
 import de.cb.drones.socket.SocketRepository;
-// import de.cb.drones.socket.SocketBlacklistRepository;
+import de.cb.drones.socket.SocketStructure;
+import de.cb.drones.socket.SocketStructureRepository;
+import de.cb.drones.socket.SocketStructureListener;
+import de.cb.drones.socket.SocketPreviewManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collections;
@@ -19,6 +23,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
@@ -44,17 +49,23 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private final AdvancedDeliveryDronesPlugin plugin;
     private final DroneManager droneManager;
     private final PlayerSettingsRepository settingsRepository;
+    private final PlayerBlacklistRepository blacklistRepository;
     private final DroneMenuHandler menuHandler;
     private final SocketRepository socketRepository;
-    // private final SocketBlacklistRepository blacklistRepository;
-
-    public DroneCommand(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, DroneSettings droneSettings, SocketRepository socketRepository /*, SocketBlacklistRepository blacklistRepository */) {
+    private final SocketStructureRepository structureRepository;
+    private final SocketStructureListener structureListener;
+    private final SocketPreviewManager previewManager;
+    private final Map<UUID, SocketStructure> pendingStructures = new HashMap<>();
+    public DroneCommand(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, PlayerBlacklistRepository blacklistRepository, DroneSettings droneSettings, SocketRepository socketRepository, SocketStructureRepository structureRepository, SocketStructureListener structureListener, SocketPreviewManager previewManager) {
         this.plugin = plugin;
         this.droneManager = droneManager;
         this.settingsRepository = settingsRepository;
+        this.blacklistRepository = blacklistRepository;
         this.socketRepository = socketRepository;
-        // this.blacklistRepository = blacklistRepository;
-        this.menuHandler = new DroneMenuHandler(plugin, droneManager, settingsRepository, droneSettings, socketRepository /*, blacklistRepository */);
+        this.structureRepository = structureRepository;
+        this.structureListener = structureListener;
+        this.previewManager = previewManager;
+        this.menuHandler = new DroneMenuHandler(plugin, droneManager, settingsRepository, blacklistRepository, droneSettings, socketRepository);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
     
@@ -83,9 +94,11 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "reload" -> executeReload(player);
             case "list" -> executeList(player);
             case "decline" -> executeDecline(player);
+            case "cancel" -> executeCancel(player);
             case "socket" -> executeSocket(player, args);
+            case "blacklist" -> executeBlacklist(player, args);
             default -> {
-                player.sendMessage("/drone <send|admin|preview|toggle|reload|list|decline|socket>");
+                player.sendMessage("/drone <send|admin|preview|toggle|reload|list|decline|cancel|socket|blacklist>");
                 yield true;
             }
         };
@@ -111,6 +124,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         if (!settingsRepository.canReceive(target.getUniqueId())) {
             droneManager.sendMessage(sender, "toggled-off");
+            return true;
+        }
+        if (blacklistRepository.isPlayerBlacklisted(target.getUniqueId(), sender.getUniqueId())) {
+            droneManager.sendMessage(sender, "blacklist-player-blocked", "<player>", target.getName());
             return true;
         }
         if (!droneManager.canSenderLaunch(sender.getUniqueId())) {
@@ -204,6 +221,114 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         return true;
     }
 
+    private boolean executeBlacklist(Player player, String[] args) {
+        if (!player.hasPermission("drone.use")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
+        if (args.length < 2) {
+            menuHandler.getMenuGUI().openBlacklistManagementMenu(player);
+            return true;
+        }
+
+        if (!"player".equalsIgnoreCase(args[1])) {
+            player.sendMessage(plugin.component("usage-blacklist"));
+            return true;
+        }
+        if (args.length < 3) {
+            player.sendMessage(plugin.component("usage-blacklist"));
+            return true;
+        }
+
+        String action = args[2].toLowerCase(Locale.ROOT);
+        return switch (action) {
+            case "add" -> executePlayerBlacklistAdd(player, args);
+            case "remove" -> executePlayerBlacklistRemove(player, args);
+            case "list" -> executePlayerBlacklistList(player);
+            default -> {
+                player.sendMessage(plugin.component("usage-blacklist"));
+                yield true;
+            }
+        };
+    }
+
+    private boolean executePlayerBlacklistAdd(Player player, String[] args) {
+        if (args.length < 4) {
+            menuHandler.getMenuGUI().openPlayerBlacklistSelectionMenu(player, true);
+            return true;
+        }
+
+        Player target = Bukkit.getPlayerExact(args[3]);
+        if (target == null || !target.isOnline()) {
+            droneManager.sendMessage(player, "player-offline");
+            return true;
+        }
+        if (target.equals(player)) {
+            droneManager.sendMessage(player, "blacklist-self");
+            return true;
+        }
+
+        if (blacklistRepository.addToPlayerBlacklist(player.getUniqueId(), target.getUniqueId())) {
+            droneManager.sendMessage(player, "blacklist-player-added", "<player>", target.getName());
+        } else {
+            droneManager.sendMessage(player, "blacklist-player-already", "<player>", target.getName());
+        }
+        return true;
+    }
+
+    private boolean executePlayerBlacklistRemove(Player player, String[] args) {
+        if (args.length < 4) {
+            menuHandler.getMenuGUI().openPlayerBlacklistSelectionMenu(player, false);
+            return true;
+        }
+
+        UUID targetId = resolvePlayerUuid(args[3]);
+        if (targetId == null) {
+            droneManager.sendMessage(player, "player-offline");
+            return true;
+        }
+
+        OfflinePlayer offline = Bukkit.getOfflinePlayer(targetId);
+        String targetName = offline.getName() != null ? offline.getName() : args[3];
+
+        if (blacklistRepository.removeFromPlayerBlacklist(player.getUniqueId(), targetId)) {
+            droneManager.sendMessage(player, "blacklist-player-removed", "<player>", targetName);
+        } else {
+            droneManager.sendMessage(player, "blacklist-player-not-found", "<player>", targetName);
+        }
+        return true;
+    }
+
+    private boolean executePlayerBlacklistList(Player player) {
+        List<UUID> entries = blacklistRepository.getPlayerBlacklist(player.getUniqueId());
+
+        if (entries.isEmpty()) {
+            droneManager.sendMessage(player, "blacklist-list-empty");
+            return true;
+        }
+
+        droneManager.sendMessage(player, "blacklist-player-list-header", "<count>", String.valueOf(entries.size()));
+        for (UUID entryId : entries) {
+            OfflinePlayer offline = Bukkit.getOfflinePlayer(entryId);
+            String name = offline.getName() != null ? offline.getName() : entryId.toString();
+            player.sendMessage(plugin.componentMessage("blacklist-list-entry", "<player>", name));
+        }
+        return true;
+    }
+
+    private UUID resolvePlayerUuid(String name) {
+        Player online = Bukkit.getPlayerExact(name);
+        if (online != null) {
+            return online.getUniqueId();
+        }
+        @SuppressWarnings("deprecation")
+        OfflinePlayer offline = Bukkit.getOfflinePlayer(name);
+        if (offline.hasPlayedBefore() || offline.isOnline()) {
+            return offline.getUniqueId();
+        }
+        return null;
+    }
+
     private boolean executeDecline(Player player) {
         if (!player.hasPermission("drone.use")) {
             droneManager.sendMessage(player, "no-permission");
@@ -215,6 +340,20 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         droneManager.sendMessage(player, "decline-success", "<count>", String.valueOf(declined));
+        return true;
+    }
+
+    private boolean executeCancel(Player player) {
+        if (!player.hasPermission("drone.send")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
+        int cancelled = droneManager.cancelOutgoing(player);
+        if (cancelled <= 0) {
+            droneManager.sendMessage(player, "cancel-none");
+            return true;
+        }
+        droneManager.sendMessage(player, "cancel-success", "<count>", String.valueOf(cancelled));
         return true;
     }
 
@@ -237,6 +376,11 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "rename" -> executeSocketRename(player, args);
             case "trust" -> executeSocketTrust(player, args);
             case "untrust" -> executeSocketUntrust(player, args);
+            case "blacklist" -> executeSocketBlacklist(player, args);
+            case "select" -> executeStructureSelect(player, args);
+            case "create" -> executeStructureCreate(player);
+            case "confirm" -> executeStructureConfirm(player, args);
+            case "cancel" -> executeStructureCancel(player);
             default -> {
                 player.sendMessage(plugin.component("usage-socket"));
                 yield true;
@@ -352,9 +496,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
 
-        Location loc = socket.location();
-        socketRepository.removeSocket(player.getUniqueId(), oldName);
-        socketRepository.addSocket(player.getUniqueId(), player.getName(), newName, loc);
+        if (!socketRepository.renameSocket(player.getUniqueId(), oldName, newName)) {
+            droneManager.sendMessage(player, "socket-exists", "<name>", newName);
+            return true;
+        }
         droneManager.sendMessage(player, "socket-renamed", "<old>", oldName, "<new>", newName);
         return true;
     }
@@ -415,6 +560,93 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         return true;
     }
 
+    private boolean executeSocketBlacklist(Player player, String[] args) {
+        if (args.length < 4) {
+            player.sendMessage(plugin.component("usage-socket-blacklist"));
+            return true;
+        }
+
+        String socketName = args[2];
+        if (!socketRepository.socketNameExists(player.getUniqueId(), socketName)) {
+            droneManager.sendMessage(player, "socket-not-found", "<name>", socketName);
+            return true;
+        }
+
+        String action = args[3].toLowerCase(Locale.ROOT);
+        return switch (action) {
+            case "add" -> executeSocketBlacklistAdd(player, socketName, args);
+            case "remove" -> executeSocketBlacklistRemove(player, socketName, args);
+            case "list" -> executeSocketBlacklistList(player, socketName);
+            default -> {
+                player.sendMessage(plugin.component("usage-socket-blacklist"));
+                yield true;
+            }
+        };
+    }
+
+    private boolean executeSocketBlacklistAdd(Player player, String socketName, String[] args) {
+        if (args.length < 5) {
+            menuHandler.getMenuGUI().openSocketBlacklistSelectionMenu(player, socketName, true);
+            return true;
+        }
+
+        Player target = Bukkit.getPlayerExact(args[4]);
+        if (target == null || !target.isOnline()) {
+            droneManager.sendMessage(player, "player-offline");
+            return true;
+        }
+        if (target.equals(player)) {
+            droneManager.sendMessage(player, "blacklist-self");
+            return true;
+        }
+
+        if (socketRepository.addBlacklistedPlayer(player.getUniqueId(), socketName, target.getUniqueId())) {
+            droneManager.sendMessage(player, "blacklist-socket-added", "<player>", target.getName(), "<socket>", socketName);
+        } else {
+            droneManager.sendMessage(player, "blacklist-socket-already", "<player>", target.getName(), "<socket>", socketName);
+        }
+        return true;
+    }
+
+    private boolean executeSocketBlacklistRemove(Player player, String socketName, String[] args) {
+        if (args.length < 5) {
+            menuHandler.getMenuGUI().openSocketBlacklistSelectionMenu(player, socketName, false);
+            return true;
+        }
+
+        UUID targetId = resolvePlayerUuid(args[4]);
+        if (targetId == null) {
+            droneManager.sendMessage(player, "player-offline");
+            return true;
+        }
+
+        OfflinePlayer offline = Bukkit.getOfflinePlayer(targetId);
+        String targetName = offline.getName() != null ? offline.getName() : args[4];
+
+        if (socketRepository.removeBlacklistedPlayer(player.getUniqueId(), socketName, targetId)) {
+            droneManager.sendMessage(player, "blacklist-socket-removed", "<player>", targetName, "<socket>", socketName);
+        } else {
+            droneManager.sendMessage(player, "blacklist-socket-not-found", "<player>", targetName, "<socket>", socketName);
+        }
+        return true;
+    }
+
+    private boolean executeSocketBlacklistList(Player player, String socketName) {
+        List<UUID> entries = socketRepository.getBlacklistedPlayers(player.getUniqueId(), socketName);
+        if (entries.isEmpty()) {
+            droneManager.sendMessage(player, "blacklist-list-empty");
+            return true;
+        }
+
+        droneManager.sendMessage(player, "blacklist-socket-list-header", "<socket>", socketName, "<count>", String.valueOf(entries.size()));
+        for (UUID entryId : entries) {
+            OfflinePlayer offline = Bukkit.getOfflinePlayer(entryId);
+            String name = offline.getName() != null ? offline.getName() : entryId.toString();
+            player.sendMessage(plugin.componentMessage("blacklist-list-entry", "<player>", name));
+        }
+        return true;
+    }
+
     private boolean executeSocketSend(Player player, String[] args) {
         if (args.length < 3) {
             player.sendMessage("/drone socket send <socket-name>");
@@ -437,6 +669,11 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         Player socketOwner = Bukkit.getPlayer(targetSocket.ownerId());
         if (socketOwner == null || !socketOwner.isOnline()) {
             droneManager.sendMessage(player, "player-offline");
+            return true;
+        }
+
+        if (socketRepository.isBlacklisted(targetSocket.ownerId(), socketName, player.getUniqueId())) {
+            droneManager.sendMessage(player, "blacklist-socket-blocked", "<socket>", socketName);
             return true;
         }
 
@@ -630,7 +867,34 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return List.of("send", "admin", "preview", "toggle", "reload", "list", "decline", "socket");
+            return List.of("send", "admin", "preview", "toggle", "reload", "list", "decline", "cancel", "socket", "blacklist");
+        }
+        if (args.length == 2 && "blacklist".equalsIgnoreCase(args[0])) {
+            return List.of("player");
+        }
+        if (args.length == 3 && "blacklist".equalsIgnoreCase(args[0]) && "player".equalsIgnoreCase(args[1])) {
+            return List.of("add", "remove", "list");
+        }
+        if (args.length == 4 && "blacklist".equalsIgnoreCase(args[0]) && "player".equalsIgnoreCase(args[1]) && sender instanceof Player player) {
+            if ("add".equalsIgnoreCase(args[2])) {
+                List<String> results = new ArrayList<>();
+                for (Player online : Bukkit.getOnlinePlayers()) {
+                    if (!online.equals(player)) {
+                        results.add(online.getName());
+                    }
+                }
+                return results;
+            }
+            if ("remove".equalsIgnoreCase(args[2])) {
+                List<String> results = new ArrayList<>();
+                for (UUID entryId : blacklistRepository.getPlayerBlacklist(player.getUniqueId())) {
+                    OfflinePlayer offline = Bukkit.getOfflinePlayer(entryId);
+                    if (offline.getName() != null) {
+                        results.add(offline.getName());
+                    }
+                }
+                return results;
+            }
         }
         if (args.length == 2 && "admin".equalsIgnoreCase(args[0])) {
             return List.of("send");
@@ -652,7 +916,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return results;
         }
         if (args.length == 2 && "socket".equalsIgnoreCase(args[0])) {
-            return List.of("place", "remove", "list", "send", "manage", "rename", "trust", "untrust");
+            return List.of("place", "remove", "list", "send", "manage", "rename", "trust", "untrust", "blacklist");
         }
         if (args.length == 3 && "socket".equalsIgnoreCase(args[0])) {
             if (sender instanceof Player player) {
@@ -668,12 +932,35 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                             .map(DeliverySocket::name)
                             .toList();
                 }
-                if ("trust".equalsIgnoreCase(args[1]) || "untrust".equalsIgnoreCase(args[1])) {
-                    // Only own sockets for trust/untrust
+                if ("trust".equalsIgnoreCase(args[1]) || "untrust".equalsIgnoreCase(args[1]) || "blacklist".equalsIgnoreCase(args[1])) {
                     return socketRepository.getSocketsByOwner(player.getUniqueId()).stream()
                             .map(DeliverySocket::name)
                             .toList();
                 }
+            }
+        }
+        if (args.length == 4 && "socket".equalsIgnoreCase(args[0]) && "blacklist".equalsIgnoreCase(args[1]) && sender instanceof Player player) {
+            return List.of("add", "remove", "list");
+        }
+        if (args.length == 5 && "socket".equalsIgnoreCase(args[0]) && "blacklist".equalsIgnoreCase(args[1]) && sender instanceof Player player) {
+            if ("add".equalsIgnoreCase(args[3])) {
+                List<String> results = new ArrayList<>();
+                for (Player online : Bukkit.getOnlinePlayers()) {
+                    if (!online.equals(player)) {
+                        results.add(online.getName());
+                    }
+                }
+                return results;
+            }
+            if ("remove".equalsIgnoreCase(args[3])) {
+                List<String> results = new ArrayList<>();
+                for (UUID entryId : socketRepository.getBlacklistedPlayers(player.getUniqueId(), args[2])) {
+                    OfflinePlayer offline = Bukkit.getOfflinePlayer(entryId);
+                    if (offline.getName() != null) {
+                        results.add(offline.getName());
+                    }
+                }
+                return results;
             }
         }
         if (args.length == 4 && "socket".equalsIgnoreCase(args[0])) {
@@ -762,6 +1049,16 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private void prepareSendFlow(Player sender, Player receiver, Location fixedTarget, boolean exactSocketTarget, String socketName) {
+        if (socketName != null) {
+            if (socketRepository.isBlacklisted(receiver.getUniqueId(), socketName, sender.getUniqueId())) {
+                droneManager.sendMessage(sender, "blacklist-socket-blocked", "<socket>", socketName);
+                return;
+            }
+        } else if (blacklistRepository.isPlayerBlacklisted(receiver.getUniqueId(), sender.getUniqueId())) {
+            droneManager.sendMessage(sender, "blacklist-player-blocked", "<player>", receiver.getName());
+            return;
+        }
+
         if (droneManager.settings().carryLeashedAnimals()) {
             List<LivingEntity> leashedAnimals = listSenderLeashedAnimals(sender);
             if (!leashedAnimals.isEmpty()) {
@@ -881,6 +1178,15 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             droneManager.sendMessage(sender, "player-offline");
             return;
         }
+        if (holder.socketName() != null) {
+            if (socketRepository.isBlacklisted(receiver.getUniqueId(), holder.socketName(), sender.getUniqueId())) {
+                droneManager.sendMessage(sender, "blacklist-socket-blocked", "<socket>", holder.socketName());
+                return;
+            }
+        } else if (blacklistRepository.isPlayerBlacklisted(receiver.getUniqueId(), sender.getUniqueId())) {
+            droneManager.sendMessage(sender, "blacklist-player-blocked", "<player>", receiver.getName());
+            return;
+        }
         List<LivingEntity> attachedAnimals = holder.animalsOnly()
                 ? resolveSelectedAnimals(holder.senderId(), holder.selectedAnimalIds())
                 : List.of();
@@ -906,6 +1212,132 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                         + "<green><bold>[Vorschau]</bold></green></click>"
         );
         receiver.sendMessage(incoming);
+    }
+
+    // === Socket Structure Commands ===
+    
+    private boolean executeStructureSelect(Player player, String[] args) {
+        if (args.length < 3) {
+            player.sendMessage(Component.text("Usage: /drone socket select <structureName>"));
+            return true;
+        }
+        
+        String structureName = args[2];
+        if (!structureRepository.exists(structureName)) {
+            player.sendMessage(Component.text("Structure not found: " + structureName));
+            return true;
+        }
+        
+        ItemStack tool = new ItemStack(Material.CARROT_ON_A_STICK);
+        ItemMeta meta = tool.getItemMeta();
+        if (meta != null) {
+            meta.displayName(Component.text("Structure Selection Tool"));
+            tool.setItemMeta(meta);
+        }
+        
+        player.getInventory().addItem(tool);
+        player.sendMessage(Component.text("Left-click to mark corner 1, right-click to mark corner 2"));
+        return true;
+    }
+    
+    private boolean executeStructureCreate(Player player) {
+        UUID playerId = player.getUniqueId();
+        Location corner1 = structureListener.getCorner1(playerId);
+        Location corner2 = structureListener.getCorner2(playerId);
+        
+        if (corner1 == null || corner2 == null) {
+            player.sendMessage(Component.text("Both corners must be marked first!"));
+            return true;
+        }
+        
+        try {
+            // Calculate structure bounds
+            int minX = Math.min(corner1.getBlockX(), corner2.getBlockX());
+            int maxX = Math.max(corner1.getBlockX(), corner2.getBlockX());
+            int minY = Math.min(corner1.getBlockY(), corner2.getBlockY());
+            int maxY = Math.max(corner1.getBlockY(), corner2.getBlockY());
+            int minZ = Math.min(corner1.getBlockZ(), corner2.getBlockZ());
+            int maxZ = Math.max(corner1.getBlockZ(), corner2.getBlockZ());
+            
+            int sizeX = maxX - minX + 1;
+            int sizeY = maxY - minY + 1;
+            int sizeZ = maxZ - minZ + 1;
+            
+            // Read blocks with relative coordinates
+            Map<String, String> blockData = new HashMap<>();
+            for (int x = minX; x <= maxX; x++) {
+                for (int y = minY; y <= maxY; y++) {
+                    for (int z = minZ; z <= maxZ; z++) {
+                        int relX = x - minX;
+                        int relY = y - minY;
+                        int relZ = z - minZ;
+                        org.bukkit.block.Block block = corner1.getWorld().getBlockAt(x, y, z);
+                        String blockDataStr = block.getBlockData().getAsString();
+                        blockData.put(relX + "," + relY + "," + relZ, blockDataStr);
+                    }
+                }
+            }
+            
+            // Show preview
+            Location previewLoc = player.getLocation().clone().add(0, 2, 0);
+            Map<String, String> tempBlockData = new HashMap<>();
+            for (int i = 0; i < 3; i++) {
+                tempBlockData.put("0," + i + ",0", "minecraft:smooth_stone_slab");
+            }
+            SocketStructure preview = new SocketStructure("preview", 1, 3, 1, tempBlockData);
+            previewManager.showPreview(playerId, previewLoc, preview);
+            
+            // Store pending structure
+            SocketStructure structure = new SocketStructure("pending", sizeX, sizeY, sizeZ, blockData);
+            pendingStructures.put(playerId, structure);
+            
+            player.sendMessage(Component.text("Structure captured! Use /drone socket confirm <name> to save"));
+            return true;
+        } catch (Exception e) {
+            player.sendMessage(Component.text("Error creating structure: " + e.getMessage()));
+            plugin.getLogger().severe("Error creating structure: " + e.getMessage());
+            return true;
+        }
+    }
+    
+    private boolean executeStructureConfirm(Player player, String[] args) {
+        if (args.length < 3) {
+            player.sendMessage(Component.text("Usage: /drone socket confirm <name>"));
+            return true;
+        }
+        
+        UUID playerId = player.getUniqueId();
+        SocketStructure pending = pendingStructures.get(playerId);
+        
+        if (pending == null) {
+            player.sendMessage(Component.text("No pending structure! Use /drone socket create first"));
+            return true;
+        }
+        
+        String structureName = args[2];
+        
+        try {
+            SocketStructure finalStructure = new SocketStructure(structureName, pending.sizeX(), pending.sizeY(), pending.sizeZ(), pending.blockData());
+            structureRepository.saveStructure(finalStructure);
+            
+            previewManager.clearPreview(playerId);
+            pendingStructures.remove(playerId);
+            structureListener.clearCorners(playerId);
+            
+            player.sendMessage(Component.text("Structure '" + structureName + "' saved successfully!"));
+            return true;
+        } catch (Exception e) {
+            player.sendMessage(Component.text("Error saving structure: " + e.getMessage()));
+            return true;
+        }
+    }
+    
+    private boolean executeStructureCancel(Player player) {
+        UUID playerId = player.getUniqueId();
+        previewManager.clearPreview(playerId);
+        pendingStructures.remove(playerId);
+        player.sendMessage(Component.text("Structure creation cancelled"));
+        return true;
     }
 
     private record ComposeInventoryHolder(

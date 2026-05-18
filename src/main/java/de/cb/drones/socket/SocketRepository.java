@@ -47,7 +47,7 @@ public final class SocketRepository {
         this.config = YamlConfiguration.loadConfiguration(file);
     }
 
-    public DeliverySocket addSocket(UUID ownerId, String ownerName, String name, Location location) {
+    public DeliverySocket addSocket(UUID ownerId, String ownerName, String name, Location location, String structureName) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Socket name cannot be null or blank");
         }
@@ -66,9 +66,13 @@ public final class SocketRepository {
             throw new IllegalArgumentException("Socket with name '" + name + "' already exists");
         }
 
-        DeliverySocket socket = DeliverySocket.create(ownerId, ownerName, name, location);
+        DeliverySocket socket = DeliverySocket.create(ownerId, ownerName, name, location, structureName);
         saveSocket(socket);
         return socket;
+    }
+
+    public DeliverySocket addSocket(UUID ownerId, String ownerName, String name, Location location) {
+        return addSocket(ownerId, ownerName, name, location, null);
     }
 
     public boolean removeSocket(UUID ownerId, String name) {
@@ -151,16 +155,7 @@ public final class SocketRepository {
         }
         newTrustedPlayers.add(playerUuid);
         
-        DeliverySocket updatedSocket = new DeliverySocket(
-                socket.socketId(),
-                socket.ownerId(),
-                socket.ownerName(),
-                socket.name(),
-                socket.location(),
-                socket.createdTimestamp(),
-                newTrustedPlayers
-        );
-        saveSocket(updatedSocket);
+        saveSocket(copySocket(socket, newTrustedPlayers, socket.blacklistedPlayers()));
         return true;
     }
 
@@ -176,16 +171,83 @@ public final class SocketRepository {
         }
         newTrustedPlayers.remove(playerUuid);
         
-        DeliverySocket updatedSocket = new DeliverySocket(
+        saveSocket(copySocket(socket, newTrustedPlayers, socket.blacklistedPlayers()));
+        return true;
+    }
+
+    public boolean addBlacklistedPlayer(UUID ownerId, String socketName, UUID playerUuid) {
+        DeliverySocket socket = getSocket(ownerId, socketName);
+        if (socket == null) {
+            return false;
+        }
+
+        List<UUID> blacklisted = new ArrayList<>(socket.blacklistedPlayers());
+        if (blacklisted.contains(playerUuid)) {
+            return false;
+        }
+        blacklisted.add(playerUuid);
+        saveSocket(copySocket(socket, socket.trustedPlayers(), blacklisted));
+        return true;
+    }
+
+    public boolean removeBlacklistedPlayer(UUID ownerId, String socketName, UUID playerUuid) {
+        DeliverySocket socket = getSocket(ownerId, socketName);
+        if (socket == null) {
+            return false;
+        }
+
+        List<UUID> blacklisted = new ArrayList<>(socket.blacklistedPlayers());
+        if (!blacklisted.remove(playerUuid)) {
+            return false;
+        }
+        saveSocket(copySocket(socket, socket.trustedPlayers(), blacklisted));
+        return true;
+    }
+
+    public List<UUID> getBlacklistedPlayers(UUID ownerId, String socketName) {
+        DeliverySocket socket = getSocket(ownerId, socketName);
+        if (socket == null) {
+            return List.of();
+        }
+        return new ArrayList<>(socket.blacklistedPlayers());
+    }
+
+    public boolean isBlacklisted(UUID ownerId, String socketName, UUID senderId) {
+        DeliverySocket socket = getSocket(ownerId, socketName);
+        return socket != null && socket.blacklistedPlayers().contains(senderId);
+    }
+
+    public boolean relocateSocket(UUID ownerId, String socketName, Location newLocation) {
+        DeliverySocket socket = getSocket(ownerId, socketName);
+        if (socket == null) {
+            return false;
+        }
+        saveSocket(copySocket(socket, socket.trustedPlayers(), socket.blacklistedPlayers(), newLocation.clone()));
+        return true;
+    }
+
+    public boolean renameSocket(UUID ownerId, String oldName, String newName) {
+        DeliverySocket socket = getSocket(ownerId, oldName);
+        if (socket == null) {
+            return false;
+        }
+        if (socketNameExists(ownerId, newName)) {
+            return false;
+        }
+
+        removeSocket(ownerId, oldName);
+        DeliverySocket renamed = new DeliverySocket(
                 socket.socketId(),
                 socket.ownerId(),
                 socket.ownerName(),
-                socket.name(),
+                newName,
                 socket.location(),
                 socket.createdTimestamp(),
-                newTrustedPlayers
+                socket.trustedPlayers(),
+                socket.blacklistedPlayers(),
+                socket.structureName()
         );
-        saveSocket(updatedSocket);
+        saveSocket(renamed);
         return true;
     }
 
@@ -208,14 +270,38 @@ public final class SocketRepository {
         config.set(socketPath + ".yaw", socket.location().getYaw());
         config.set(socketPath + ".pitch", socket.location().getPitch());
         config.set(socketPath + ".created", socket.createdTimestamp());
+        config.set(socketPath + ".structure-name", socket.structureName());
         
         // Save trusted players
         List<String> trustedPlayerStrings = socket.trustedPlayers().stream()
                 .map(UUID::toString)
                 .toList();
         config.set(socketPath + ".trusted-players", trustedPlayerStrings);
+
+        List<String> blacklistedPlayerStrings = socket.blacklistedPlayers().stream()
+                .map(UUID::toString)
+                .toList();
+        config.set(socketPath + ".blacklisted-players", blacklistedPlayerStrings);
         
         save();
+    }
+
+    private DeliverySocket copySocket(DeliverySocket socket, List<UUID> trustedPlayers, List<UUID> blacklistedPlayers) {
+        return copySocket(socket, trustedPlayers, blacklistedPlayers, socket.location());
+    }
+
+    private DeliverySocket copySocket(DeliverySocket socket, List<UUID> trustedPlayers, List<UUID> blacklistedPlayers, Location location) {
+        return new DeliverySocket(
+                socket.socketId(),
+                socket.ownerId(),
+                socket.ownerName(),
+                socket.name(),
+                location,
+                socket.createdTimestamp(),
+                trustedPlayers,
+                blacklistedPlayers,
+                socket.structureName()
+        );
     }
 
     private DeliverySocket loadSocket(UUID ownerId, String name, String socketPath) {
@@ -228,6 +314,7 @@ public final class SocketRepository {
         float yaw = (float) config.getDouble(socketPath + ".yaw");
         float pitch = (float) config.getDouble(socketPath + ".pitch");
         long created = config.getLong(socketPath + ".created");
+        String structureName = config.getString(socketPath + ".structure-name");
 
         // Load trusted players
         List<UUID> trustedPlayers = new ArrayList<>();
@@ -248,7 +335,18 @@ public final class SocketRepository {
         }
 
         Location location = new Location(world, x, y, z, yaw, pitch);
-        return new DeliverySocket(socketId, ownerId, ownerName, name, location, created, trustedPlayers);
+        List<UUID> blacklistedPlayers = new ArrayList<>();
+        if (config.contains(socketPath + ".blacklisted-players")) {
+            for (String uuidStr : config.getStringList(socketPath + ".blacklisted-players")) {
+                try {
+                    blacklistedPlayers.add(UUID.fromString(uuidStr));
+                } catch (IllegalArgumentException e) {
+                    plugin.getLogger().warning("Invalid UUID in blacklisted players for socket '" + name + "': " + uuidStr);
+                }
+            }
+        }
+
+        return new DeliverySocket(socketId, ownerId, ownerName, name, location, created, trustedPlayers, blacklistedPlayers, structureName);
     }
 
     private void save() {

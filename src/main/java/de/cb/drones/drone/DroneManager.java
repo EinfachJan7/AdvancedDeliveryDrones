@@ -373,6 +373,20 @@ public final class DroneManager {
         return incoming.size();
     }
 
+    public int cancelOutgoing(Player sender) {
+        List<DeliveryDrone> outgoing = activeDrones.values().stream()
+                .filter(drone -> drone.senderId().equals(sender.getUniqueId()))
+                .toList();
+        if (outgoing.isEmpty()) {
+            return 0;
+        }
+        for (DeliveryDrone drone : outgoing) {
+            returnItemsToSenderOnCancel(drone);
+            destroyDrone(drone, false);
+        }
+        return outgoing.size();
+    }
+
     public int receiverWentOffline(UUID receiverId) {
         List<DeliveryDrone> incoming = activeDrones.values().stream()
                 .filter(drone -> drone.receiverId().equals(receiverId))
@@ -432,6 +446,24 @@ public final class DroneManager {
             }
         }
         sendMessage(sender, "decline-sender-notify", "<player>", drone.receiverName());
+    }
+
+    private void returnItemsToSenderOnCancel(DeliveryDrone drone) {
+        List<ItemStack> items = drone.snapshotItems();
+        if (items.isEmpty()) {
+            return;
+        }
+        Player sender = Bukkit.getPlayer(drone.senderId());
+        if (sender == null || !sender.isOnline()) {
+            pendingReturns.computeIfAbsent(drone.senderId(), ignored -> new ArrayList<>()).addAll(items);
+            return;
+        }
+        for (ItemStack item : items) {
+            Map<Integer, ItemStack> overflow = sender.getInventory().addItem(item);
+            if (!overflow.isEmpty()) {
+                overflow.values().forEach(stack -> sender.getWorld().dropItemNaturally(sender.getLocation(), stack));
+            }
+        }
     }
 
     private void returnItemsToSenderOffline(DeliveryDrone drone) {

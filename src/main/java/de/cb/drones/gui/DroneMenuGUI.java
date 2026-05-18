@@ -1,6 +1,7 @@
 package de.cb.drones.gui;
 
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
+import de.cb.drones.config.PlayerBlacklistRepository;
 import de.cb.drones.config.PlayerSettingsRepository;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
@@ -8,7 +9,6 @@ import de.cb.drones.drone.GuiSettings;
 import de.cb.drones.drone.GuiItem;
 import de.cb.drones.socket.DeliverySocket;
 import de.cb.drones.socket.SocketRepository;
-// import de.cb.drones.socket.SocketBlacklistRepository;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -16,6 +16,7 @@ import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -38,17 +39,19 @@ public class DroneMenuGUI {
     private final PlayerSettingsRepository settingsRepository;
     private DroneSettings droneSettings;
     private final SocketRepository socketRepository;
-    // private final SocketBlacklistRepository blacklistRepository;
+    private final PlayerBlacklistRepository blacklistRepository;
     private final NamespacedKey guiItemKey;
+    private final NamespacedKey playerUuidKey;
 
-    public DroneMenuGUI(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, DroneSettings droneSettings, SocketRepository socketRepository /*, SocketBlacklistRepository blacklistRepository */, NamespacedKey guiItemKey) {
+    public DroneMenuGUI(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, PlayerBlacklistRepository blacklistRepository, DroneSettings droneSettings, SocketRepository socketRepository, NamespacedKey guiItemKey) {
         this.plugin = plugin;
         this.droneManager = droneManager;
         this.settingsRepository = settingsRepository;
+        this.blacklistRepository = blacklistRepository;
         this.droneSettings = droneSettings;
         this.socketRepository = socketRepository;
-        // this.blacklistRepository = blacklistRepository;
         this.guiItemKey = guiItemKey;
+        this.playerUuidKey = new NamespacedKey(plugin, "player_uuid");
     }
 
     public void updateSettings(DroneSettings newSettings) {
@@ -231,31 +234,27 @@ public class DroneMenuGUI {
         return head;
     }
 
-    private ItemStack createUntrustPlayerHeadWithUUID(org.bukkit.entity.Player player, UUID uuid) {
+    private ItemStack createUntrustPlayerHeadWithUUID(OfflinePlayer player, UUID uuid) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = head.getItemMeta();
         if (meta != null) {
-            // Use untrust-specific name format with placeholder replacement
+            String playerName = player.getName() != null ? player.getName() : uuid.toString();
             String nameFormat = droneSettings.guiConfig().untrustPlayerHeadNameFormat()
-                .replace("<player>", player.getName());
+                .replace("<player>", playerName);
             meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
 
-            // Use untrust-specific lore with placeholder replacement
             List<Component> loreComponents = new ArrayList<>();
             for (String line : droneSettings.guiConfig().untrustPlayerHeadLore()) {
-                String formattedLine = line.replace("<player>", player.getName());
-                loreComponents.add(MINI_MESSAGE.deserialize(formattedLine));
+                loreComponents.add(MINI_MESSAGE.deserialize(line.replace("<player>", playerName)));
             }
             meta.lore(loreComponents);
 
-            // Store UUID in persistent data for offline player handling
-            if (meta.getPersistentDataContainer() != null) {
-                NamespacedKey playerUuidKey = new NamespacedKey("advanced-delivery-drones", "player_uuid");
-                meta.getPersistentDataContainer().set(playerUuidKey, PersistentDataType.STRING, uuid.toString());
-            }
+            meta.getPersistentDataContainer().set(
+                    new NamespacedKey("advanced-delivery-drones", "player_uuid"),
+                    PersistentDataType.STRING,
+                    uuid.toString());
 
-            // Set player head texture
-            if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
+            if (meta instanceof SkullMeta skullMeta) {
                 skullMeta.setOwningPlayer(player);
             }
 
@@ -486,16 +485,14 @@ public class DroneMenuGUI {
             menu.setItem(relocateItem.position(), relocateButton);
         }
 
-        GuiItem trustItem = menuSettings.items().get("trust");
-        if (trustItem != null && trustItem.position() >= 0 && trustItem.position() < size) {
-            ItemStack trustButton = createMenuItem(trustItem.material(), trustItem.name(), trustItem.lore());
-            menu.setItem(trustItem.position(), trustButton);
+        GuiItem trustManagementItem = menuSettings.items().get("trust-management");
+        if (trustManagementItem != null && trustManagementItem.position() >= 0 && trustManagementItem.position() < size) {
+            menu.setItem(trustManagementItem.position(), createMenuItem(trustManagementItem.material(), trustManagementItem.name(), trustManagementItem.lore()));
         }
 
-        GuiItem untrustItem = menuSettings.items().get("untrust");
-        if (untrustItem != null && untrustItem.position() >= 0 && untrustItem.position() < size) {
-            ItemStack untrustButton = createMenuItem(untrustItem.material(), untrustItem.name(), untrustItem.lore());
-            menu.setItem(untrustItem.position(), untrustButton);
+        GuiItem blacklistManagementItem = menuSettings.items().get("blacklist-management");
+        if (blacklistManagementItem != null && blacklistManagementItem.position() >= 0 && blacklistManagementItem.position() < size) {
+            menu.setItem(blacklistManagementItem.position(), createMenuItem(blacklistManagementItem.material(), blacklistManagementItem.name(), blacklistManagementItem.lore()));
         }
 
         GuiItem deleteItem = menuSettings.items().get("delete");
@@ -509,6 +506,37 @@ public class DroneMenuGUI {
         if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
             ItemStack backButton = createMenuItem(backItem.material(), backItem.name(), backItem.lore());
             menu.setItem(backItem.position(), backButton);
+        }
+
+        player.openInventory(menu);
+    }
+
+    public void openSocketTrustMenu(Player player, String socketName) {
+        openSocketSubMenu(player, socketName, "socket_trust_menu:", droneSettings.guiConfig().socketTrustMenu());
+    }
+
+    public void openSocketBlacklistMenu(Player player, String socketName) {
+        openSocketSubMenu(player, socketName, "socket_blacklist_menu:", droneSettings.guiConfig().socketBlacklistMenu());
+    }
+
+    private void openSocketSubMenu(Player player, String socketName, String menuPrefix, GuiSettings menuSettings) {
+        DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder(menuPrefix + socketName);
+        Inventory menu = player.getServer().createInventory(holder, menuSettings.size(),
+                MINI_MESSAGE.deserialize(menuSettings.title()));
+        holder.setInventory(menu);
+
+        if (menuSettings.fillItem() != null) {
+            ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
+                    menuSettings.fillItem().name(), menuSettings.fillItem().lore());
+            for (int i = 0; i < menuSettings.size(); i++) {
+                menu.setItem(i, filler);
+            }
+        }
+
+        for (GuiItem item : menuSettings.items().values()) {
+            if (item.position() >= 0 && item.position() < menuSettings.size()) {
+                menu.setItem(item.position(), createMenuItem(item.material(), item.name(), item.lore()));
+            }
         }
 
         player.openInventory(menu);
@@ -571,16 +599,17 @@ public class DroneMenuGUI {
                 }
             }
 
-            // Add trusted player heads (online only, but with UUID for offline handling)
             int slot = 0;
             for (UUID trustedUuid : trustedPlayerUUIDs) {
-                if (slot >= size) break;
-                org.bukkit.entity.Player trustedPlayer = org.bukkit.Bukkit.getPlayer(trustedUuid);
-                if (trustedPlayer != null) {
-                    ItemStack headItem = createUntrustPlayerHeadWithUUID(trustedPlayer, trustedUuid);
-                    menu.setItem(slot, headItem);
-                    slot++;
+                if (slot >= size) {
+                    break;
                 }
+                org.bukkit.entity.Player trustedPlayer = org.bukkit.Bukkit.getPlayer(trustedUuid);
+                OfflinePlayer offline = Bukkit.getOfflinePlayer(trustedUuid);
+                ItemStack headItem = trustedPlayer != null
+                        ? createUntrustPlayerHeadWithUUID(trustedPlayer, trustedUuid)
+                        : createUntrustPlayerHeadWithUUID(offline, trustedUuid);
+                menu.setItem(slot++, headItem);
             }
         }
 
@@ -592,5 +621,192 @@ public class DroneMenuGUI {
         }
 
         player.openInventory(menu);
+    }
+
+    public void openBlacklistManagementMenu(Player player) {
+        GuiSettings menuSettings = droneSettings.guiConfig().blacklistManagement();
+        DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("blacklist_management");
+        Inventory menu = player.getServer().createInventory(holder, menuSettings.size(),
+                MINI_MESSAGE.deserialize(menuSettings.title()));
+        holder.setInventory(menu);
+
+        if (menuSettings.fillItem() != null) {
+            ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
+                    menuSettings.fillItem().name(), menuSettings.fillItem().lore());
+            for (int i = 0; i < menuSettings.size(); i++) {
+                menu.setItem(i, filler);
+            }
+        }
+
+        for (Map.Entry<String, GuiItem> entry : menuSettings.items().entrySet()) {
+            GuiItem item = entry.getValue();
+            if (item.position() >= 0 && item.position() < menuSettings.size()) {
+                menu.setItem(item.position(), createMenuItem(item.material(), item.name(), item.lore()));
+            }
+        }
+
+        GuiItem backItem = menuSettings.items().get("back");
+        if (backItem != null && backItem.position() >= 0 && backItem.position() < menuSettings.size()) {
+            menu.setItem(backItem.position(), createMenuItem(backItem.material(), backItem.name(), backItem.lore()));
+        }
+
+        player.openInventory(menu);
+    }
+
+    public void openPlayerBlacklistSelectionMenu(Player player, boolean isAdd) {
+        GuiSettings menuSettings = isAdd
+                ? droneSettings.guiConfig().blacklistPlayerAddSelection()
+                : droneSettings.guiConfig().blacklistPlayerRemoveSelection();
+        openBlacklistSelectionMenu(
+                player,
+                menuSettings,
+                "blacklist_selection:player:" + isAdd,
+                isAdd,
+                blacklistRepository.getPlayerBlacklist(player.getUniqueId()),
+                null
+        );
+    }
+
+    public void openSocketBlacklistSelectionMenu(Player player, String socketName, boolean isAdd) {
+        GuiSettings menuSettings = isAdd
+                ? droneSettings.guiConfig().blacklistSocketAddSelection()
+                : droneSettings.guiConfig().blacklistSocketRemoveSelection();
+        openBlacklistSelectionMenu(
+                player,
+                menuSettings,
+                "blacklist_selection:socket:" + socketName + ":" + isAdd,
+                isAdd,
+                socketRepository.getBlacklistedPlayers(player.getUniqueId(), socketName),
+                socketName
+        );
+    }
+
+    private void openBlacklistSelectionMenu(
+            Player player,
+            GuiSettings menuSettings,
+            String menuType,
+            boolean isAdd,
+            List<UUID> blockedOrExisting,
+            String socketName
+    ) {
+        int size;
+        Inventory menu;
+
+        if (isAdd) {
+            List<Player> candidates = new ArrayList<>();
+            for (Player target : player.getServer().getOnlinePlayers()) {
+                if (!target.equals(player) && !blockedOrExisting.contains(target.getUniqueId())) {
+                    candidates.add(target);
+                }
+            }
+
+            size = Math.max(menuSettings.size(), Math.min(54, ((candidates.size() + 8) / 9) * 9));
+            DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder(menuType);
+            menu = player.getServer().createInventory(holder, size, MINI_MESSAGE.deserialize(menuSettings.title()));
+            holder.setInventory(menu);
+            fillMenu(menu, menuSettings, size);
+
+            int slot = 0;
+            for (Player target : candidates) {
+                if (slot >= size) {
+                    break;
+                }
+                menu.setItem(slot++, createBlacklistAddPlayerHead(target, socketName));
+            }
+        } else {
+            size = Math.max(menuSettings.size(), Math.min(54, ((blockedOrExisting.size() + 8) / 9) * 9));
+            DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder(menuType);
+            menu = player.getServer().createInventory(holder, size, MINI_MESSAGE.deserialize(menuSettings.title()));
+            holder.setInventory(menu);
+            fillMenu(menu, menuSettings, size);
+
+            int slot = 0;
+            for (UUID blockedUuid : blockedOrExisting) {
+                if (slot >= size) {
+                    break;
+                }
+                OfflinePlayer offline = Bukkit.getOfflinePlayer(blockedUuid);
+                menu.setItem(slot++, createBlacklistRemovePlayerHead(offline, blockedUuid, socketName));
+            }
+        }
+
+        GuiItem backItem = menuSettings.items().get("back");
+        if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
+            menu.setItem(backItem.position(), createMenuItem(backItem.material(), backItem.name(), backItem.lore()));
+        }
+
+        player.openInventory(menu);
+    }
+
+    private void fillMenu(Inventory menu, GuiSettings menuSettings, int size) {
+        if (menuSettings.fillItem() == null) {
+            return;
+        }
+        ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
+                menuSettings.fillItem().name(), menuSettings.fillItem().lore());
+        for (int i = 0; i < size; i++) {
+            menu.setItem(i, filler);
+        }
+    }
+
+    private ItemStack createBlacklistAddPlayerHead(Player target, String socketName) {
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        ItemMeta meta = head.getItemMeta();
+        if (meta == null) {
+            return head;
+        }
+
+        String playerName = target.getName();
+        String socketLabel = socketName != null ? socketName : "";
+        String nameFormat = droneSettings.guiConfig().blacklistAddPlayerHeadNameFormat()
+                .replace("<player>", playerName)
+                .replace("<socket>", socketLabel);
+        meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
+
+        List<Component> loreComponents = new ArrayList<>();
+        for (String line : droneSettings.guiConfig().blacklistAddPlayerHeadLore()) {
+            loreComponents.add(MINI_MESSAGE.deserialize(line
+                    .replace("<player>", playerName)
+                    .replace("<socket>", socketLabel)));
+        }
+        meta.lore(loreComponents);
+        meta.getPersistentDataContainer().set(playerUuidKey, PersistentDataType.STRING, target.getUniqueId().toString());
+
+        if (meta instanceof SkullMeta skullMeta) {
+            skullMeta.setOwningPlayer(target);
+        }
+        head.setItemMeta(meta);
+        return head;
+    }
+
+    private ItemStack createBlacklistRemovePlayerHead(OfflinePlayer offline, UUID uuid, String socketName) {
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        ItemMeta meta = head.getItemMeta();
+        if (meta == null) {
+            return head;
+        }
+
+        String playerName = offline.getName() != null ? offline.getName() : uuid.toString();
+        String socketLabel = socketName != null ? socketName : "";
+        String nameFormat = droneSettings.guiConfig().blacklistRemovePlayerHeadNameFormat()
+                .replace("<player>", playerName)
+                .replace("<socket>", socketLabel);
+        meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
+
+        List<Component> loreComponents = new ArrayList<>();
+        for (String line : droneSettings.guiConfig().blacklistRemovePlayerHeadLore()) {
+            loreComponents.add(MINI_MESSAGE.deserialize(line
+                    .replace("<player>", playerName)
+                    .replace("<socket>", socketLabel)));
+        }
+        meta.lore(loreComponents);
+
+        meta.getPersistentDataContainer().set(playerUuidKey, PersistentDataType.STRING, uuid.toString());
+
+        if (meta instanceof SkullMeta skullMeta) {
+            skullMeta.setOwningPlayer(offline);
+        }
+        head.setItemMeta(meta);
+        return head;
     }
 }

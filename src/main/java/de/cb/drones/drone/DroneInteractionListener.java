@@ -47,6 +47,11 @@ public final class DroneInteractionListener implements Listener {
     }
 
     private boolean handleInteract(Player player, Entity clicked) {
+        // Ignore block displays (socket previews)
+        if (clicked instanceof org.bukkit.entity.BlockDisplay) {
+            return false;
+        }
+        
         DeliveryDrone drone = droneManager.findByEntity(clicked.getUniqueId());
         if (drone == null) {
             return false;

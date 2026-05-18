@@ -1,10 +1,12 @@
 package de.cb.drones.gui;
 
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
+import de.cb.drones.config.PlayerBlacklistRepository;
 import de.cb.drones.config.PlayerSettingsRepository;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.drone.GuiItem;
+import de.cb.drones.drone.GuiSettings;
 import de.cb.drones.socket.SocketRepository;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -23,6 +25,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.NamespacedKey;
 
 import java.util.HashMap;
@@ -39,7 +42,7 @@ public class DroneMenuHandler implements Listener {
     private final DroneMenuGUI menuGUI;
     private final SocketRepository socketRepository;
     private final NamespacedKey guiItemKey;
-    // private final SocketBlacklistRepository blacklistRepository;
+    private final PlayerBlacklistRepository blacklistRepository;
     
     // Track pending socket renames (player UUID -> old socket name)
     private final Map<UUID, String> pendingRenames = new HashMap<>();
@@ -47,15 +50,15 @@ public class DroneMenuHandler implements Listener {
     private final Map<UUID, Location> signLocations = new HashMap<>();
     private final Map<UUID, Material> signOriginalMaterials = new HashMap<>();
 
-    public DroneMenuHandler(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, DroneSettings droneSettings, SocketRepository socketRepository /*, SocketBlacklistRepository blacklistRepository */) {
+    public DroneMenuHandler(AdvancedDeliveryDronesPlugin plugin, DroneManager droneManager, PlayerSettingsRepository settingsRepository, PlayerBlacklistRepository blacklistRepository, DroneSettings droneSettings, SocketRepository socketRepository) {
         this.plugin = plugin;
         this.droneManager = droneManager;
         this.settingsRepository = settingsRepository;
+        this.blacklistRepository = blacklistRepository;
         this.droneSettings = droneSettings;
         this.socketRepository = socketRepository;
-        // this.blacklistRepository = blacklistRepository;
         this.guiItemKey = new NamespacedKey(plugin, "gui_item");
-        this.menuGUI = new DroneMenuGUI(plugin, droneManager, settingsRepository, droneSettings, socketRepository, /* blacklistRepository, */ this.guiItemKey);
+        this.menuGUI = new DroneMenuGUI(plugin, droneManager, settingsRepository, blacklistRepository, droneSettings, socketRepository, this.guiItemKey);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -101,6 +104,7 @@ public class DroneMenuHandler implements Listener {
             case "target_selection" -> handleTargetSelectionClick(player, clicked, event.getSlot());
             case "socket_selection" -> handleSocketSelectionClick(player, clicked, event.getSlot());
             case "socket_management" -> handleSocketManagementClick(player, clicked, event.getSlot(), event.isRightClick());
+            case "blacklist_management" -> handleBlacklistManagementClick(player, clicked, event.getSlot());
             default -> {
                 if (menuType.startsWith("socket_edit:")) {
                     String socketName = menuType.substring("socket_edit:".length());
@@ -110,6 +114,19 @@ public class DroneMenuHandler implements Listener {
                     String socketName = parts[0];
                     boolean isTrust = Boolean.parseBoolean(parts[1]);
                     handleTrustSelectionClick(player, clicked, event.getSlot(), socketName, isTrust);
+                } else if (menuType.startsWith("blacklist_selection:")) {
+                    String[] parts = menuType.substring("blacklist_selection:".length()).split(":", 3);
+                    if ("player".equals(parts[0]) && parts.length >= 2) {
+                        handlePlayerBlacklistSelectionClick(player, clicked, event.getSlot(), Boolean.parseBoolean(parts[1]));
+                    } else if ("socket".equals(parts[0]) && parts.length >= 3) {
+                        handleSocketBlacklistSelectionClick(player, clicked, event.getSlot(), parts[1], Boolean.parseBoolean(parts[2]));
+                    }
+                } else if (menuType.startsWith("socket_trust_menu:")) {
+                    String socketName = menuType.substring("socket_trust_menu:".length());
+                    handleSocketTrustMenuClick(player, clicked, event.getSlot(), socketName);
+                } else if (menuType.startsWith("socket_blacklist_menu:")) {
+                    String socketName = menuType.substring("socket_blacklist_menu:".length());
+                    handleSocketBlacklistMenuClick(player, clicked, event.getSlot(), socketName);
                 }
             }
         }
@@ -133,6 +150,7 @@ public class DroneMenuHandler implements Listener {
         GuiItem declineItem = droneSettings.guiConfig().mainMenu().items().get("decline");
         GuiItem previewItem = droneSettings.guiConfig().mainMenu().items().get("preview");
         GuiItem socketManageItem = droneSettings.guiConfig().mainMenu().items().get("socket-manage");
+        GuiItem blacklistItem = droneSettings.guiConfig().mainMenu().items().get("blacklist");
 
         if (sendItem != null && slot == sendItem.position()) { // Send Drone
             menuGUI.openTargetSelectionMenu(player);
@@ -161,7 +179,133 @@ public class DroneMenuHandler implements Listener {
                 });
         } else if (socketManageItem != null && slot == socketManageItem.position()) { // Socket Management
             menuGUI.openSocketManagementMenu(player);
+        } else if (blacklistItem != null && slot == blacklistItem.position()) {
+            menuGUI.openBlacklistManagementMenu(player);
         }
+    }
+
+    private void handleBlacklistManagementClick(Player player, ItemStack clicked, int slot) {
+        GuiItem backItem = droneSettings.guiConfig().blacklistManagement().items().get("back");
+        if (backItem != null && slot == backItem.position()) {
+            menuGUI.openMainMenu(player);
+            return;
+        }
+
+        GuiItem playerAdd = droneSettings.guiConfig().blacklistManagement().items().get("player-add");
+        if (playerAdd != null && slot == playerAdd.position()) {
+            menuGUI.openPlayerBlacklistSelectionMenu(player, true);
+            return;
+        }
+
+        GuiItem playerRemove = droneSettings.guiConfig().blacklistManagement().items().get("player-remove");
+        if (playerRemove != null && slot == playerRemove.position()) {
+            menuGUI.openPlayerBlacklistSelectionMenu(player, false);
+        }
+    }
+
+    private void handlePlayerBlacklistSelectionClick(Player player, ItemStack clicked, int slot, boolean isAdd) {
+        GuiSettings selectionSettings = isAdd
+                ? droneSettings.guiConfig().blacklistPlayerAddSelection()
+                : droneSettings.guiConfig().blacklistPlayerRemoveSelection();
+        GuiItem backItem = selectionSettings.items().get("back");
+        if (backItem != null && slot == backItem.position()) {
+            menuGUI.openBlacklistManagementMenu(player);
+            return;
+        }
+        if (handleBlacklistHeadClick(player, clicked, isAdd, null, true)) {
+            menuGUI.openPlayerBlacklistSelectionMenu(player, isAdd);
+        }
+    }
+
+    private void handleSocketBlacklistSelectionClick(Player player, ItemStack clicked, int slot, String socketName, boolean isAdd) {
+        GuiSettings selectionSettings = isAdd
+                ? droneSettings.guiConfig().blacklistSocketAddSelection()
+                : droneSettings.guiConfig().blacklistSocketRemoveSelection();
+        GuiItem backItem = selectionSettings.items().get("back");
+        if (backItem != null && slot == backItem.position()) {
+            menuGUI.openSocketBlacklistMenu(player, socketName);
+            return;
+        }
+        if (handleBlacklistHeadClick(player, clicked, isAdd, socketName, false)) {
+            menuGUI.openSocketBlacklistSelectionMenu(player, socketName, isAdd);
+        }
+    }
+
+    private boolean handleBlacklistHeadClick(Player player, ItemStack clicked, boolean isAdd, String socketName, boolean playerScope) {
+        if (clicked.getType() != Material.PLAYER_HEAD) {
+            return false;
+        }
+        ItemMeta meta = clicked.getItemMeta();
+        if (meta == null) {
+            return false;
+        }
+
+        UUID targetUUID = resolveTargetUuid(meta);
+        if (targetUUID == null) {
+            return false;
+        }
+
+        if (isAdd) {
+            Player target = player.getServer().getPlayer(targetUUID);
+            if (target == null || !target.isOnline() || target.equals(player)) {
+                return false;
+            }
+
+            boolean added = playerScope
+                    ? blacklistRepository.addToPlayerBlacklist(player.getUniqueId(), targetUUID)
+                    : socketRepository.addBlacklistedPlayer(player.getUniqueId(), socketName, targetUUID);
+
+            if (added) {
+                if (playerScope) {
+                    droneManager.sendMessage(player, "blacklist-player-added", "<player>", target.getName());
+                } else {
+                    droneManager.sendMessage(player, "blacklist-socket-added", "<player>", target.getName(), "<socket>", socketName);
+                }
+            } else if (playerScope) {
+                droneManager.sendMessage(player, "blacklist-player-already", "<player>", target.getName());
+            } else {
+                droneManager.sendMessage(player, "blacklist-socket-already", "<player>", target.getName(), "<socket>", socketName);
+            }
+            return true;
+        }
+
+        boolean removed = playerScope
+                ? blacklistRepository.removeFromPlayerBlacklist(player.getUniqueId(), targetUUID)
+                : socketRepository.removeBlacklistedPlayer(player.getUniqueId(), socketName, targetUUID);
+
+        String targetName = Bukkit.getOfflinePlayer(targetUUID).getName();
+        if (targetName == null) {
+            targetName = targetUUID.toString();
+        }
+
+        if (removed) {
+            if (playerScope) {
+                droneManager.sendMessage(player, "blacklist-player-removed", "<player>", targetName);
+            } else {
+                droneManager.sendMessage(player, "blacklist-socket-removed", "<player>", targetName, "<socket>", socketName);
+            }
+        } else if (playerScope) {
+            droneManager.sendMessage(player, "blacklist-player-not-found", "<player>", targetName);
+        } else {
+            droneManager.sendMessage(player, "blacklist-socket-not-found", "<player>", targetName, "<socket>", socketName);
+        }
+        return true;
+    }
+
+    private UUID resolveTargetUuid(ItemMeta meta) {
+        NamespacedKey playerUuidKey = new NamespacedKey("advanced-delivery-drones", "player_uuid");
+        if (meta.getPersistentDataContainer().has(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING)) {
+            String uuidString = meta.getPersistentDataContainer().get(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING);
+            if (uuidString != null) {
+                try {
+                    return UUID.fromString(uuidString);
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+        }
+        String targetName = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
+        Player target = Bukkit.getPlayer(targetName);
+        return target != null ? target.getUniqueId() : null;
     }
 
     private void handlePlayerSelectionClick(Player player, ItemStack clicked, int slot) {
@@ -278,10 +422,12 @@ public class DroneMenuHandler implements Listener {
     }
 
     private void handleTrustSelectionClick(Player player, ItemStack clicked, int slot, String socketName, boolean isTrust) {
-        // Check for back button first
-        GuiItem backItem = droneSettings.guiConfig().playerSelection().items().get("back");
+        GuiSettings selectionSettings = isTrust
+                ? droneSettings.guiConfig().trustPlayerSelection()
+                : droneSettings.guiConfig().untrustPlayerSelection();
+        GuiItem backItem = selectionSettings.items().get("back");
         if (backItem != null && slot == backItem.position()) {
-            menuGUI.openSocketEditMenu(player, socketName);
+            menuGUI.openSocketTrustMenu(player, socketName);
             return;
         }
 
@@ -340,7 +486,47 @@ public class DroneMenuHandler implements Listener {
             }
         }
 
-        menuGUI.openSocketEditMenu(player, socketName);
+        menuGUI.openTrustPlayerSelectionMenu(player, socketName, isTrust);
+    }
+
+    private void handleSocketTrustMenuClick(Player player, ItemStack clicked, int slot, String socketName) {
+        GuiSettings menuSettings = droneSettings.guiConfig().socketTrustMenu();
+        GuiItem backItem = menuSettings.items().get("back");
+        if (backItem != null && slot == backItem.position()) {
+            menuGUI.openSocketEditMenu(player, socketName);
+            return;
+        }
+
+        GuiItem trustItem = menuSettings.items().get("trust");
+        if (trustItem != null && slot == trustItem.position()) {
+            menuGUI.openTrustPlayerSelectionMenu(player, socketName, true);
+            return;
+        }
+
+        GuiItem untrustItem = menuSettings.items().get("untrust");
+        if (untrustItem != null && slot == untrustItem.position()) {
+            menuGUI.openTrustPlayerSelectionMenu(player, socketName, false);
+        }
+    }
+
+    private void handleSocketBlacklistMenuClick(Player player, ItemStack clicked, int slot, String socketName) {
+        GuiSettings menuSettings = droneSettings.guiConfig().socketBlacklistMenu();
+        GuiItem backItem = menuSettings.items().get("back");
+        if (backItem != null && slot == backItem.position()) {
+            menuGUI.openSocketEditMenu(player, socketName);
+            return;
+        }
+
+        GuiItem blacklistAddItem = menuSettings.items().get("blacklist-add");
+        if (blacklistAddItem != null && slot == blacklistAddItem.position()) {
+            menuGUI.openSocketBlacklistSelectionMenu(player, socketName, true);
+            return;
+        }
+
+        GuiItem blacklistRemoveItem = menuSettings.items().get("blacklist-remove");
+        if (blacklistRemoveItem != null && slot == blacklistRemoveItem.position()) {
+            menuGUI.openSocketBlacklistSelectionMenu(player, socketName, false);
+        }
     }
 
     private void handleSocketEditClick(Player player, ItemStack clicked, int slot, String socketName) {
@@ -372,22 +558,21 @@ public class DroneMenuHandler implements Listener {
                 return;
             }
 
-            socketRepository.removeSocket(player.getUniqueId(), socketName);
-            socketRepository.addSocket(player.getUniqueId(), player.getName(), socketName, player.getLocation());
+            socketRepository.relocateSocket(player.getUniqueId(), socketName, player.getLocation());
             droneManager.sendMessage(player, "socket-relocated", "<name>", socketName);
             menuGUI.openSocketManagementMenu(player);
             return;
         }
 
-        GuiItem trustItem = droneSettings.guiConfig().socketEdit().items().get("trust");
-        if (trustItem != null && slot == trustItem.position()) {
-            menuGUI.openTrustPlayerSelectionMenu(player, socketName, true);
+        GuiItem trustManagementItem = droneSettings.guiConfig().socketEdit().items().get("trust-management");
+        if (trustManagementItem != null && slot == trustManagementItem.position()) {
+            menuGUI.openSocketTrustMenu(player, socketName);
             return;
         }
 
-        GuiItem untrustItem = droneSettings.guiConfig().socketEdit().items().get("untrust");
-        if (untrustItem != null && slot == untrustItem.position()) {
-            menuGUI.openTrustPlayerSelectionMenu(player, socketName, false);
+        GuiItem blacklistManagementItem = droneSettings.guiConfig().socketEdit().items().get("blacklist-management");
+        if (blacklistManagementItem != null && slot == blacklistManagementItem.position()) {
+            menuGUI.openSocketBlacklistMenu(player, socketName);
             return;
         }
 
@@ -503,12 +688,7 @@ public class DroneMenuHandler implements Listener {
             return;
         }
         
-        // Perform the rename
-        de.cb.drones.socket.DeliverySocket socket = socketRepository.getSocket(playerId, oldName);
-        if (socket != null) {
-            Location loc = socket.location();
-            socketRepository.removeSocket(playerId, oldName);
-            socketRepository.addSocket(playerId, player.getName(), newName, loc);
+        if (socketRepository.renameSocket(playerId, oldName, newName)) {
             droneManager.sendMessage(player, "socket-renamed", "<old>", oldName, "<new>", newName);
         }
     }

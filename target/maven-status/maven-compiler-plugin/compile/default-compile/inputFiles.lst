@@ -1,5 +1,6 @@
 C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\AdvancedDeliveryDronesPlugin.java
 C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\command\DroneCommand.java
+C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\config\PlayerBlacklistRepository.java
 C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\config\PlayerSettingsRepository.java
 C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\discord\DiscordWebhookManager.java
 C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\drone\DeliveryDrone.java
@@ -13,4 +14,8 @@ C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\gui\D
 C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\gui\GuiConfiguration.java
 C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\performance\PerformanceOptimizer.java
 C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\socket\DeliverySocket.java
+C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\socket\SocketPreviewManager.java
 C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\socket\SocketRepository.java
+C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\socket\SocketStructure.java
+C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\socket\SocketStructureListener.java
+C:\Users\Jankr\Downloads\AdvancedDeliveryDrones\src\main\java\de\cb\drones\socket\SocketStructureRepository.java
