@@ -1,5 +1,7 @@
 # Advanced Delivery Drones
 
+Licensed under the [MIT License](LICENSE).
+
 Physical drone deliveries for Minecraft Paper servers: visible flight, package inventories, sockets, animal transport, blacklists, Discord webhooks, and fully configurable GUIs.
 
 > **Roadmap:** Dedicated translation files (locale bundles) and a finer-grained permission system are planned for a future release. Until then, all player-facing text lives in `config.yml` / `gui.yml`, and permissions are grouped as documented below.
