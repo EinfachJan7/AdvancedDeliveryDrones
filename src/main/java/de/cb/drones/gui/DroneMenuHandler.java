@@ -318,6 +318,11 @@ public class DroneMenuHandler implements Listener {
     }
 
     private void handlePlayerSelectionClick(Player player, ItemStack clicked, int slot) {
+        if (!droneSettings.playersEnabled()) {
+            droneManager.sendMessage(player, "players-disabled");
+            player.closeInventory();
+            return;
+        }
         // Check for back button first with null check
         GuiItem backItem = droneSettings.guiConfig().playerSelection().items().get("back");
         if (backItem != null && slot == backItem.position()) {
@@ -352,6 +357,10 @@ public class DroneMenuHandler implements Listener {
         }
 
         if (playerItem != null && slot == playerItem.position()) {
+            if (!droneSettings.playersEnabled()) {
+                droneManager.sendMessage(player, "players-disabled");
+                return;
+            }
             menuGUI.openPlayerSelectionMenu(player);
             return;
         }

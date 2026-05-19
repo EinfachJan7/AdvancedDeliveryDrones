@@ -105,6 +105,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeSend(Player sender, String[] args) {
+        if (!droneSettings.playersEnabled()) {
+            droneManager.sendMessage(sender, "players-disabled");
+            return true;
+        }
         if (!sender.hasPermission("drone.send.players")) {
             droneManager.sendMessage(sender, "no-permission");
             return true;
