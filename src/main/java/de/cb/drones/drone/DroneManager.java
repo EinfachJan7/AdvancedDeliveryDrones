@@ -92,15 +92,15 @@ public final class DroneManager {
     }
 
     public void sendMessage(Player player, String key, String placeholder1, String value1, String placeholder2, String value2) {
-        String prefix = plugin.getConfig().getString("messages.prefix", "");
-        String body = plugin.getConfig().getString("messages." + key, key);
+        String prefix = plugin.getLanguageManager().getString("prefix", "");
+        String body = plugin.getLanguageManager().getString(key, key);
         body = body.replace(placeholder1, value1).replace(placeholder2, value2);
         player.sendMessage(miniMessage.deserialize(prefix + body));
     }
 
     public void sendMessage(Player player, String key, String placeholder1, String value1, String placeholder2, String value2, String placeholder3, String value3) {
-        String prefix = plugin.getConfig().getString("messages.prefix", "");
-        String body = plugin.getConfig().getString("messages." + key, key);
+        String prefix = plugin.getLanguageManager().getString("prefix", "");
+        String body = plugin.getLanguageManager().getString(key, key);
         body = body.replace(placeholder1, value1).replace(placeholder2, value2).replace(placeholder3, value3);
         player.sendMessage(miniMessage.deserialize(prefix + body));
     }

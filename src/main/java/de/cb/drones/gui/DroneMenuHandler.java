@@ -719,7 +719,7 @@ public class DroneMenuHandler implements Listener {
         
         // Validate the new name
         if (newName.isBlank()) {
-            droneManager.sendMessage(player, "socket-error", "<error>", "Kein Name eingegeben");
+            droneManager.sendMessage(player, "socket-error", "<error>", plugin.getLanguageManager().getString("socket-error-no-name"));
             return;
         }
         

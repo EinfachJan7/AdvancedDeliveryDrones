@@ -98,7 +98,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "socket" -> executeSocket(player, args);
             case "blacklist" -> executeBlacklist(player, args);
             default -> {
-                player.sendMessage("/drone <send|admin|preview|toggle|reload|list|decline|cancel|socket|blacklist>");
+                player.sendMessage(plugin.component("usage-unknown"));
                 yield true;
             }
         };
@@ -209,11 +209,8 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         droneManager.sendMessage(player, "active-drones-count", "<count>", String.valueOf(drones.size()));
         for (de.cb.drones.drone.DeliveryDrone drone : drones) {
             Location loc = drone.currentLocation();
-            String command = "/tp " + loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ();
             Component line = MINI_MESSAGE.deserialize(
-                    "<gray>- <yellow><receiver></yellow> <dark_gray>|</dark_gray> "
-                            + "<white><world></white> <gray>(<x> <y> <z>)</gray> "
-                            + "<click:run_command:'" + command + "'><green>[Teleport]</green></click>",
+                    plugin.getLanguageManager().getString("active-drones-list-entry"),
                     Placeholder.unparsed("receiver", drone.receiverName()),
                     Placeholder.unparsed("world", loc.getWorld() == null ? "world" : loc.getWorld().getName()),
                     Placeholder.unparsed("x", String.valueOf(loc.getBlockX())),
@@ -482,10 +479,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         droneManager.sendMessage(player, "socket-list-header", "<count>", String.valueOf(sockets.size()));
         for (DeliverySocket socket : sockets) {
             Component line = MINI_MESSAGE.deserialize(
-                    "<gray>- <yellow><name></yellow> <dark_gray>|</dark_gray> "
-                            + "<white><world></white> <gray>(<coords>)</gray> "
-                            + "<click:run_command:'/drone socket send " + socket.name() + "'><green>[Send]</green></click> "
-                            + "<click:run_command:'/drone socket remove " + socket.name() + "'><red>[Remove]</red></click>",
+                    plugin.getLanguageManager().getString("socket-list-entry"),
                     Placeholder.unparsed("name", socket.name()),
                     Placeholder.unparsed("world", socket.getWorldName()),
                     Placeholder.unparsed("coords", socket.getCoordinates())
@@ -700,7 +694,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length < 3) {
-            player.sendMessage("/drone socket send <socket-name>");
+            player.sendMessage(plugin.component("usage-socket-send-command"));
             return true;
         }
         String socketName = args[2];
@@ -763,7 +757,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             Inventory deliveryInventory = Bukkit.createInventory(
                     new DroneInventoryHolder(holder.senderId(), holder.receiverId()),
                     droneManager.settings().inventorySize(),
-                    MINI_MESSAGE.deserialize(plugin.getConfig().getString("messages.drone-inventory-title", "<gold>Delivery Drone</gold>"))
+                    MINI_MESSAGE.deserialize(plugin.getLanguageManager().getString("drone-inventory-title", "<gold>Delivery Drone</gold>"))
             );
             spawnDroneFromSelection(sender, holder, deliveryInventory);
             return;
@@ -779,7 +773,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         Inventory deliveryInventory = Bukkit.createInventory(
                 new DroneInventoryHolder(holder.senderId(), holder.receiverId()),
                 inv.getSize(),
-                MINI_MESSAGE.deserialize(plugin.getConfig().getString("messages.drone-inventory-title", "<gold>Delivery Drone</gold>"))
+                MINI_MESSAGE.deserialize(plugin.getLanguageManager().getString("drone-inventory-title", "<gold>Delivery Drone</gold>"))
         );
         deliveryInventory.setContents(inv.getContents());
         inv.clear();
@@ -831,7 +825,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length < 2) {
-            player.sendMessage("/drone preview <drone-id>");
+            player.sendMessage(plugin.component("usage-preview-command"));
             return true;
         }
         UUID droneId;
@@ -850,7 +844,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         Inventory preview = Bukkit.createInventory(
                 new PreviewInventoryHolder(drone.droneId(), player.getUniqueId()),
                 previewSize,
-                MINI_MESSAGE.deserialize(plugin.getConfig().getString("messages.drone-preview-title", "<gold>Drone Vorschau</gold>"))
+                MINI_MESSAGE.deserialize(plugin.getLanguageManager().getString("drone-preview-title", "<gold>Drone Vorschau</gold>"))
         );
         if (drone.animalsOnlyDelivery()) {
             populateAnimalPreview(preview, drone.attachedAnimalTypes());
@@ -878,9 +872,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             ItemStack stack = new ItemStack(egg, Math.min(64, entry.getValue()));
             ItemMeta meta = stack.getItemMeta();
             if (meta != null) {
-                String animalName = plugin.getConfig().getString("messages.animal-display-name", "<gold>Tier: <type></gold>")
+                String animalName = plugin.getLanguageManager().getString("animal-display-name", "<gold>Tier: <type></gold>")
                     .replace("<type>", entry.getKey().name());
-                String animalCount = plugin.getConfig().getString("messages.animal-display-count", "<gray>Anzahl: <count></gray>")
+                String animalCount = plugin.getLanguageManager().getString("animal-display-count", "<gray>Anzahl: <count></gray>")
                     .replace("<count>", String.valueOf(entry.getValue()));
                 meta.displayName(MINI_MESSAGE.deserialize(animalName));
                 meta.lore(List.of(MINI_MESSAGE.deserialize(animalCount)));
@@ -1208,7 +1202,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private Component getComponentMessageWithoutPrefix(String key, String placeholder, String value) {
-        String body = plugin.getConfig().getString("messages." + key, key);
+        String body = plugin.getLanguageManager().getString(key, key);
         if (placeholder != null && value != null) {
             body = body.replace(placeholder, value);
         }
@@ -1219,7 +1213,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         Inventory deliveryInventory = Bukkit.createInventory(
                 new DroneInventoryHolder(holder.senderId(), holder.receiverId()),
                 droneManager.settings().inventorySize(),
-                MINI_MESSAGE.deserialize(plugin.getConfig().getString("messages.drone-inventory-title", "<gold>Delivery Drone</gold>"))
+                MINI_MESSAGE.deserialize(plugin.getLanguageManager().getString("drone-inventory-title", "<gold>Delivery Drone</gold>"))
         );
         ComposeInventoryHolder composeHolder = new ComposeInventoryHolder(
                 holder.senderId(),

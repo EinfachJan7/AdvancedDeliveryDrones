@@ -1,6 +1,7 @@
 package de.cb.drones;
 
 import de.cb.drones.command.DroneCommand;
+import de.cb.drones.config.LanguageManager;
 import de.cb.drones.config.PlayerBlacklistRepository;
 import de.cb.drones.config.PlayerSettingsRepository;
 import de.cb.drones.config.SocketPendingReturnsRepository;
@@ -28,11 +29,14 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private SocketRepository socketRepository;
     private FileConfiguration guiConfig;
     private DroneCommand droneCommand;
+    private LanguageManager languageManager;
     
     @Override
     public void onEnable() {
         saveDefaultConfig();
         saveGuiConfig();
+        this.languageManager = new LanguageManager(this);
+        this.languageManager.reload();
         this.playerSettings = new PlayerSettingsRepository(this);
         this.blacklistRepository = new PlayerBlacklistRepository(this);
         this.socketPendingReturns = new SocketPendingReturnsRepository(this);
@@ -77,6 +81,10 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         saveDefaultConfig();
         saveGuiConfig();
         reloadConfig();
+        if (this.languageManager == null) {
+            this.languageManager = new LanguageManager(this);
+        }
+        this.languageManager.reload();
         playerSettings.reload();
         blacklistRepository.reload();
         socketPendingReturns.reload();
@@ -113,14 +121,14 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     }
 
     public Component component(String key) {
-        String prefix = getConfig().getString("messages.prefix", "");
-        String body = getConfig().getString("messages." + key, key);
+        String prefix = languageManager.getString("prefix", "");
+        String body = languageManager.getString(key, key);
         return miniMessage.deserialize(prefix + body);
     }
 
     public String message(String key, String placeholder, String value) {
-        String prefix = getConfig().getString("messages.prefix", "");
-        String body = getConfig().getString("messages." + key, key);
+        String prefix = languageManager.getString("prefix", "");
+        String body = languageManager.getString(key, key);
         if (placeholder != null && value != null) {
             body = body.replace(placeholder, value);
         }
@@ -128,12 +136,16 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     }
 
     public Component componentMessage(String key, String placeholder, String value) {
-        String prefix = getConfig().getString("messages.prefix", "");
-        String body = getConfig().getString("messages." + key, key);
+        String prefix = languageManager.getString("prefix", "");
+        String body = languageManager.getString(key, key);
         if (placeholder != null && value != null) {
             body = body.replace(placeholder, value);
         }
         return miniMessage.deserialize(prefix + body);
+    }
+
+    public LanguageManager getLanguageManager() {
+        return languageManager;
     }
 
     public DiscordWebhookManager getDiscordWebhookManager() {
