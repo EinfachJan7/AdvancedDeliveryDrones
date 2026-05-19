@@ -428,26 +428,37 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                     cancel();
                     return;
                 }
-                Location from = player.getLocation().add(0, 0.2, 0);
-                Location to = finalTargetDrone.currentLocation().add(0, 0.5, 0);
-                org.bukkit.util.Vector dir = to.toVector().subtract(from.toVector());
-                double dist = dir.length();
-                if (dist > 1.5) {
-                    dir.normalize();
-                    for (double d = 1.0; d < dist; d += 1.5) {
-                        Location loc = from.clone().add(dir.clone().multiply(d));
-                        DroneSettings.ParticleEffect pe = droneSettings.locateParticle();
-                        if (pe != null && pe.particle() != null) {
-                            if (pe.data() != null) {
-                                player.spawnParticle(pe.particle(), loc, 1, 0.0, 0.0, 0.0, 0.0, pe.data());
-                            } else {
-                                player.spawnParticle(pe.particle(), loc, 1, 0.0, 0.0, 0.0, 0.0);
-                            }
-                        } else {
-                            player.spawnParticle(org.bukkit.Particle.HAPPY_VILLAGER, loc, 1, 0.0, 0.0, 0.0, 0.0);
+                
+                java.util.List<Location> path = findPath(player.getLocation(), finalTargetDrone.currentLocation());
+                if (path.isEmpty()) {
+                    Location from = player.getLocation().add(0, 0.2, 0);
+                    Location to = finalTargetDrone.currentLocation().add(0, 0.5, 0);
+                    org.bukkit.util.Vector dir = to.toVector().subtract(from.toVector());
+                    double dist = dir.length();
+                    if (dist > 1.5) {
+                        dir.normalize();
+                        for (double d = 1.0; d < dist; d += 1.5) {
+                            Location loc = from.clone().add(dir.clone().multiply(d));
+                            spawnLocateParticle(player, loc);
                         }
                     }
+                } else {
+                    for (int i = 0; i < path.size() - 1; i++) {
+                        Location from = path.get(i);
+                        Location to = path.get(i + 1);
+                        org.bukkit.util.Vector dir = to.toVector().subtract(from.toVector());
+                        double dist = dir.length();
+                        if (dist > 0.1) {
+                            dir.normalize();
+                            for (double d = 0.0; d < dist; d += 1.0) {
+                                Location loc = from.clone().add(dir.clone().multiply(d));
+                                spawnLocateParticle(player, loc);
+                            }
+                        }
+                    }
+                    spawnLocateParticle(player, path.get(path.size() - 1));
                 }
+                
                 runs++;
                 if (runs >= 20) {
                     cancel();
@@ -456,6 +467,19 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }.runTaskTimer(plugin, 0L, 10L);
         
         return true;
+    }
+
+    private void spawnLocateParticle(Player player, Location loc) {
+        DroneSettings.ParticleEffect pe = droneSettings.locateParticle();
+        if (pe != null && pe.particle() != null) {
+            if (pe.data() != null) {
+                player.spawnParticle(pe.particle(), loc, 1, 0.0, 0.0, 0.0, 0.0, pe.data());
+            } else {
+                player.spawnParticle(pe.particle(), loc, 1, 0.0, 0.0, 0.0, 0.0);
+            }
+        } else {
+            player.spawnParticle(org.bukkit.Particle.HAPPY_VILLAGER, loc, 1, 0.0, 0.0, 0.0, 0.0);
+        }
     }
 
     private boolean executeSocket(Player player, String[] args) {
@@ -1411,5 +1435,136 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         public Inventory getInventory() {
             return null;
         }
+    }
+
+    private static class PathNode implements Comparable<PathNode> {
+        final Location loc;
+        final PathNode parent;
+        final double g;
+        final double h;
+
+        PathNode(Location loc, PathNode parent, double g, double h) {
+            this.loc = loc;
+            this.parent = parent;
+            this.g = g;
+            this.h = h;
+        }
+
+        double f() {
+            return g + h;
+        }
+
+        @Override
+        public int compareTo(PathNode o) {
+            return Double.compare(this.f(), o.f());
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof PathNode other) {
+                return loc.getBlockX() == other.loc.getBlockX() &&
+                       loc.getBlockY() == other.loc.getBlockY() &&
+                       loc.getBlockZ() == other.loc.getBlockZ();
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return (loc.getBlockX() * 31 + loc.getBlockY()) * 31 + loc.getBlockZ();
+        }
+    }
+
+    private java.util.List<Location> findPath(Location start, Location end) {
+        java.util.List<Location> path = new java.util.ArrayList<>();
+        if (!start.getWorld().equals(end.getWorld())) {
+            return path;
+        }
+
+        org.bukkit.World world = start.getWorld();
+        java.util.PriorityQueue<PathNode> openSet = new java.util.PriorityQueue<>();
+        java.util.Set<String> closedSet = new java.util.HashSet<>();
+
+        Location startBlock = start.getBlock().getLocation();
+        Location endBlock = end.getBlock().getLocation();
+
+        openSet.add(new PathNode(startBlock, null, 0, startBlock.distance(endBlock)));
+
+        PathNode targetNode = null;
+        int iterations = 0;
+        int maxIterations = 800;
+
+        while (!openSet.isEmpty() && iterations++ < maxIterations) {
+            PathNode current = openSet.poll();
+
+            if (current.loc.distanceSquared(endBlock) <= 2.25) {
+                targetNode = current;
+                break;
+            }
+
+            String currentKey = current.loc.getBlockX() + "," + current.loc.getBlockY() + "," + current.loc.getBlockZ();
+            if (closedSet.contains(currentKey)) {
+                continue;
+            }
+            closedSet.add(currentKey);
+
+            int[][] dirs = {
+                {1, 0, 0}, {-1, 0, 0},
+                {0, 0, 1}, {0, 0, -1}
+            };
+
+            for (int[] dir : dirs) {
+                for (int dy = -2; dy <= 1; dy++) {
+                    int nx = current.loc.getBlockX() + dir[0];
+                    int ny = current.loc.getBlockY() + dy;
+                    int nz = current.loc.getBlockZ() + dir[2];
+
+                    Location neighborLoc = new Location(world, nx, ny, nz);
+
+                    org.bukkit.block.Block feetBlock = world.getBlockAt(nx, ny, nz);
+                    if (!feetBlock.isPassable()) {
+                        continue;
+                    }
+
+                    org.bukkit.block.Block headBlock = world.getBlockAt(nx, ny + 1, nz);
+                    if (!headBlock.isPassable()) {
+                        continue;
+                    }
+
+                    if (dy == 1) {
+                        org.bukkit.block.Block currentHeadBlock = world.getBlockAt(current.loc.getBlockX(), current.loc.getBlockY() + 2, current.loc.getBlockZ());
+                        if (!currentHeadBlock.isPassable()) {
+                            continue;
+                        }
+                    }
+
+                    org.bukkit.block.Block standBlock = world.getBlockAt(nx, ny - 1, nz);
+                    if (standBlock.isPassable()) {
+                        org.bukkit.Material mat = standBlock.getType();
+                        if (mat != org.bukkit.Material.WATER && mat != org.bukkit.Material.LADDER && mat != org.bukkit.Material.VINE) {
+                            continue;
+                        }
+                    }
+
+                    double stepCost = 1.0 + Math.abs(dy) * 0.5;
+                    double tentativeG = current.g + stepCost;
+
+                    String neighborKey = nx + "," + ny + "," + nz;
+                    if (!closedSet.contains(neighborKey)) {
+                        openSet.add(new PathNode(neighborLoc, current, tentativeG, neighborLoc.distance(endBlock)));
+                    }
+                }
+            }
+        }
+
+        if (targetNode != null) {
+            PathNode curr = targetNode;
+            while (curr != null) {
+                path.add(0, curr.loc.clone().add(0.5, 0.2, 0.5));
+                curr = curr.parent;
+            }
+        }
+
+        return path;
     }
 }

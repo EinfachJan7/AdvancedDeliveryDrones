@@ -72,6 +72,7 @@ public final class DeliveryDrone {
     private long lastBossBarEta = -1L;
     private long approachPhaseStartTick = -1L; // -1 means not in approach phase yet
     private boolean wasGlidingFollowed = false;
+    private boolean allowGlideFollow = false;
     
     // Performance caches
     private long lastTraveledDistanceTick = -1L;
@@ -151,6 +152,8 @@ public final class DeliveryDrone {
         this.standId = stand.getUniqueId();
         this.lastKnownLocation = stand.getLocation().clone();
         this.lastInteractionTick = createdTick;
+        Player receiver = Bukkit.getPlayer(receiverId);
+        this.allowGlideFollow = receiver != null && receiver.isOnline() && receiver.isGliding();
     }
 
     public UUID droneId() {
@@ -485,7 +488,7 @@ public final class DeliveryDrone {
 
         // Elytra follow check
         boolean isGlidingTarget = false;
-        if (!exactSocketTarget && settings.followGlidingPlayer()) {
+        if (!exactSocketTarget && settings.followGlidingPlayer() && allowGlideFollow) {
             Player receiver = Bukkit.getPlayer(receiverId);
             if (receiver != null && receiver.isOnline()) {
                 if (receiver.getWorld().equals(fixedTarget.getWorld())) {
