@@ -31,6 +31,7 @@ public record DroneSettings(
         boolean carryLeashedAnimals,
         int maxLeashedAnimalsPerDrone,
         int maxSocketsPerPlayer,
+        boolean socketsEnabled,
         List<String> blockedWorlds,
         boolean hologramEnabled,
         String hologramFormat,
@@ -66,6 +67,7 @@ public record DroneSettings(
         boolean carryLeashedAnimals = cfg.getBoolean(section + "carry-leashed-animals", false);
         int maxLeashedAnimalsPerDrone = Math.max(0, cfg.getInt(section + "max-leashed-animals-per-drone", 1));
         int maxSocketsPerPlayer = Math.max(1, cfg.getInt(section + "max-sockets-per-player", 3));
+        boolean socketsEnabled = cfg.getBoolean(section + "sockets-enabled", true);
         List<String> blockedWorlds = cfg.getStringList(section + "blocked-worlds").stream()
                 .map(String::toLowerCase)
                 .toList();
@@ -104,6 +106,7 @@ public record DroneSettings(
                 carryLeashedAnimals,
                 maxLeashedAnimalsPerDrone,
                 maxSocketsPerPlayer,
+                socketsEnabled,
                 blockedWorlds,
                 hologramEnabled,
                 hologramFormat,

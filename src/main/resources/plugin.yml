@@ -10,9 +10,112 @@ commands:
 permissions:
   drone.send:
     default: true
+    description: Erlaubt das Senden von Drohnen zu Spielern und das Abbrechen ausgehender Drohnen
+    children:
+      drone.send.players: true
+      drone.cancel: true
   drone.use:
     default: true
+    description: Erlaubt die Nutzung von Drohnen-Funktionen
+    children:
+      drone.preview: true
+      drone.toggle: true
+      drone.decline: true
+      drone.blacklist: true
   drone.admin:
     default: op
+    description: Admin-Berechtigungen für Drohnen
+    children:
+      drone.admin.send: true
+      drone.admin.reload: true
+      drone.admin.list: true
   drone.socket:
     default: true
+    description: Erlaubt die Nutzung von Delivery-Sockets
+    children:
+      drone.socket.place: true
+      drone.socket.remove: true
+      drone.socket.list: true
+      drone.socket.send: true
+      drone.socket.manage: true
+      drone.socket.rename: true
+      drone.socket.trust: true
+      drone.socket.untrust: true
+      drone.socket.blacklist: true
+  
+  # Einzelne Send-Befehle
+  drone.send.players:
+    default: true
+    description: Erlaubt das Senden von Drohnen zu Spielern
+  drone.cancel:
+    default: true
+    description: Erlaubt das Abbrechen ausgehender Drohnen
+  
+  # Einzelne Use-Befehle
+  drone.preview:
+    default: true
+    description: Erlaubt das Ansehen einer Drohnen-Vorschau
+  drone.toggle:
+    default: true
+    description: Erlaubt das Ein- und Ausschalten des Drohnen-Empfangs
+  drone.decline:
+    default: true
+    description: Erlaubt das Ablehnen aller eingehenden Drohnen
+  
+  # Admin-Befehle
+  drone.admin.send:
+    default: op
+    description: Erlaubt das Admin-Versenden von Drohnen zu Orten
+  drone.admin.reload:
+    default: op
+    description: Erlaubt das Neuladen der Plugin-Konfiguration
+  drone.admin.list:
+    default: op
+    description: Erlaubt das Anzeigen aller aktiven Drohnen
+  
+  # Blacklist-Befehle
+  drone.blacklist:
+    default: true
+    description: Erlaubt die Verwaltung der Spieler-Blacklist
+    children:
+      drone.blacklist.player.add: true
+      drone.blacklist.player.remove: true
+      drone.blacklist.player.list: true
+  drone.blacklist.player.add:
+    default: true
+    description: Erlaubt das Hinzufügen von Spielern zur Blacklist
+  drone.blacklist.player.remove:
+    default: true
+    description: Erlaubt das Entfernen von Spielern von der Blacklist
+  drone.blacklist.player.list:
+    default: true
+    description: Erlaubt das Anzeigen der Blacklist
+  
+  # Socket-Befehle
+  drone.socket.place:
+    default: true
+    description: Erlaubt das Platzieren von Delivery-Sockets
+  drone.socket.remove:
+    default: true
+    description: Erlaubt das Entfernen von Delivery-Sockets
+  drone.socket.list:
+    default: true
+    description: Erlaubt das Anzeigen eigener Delivery-Sockets
+  drone.socket.send:
+    default: true
+    description: Erlaubt das Senden von Drohnen zu Sockets
+  drone.socket.manage:
+    default: true
+    description: Erlaubt die Verwaltung von Delivery-Sockets
+  drone.socket.rename:
+    default: true
+    description: Erlaubt das Umbenennen von Delivery-Sockets
+  drone.socket.trust:
+    default: true
+    description: Erlaubt das Hinzufügen vertrauenswürdiger Spieler zu Sockets
+  drone.socket.untrust:
+    default: true
+    description: Erlaubt das Entfernen vertrauenswürdiger Spieler von Sockets
+  drone.socket.blacklist:
+    default: true
+    description: Erlaubt die Verwaltung der Socket-Blacklist

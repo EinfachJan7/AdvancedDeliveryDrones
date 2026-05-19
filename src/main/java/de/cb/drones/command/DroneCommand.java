@@ -48,6 +48,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private final PlayerBlacklistRepository blacklistRepository;
     private final DroneMenuHandler menuHandler;
     private final SocketRepository socketRepository;
+    private DroneSettings droneSettings;
 
     public DroneCommand(
             AdvancedDeliveryDronesPlugin plugin,
@@ -62,11 +63,13 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         this.settingsRepository = settingsRepository;
         this.blacklistRepository = blacklistRepository;
         this.socketRepository = socketRepository;
+        this.droneSettings = droneSettings;
         this.menuHandler = new DroneMenuHandler(plugin, droneManager, settingsRepository, blacklistRepository, droneSettings, socketRepository);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
     
     public void updateMenuHandlerSettings(DroneSettings newSettings) {
+        this.droneSettings = newSettings;
         if (menuHandler != null) {
             menuHandler.updateSettings(newSettings);
         }
@@ -102,7 +105,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeSend(Player sender, String[] args) {
-        if (!sender.hasPermission("drone.send")) {
+        if (!sender.hasPermission("drone.send.players")) {
             droneManager.sendMessage(sender, "no-permission");
             return true;
         }
@@ -137,7 +140,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeAdmin(Player player, String[] args) {
-        if (!player.hasPermission("drone.admin")) {
+        if (!player.hasPermission("drone.admin.send")) {
             droneManager.sendMessage(player, "no-permission");
             return true;
         }
@@ -167,7 +170,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeToggle(Player player) {
-        if (!player.hasPermission("drone.use")) {
+        if (!player.hasPermission("drone.toggle")) {
             droneManager.sendMessage(player, "no-permission");
             return true;
         }
@@ -178,7 +181,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeReload(Player player) {
-        if (!player.hasPermission("drone.admin")) {
+        if (!player.hasPermission("drone.admin.reload")) {
             droneManager.sendMessage(player, "no-permission");
             return true;
         }
@@ -190,7 +193,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
     
     private boolean executeList(Player player) {
-        if (!player.hasPermission("drone.admin")) {
+        if (!player.hasPermission("drone.admin.list")) {
             droneManager.sendMessage(player, "no-permission");
             return true;
         }
@@ -250,6 +253,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executePlayerBlacklistAdd(Player player, String[] args) {
+        if (!player.hasPermission("drone.blacklist.player.add")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         if (args.length < 4) {
             menuHandler.getMenuGUI().openPlayerBlacklistSelectionMenu(player, true);
             return true;
@@ -274,6 +281,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executePlayerBlacklistRemove(Player player, String[] args) {
+        if (!player.hasPermission("drone.blacklist.player.remove")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         if (args.length < 4) {
             menuHandler.getMenuGUI().openPlayerBlacklistSelectionMenu(player, false);
             return true;
@@ -297,6 +308,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executePlayerBlacklistList(Player player) {
+        if (!player.hasPermission("drone.blacklist.player.list")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         List<UUID> entries = blacklistRepository.getPlayerBlacklist(player.getUniqueId());
 
         if (entries.isEmpty()) {
@@ -327,7 +342,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeDecline(Player player) {
-        if (!player.hasPermission("drone.use")) {
+        if (!player.hasPermission("drone.decline")) {
             droneManager.sendMessage(player, "no-permission");
             return true;
         }
@@ -341,7 +356,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeCancel(Player player) {
-        if (!player.hasPermission("drone.send")) {
+        if (!player.hasPermission("drone.cancel")) {
             droneManager.sendMessage(player, "no-permission");
             return true;
         }
@@ -355,6 +370,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeSocket(Player player, String[] args) {
+        if (!droneSettings.socketsEnabled()) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         if (!player.hasPermission("drone.socket")) {
             droneManager.sendMessage(player, "no-permission");
             return true;
@@ -382,6 +401,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeSocketPlace(Player player, String[] args) {
+        if (!player.hasPermission("drone.socket.place")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         if (args.length < 3) {
             player.sendMessage(plugin.component("usage-socket-place"));
             return true;
@@ -420,6 +443,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeSocketRemove(Player player, String[] args) {
+        if (!player.hasPermission("drone.socket.remove")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         if (args.length < 3) {
             player.sendMessage(plugin.component("usage-socket-remove"));
             return true;
@@ -439,6 +466,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeSocketList(Player player) {
+        if (!player.hasPermission("drone.socket.list")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         List<DeliverySocket> sockets = socketRepository.getSocketsByOwner(player.getUniqueId());
         if (sockets.isEmpty()) {
             droneManager.sendMessage(player, "socket-none");
@@ -461,11 +492,18 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeSocketManage(Player player) {
-        menuHandler.getMenuGUI().openSocketManagementMenu(player);
+        if (!player.hasPermission("drone.socket.manage")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         return true;
     }
 
     private boolean executeSocketRename(Player player, String[] args) {
+        if (!player.hasPermission("drone.socket.rename")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         if (args.length < 4) {
             player.sendMessage("/drone socket rename <alter-name> <neuer-name>");
             return true;
@@ -498,6 +536,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeSocketTrust(Player player, String[] args) {
+        if (!player.hasPermission("drone.socket.trust")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         if (args.length < 4) {
             player.sendMessage("/drone socket trust <socket-name> <player>");
             return true;
@@ -526,6 +568,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeSocketUntrust(Player player, String[] args) {
+        if (!player.hasPermission("drone.socket.untrust")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         if (args.length < 4) {
             player.sendMessage("/drone socket untrust <socket-name> <player>");
             return true;
@@ -554,6 +600,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeSocketBlacklist(Player player, String[] args) {
+        if (!player.hasPermission("drone.socket.blacklist")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         if (args.length < 4) {
             player.sendMessage(plugin.component("usage-socket-blacklist"));
             return true;
@@ -641,6 +691,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeSocketSend(Player player, String[] args) {
+        if (!player.hasPermission("drone.socket.send")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
         if (args.length < 3) {
             player.sendMessage("/drone socket send <socket-name>");
             return true;
@@ -768,7 +822,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executePreview(Player player, String[] args) {
-        if (!player.hasPermission("drone.use")) {
+        if (!player.hasPermission("drone.preview")) {
             droneManager.sendMessage(player, "no-permission");
             return true;
         }
@@ -860,7 +914,11 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            return List.of("send", "admin", "preview", "toggle", "reload", "list", "decline", "cancel", "socket", "blacklist");
+            List<String> commands = new ArrayList<>(List.of("send", "admin", "preview", "toggle", "reload", "list", "decline", "cancel", "blacklist"));
+            if (droneSettings.socketsEnabled()) {
+                commands.add("socket");
+            }
+            return commands;
         }
         if (args.length == 2 && "blacklist".equalsIgnoreCase(args[0])) {
             return List.of("player");

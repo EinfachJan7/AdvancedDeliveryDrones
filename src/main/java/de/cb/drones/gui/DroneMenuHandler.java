@@ -178,6 +178,10 @@ public class DroneMenuHandler implements Listener {
                     player.performCommand("drone preview " + drone.droneId());
                 });
         } else if (socketManageItem != null && slot == socketManageItem.position()) { // Socket Management
+            if (!droneSettings.socketsEnabled()) {
+                droneManager.sendMessage(player, "sockets-disabled");
+                return;
+            }
             menuGUI.openSocketManagementMenu(player);
         } else if (blacklistItem != null && slot == blacklistItem.position()) {
             menuGUI.openBlacklistManagementMenu(player);
@@ -218,6 +222,11 @@ public class DroneMenuHandler implements Listener {
     }
 
     private void handleSocketBlacklistSelectionClick(Player player, ItemStack clicked, int slot, String socketName, boolean isAdd) {
+        if (!droneSettings.socketsEnabled()) {
+            droneManager.sendMessage(player, "sockets-disabled");
+            player.closeInventory();
+            return;
+        }
         GuiSettings selectionSettings = isAdd
                 ? droneSettings.guiConfig().blacklistSocketAddSelection()
                 : droneSettings.guiConfig().blacklistSocketRemoveSelection();
@@ -348,12 +357,21 @@ public class DroneMenuHandler implements Listener {
         }
 
         if (socketItem != null && slot == socketItem.position()) {
+            if (!droneSettings.socketsEnabled()) {
+                droneManager.sendMessage(player, "sockets-disabled");
+                return;
+            }
             menuGUI.openSocketSelectionMenu(player);
             return;
         }
     }
 
     private void handleSocketSelectionClick(Player player, ItemStack clicked, int slot) {
+        if (!droneSettings.socketsEnabled()) {
+            droneManager.sendMessage(player, "sockets-disabled");
+            player.closeInventory();
+            return;
+        }
         // Get the configured back button position with null check
         GuiItem backItem = droneSettings.guiConfig().socketSelection().items().get("back");
 
@@ -385,6 +403,11 @@ public class DroneMenuHandler implements Listener {
     }
 
     private void handleSocketManagementClick(Player player, ItemStack clicked, int slot, boolean isRightClick) {
+        if (!droneSettings.socketsEnabled()) {
+            droneManager.sendMessage(player, "sockets-disabled");
+            player.closeInventory();
+            return;
+        }
         // Check for back button first
         GuiItem backItem = droneSettings.guiConfig().socketManagement().items().get("back");
         if (backItem != null && slot == backItem.position()) {
@@ -422,6 +445,11 @@ public class DroneMenuHandler implements Listener {
     }
 
     private void handleTrustSelectionClick(Player player, ItemStack clicked, int slot, String socketName, boolean isTrust) {
+        if (!droneSettings.socketsEnabled()) {
+            droneManager.sendMessage(player, "sockets-disabled");
+            player.closeInventory();
+            return;
+        }
         GuiSettings selectionSettings = isTrust
                 ? droneSettings.guiConfig().trustPlayerSelection()
                 : droneSettings.guiConfig().untrustPlayerSelection();
@@ -490,6 +518,11 @@ public class DroneMenuHandler implements Listener {
     }
 
     private void handleSocketTrustMenuClick(Player player, ItemStack clicked, int slot, String socketName) {
+        if (!droneSettings.socketsEnabled()) {
+            droneManager.sendMessage(player, "sockets-disabled");
+            player.closeInventory();
+            return;
+        }
         GuiSettings menuSettings = droneSettings.guiConfig().socketTrustMenu();
         GuiItem backItem = menuSettings.items().get("back");
         if (backItem != null && slot == backItem.position()) {
@@ -510,6 +543,11 @@ public class DroneMenuHandler implements Listener {
     }
 
     private void handleSocketBlacklistMenuClick(Player player, ItemStack clicked, int slot, String socketName) {
+        if (!droneSettings.socketsEnabled()) {
+            droneManager.sendMessage(player, "sockets-disabled");
+            player.closeInventory();
+            return;
+        }
         GuiSettings menuSettings = droneSettings.guiConfig().socketBlacklistMenu();
         GuiItem backItem = menuSettings.items().get("back");
         if (backItem != null && slot == backItem.position()) {
@@ -530,6 +568,11 @@ public class DroneMenuHandler implements Listener {
     }
 
     private void handleSocketEditClick(Player player, ItemStack clicked, int slot, String socketName) {
+        if (!droneSettings.socketsEnabled()) {
+            droneManager.sendMessage(player, "sockets-disabled");
+            player.closeInventory();
+            return;
+        }
         GuiItem backItem = droneSettings.guiConfig().socketEdit().items().get("back");
         if (backItem != null && slot == backItem.position()) {
             menuGUI.openSocketManagementMenu(player);
