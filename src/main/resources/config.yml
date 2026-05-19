@@ -13,6 +13,10 @@ settings:
     carry-leashed-animals: true
     max-leashed-animals-per-drone: 1
     max-sockets-per-player: 1
+    # TRUE: Sockets (Lieferstationen) aktivieren
+    sockets-enabled: true
+    # TRUE: Spieler als Ziel aktivieren
+    players-enabled: true
     blocked-worlds:
       - "world_nether"
       - "world_the_end"
@@ -165,8 +169,6 @@ messages:
   blacklist-socket-list-header: "<gold>Socket <white><socket></white> – gesperrt (<white><count></white>):</gold>"
   blacklist-list-empty: "<gray>Keine Einträge.</gray>"
   blacklist-list-entry: "<gray>  - <white><player></white></gray>"
-  usage-blacklist: "<gray>/drone blacklist <player> <add|remove|list> [Spieler]</gray>"
-  usage-socket-blacklist: "<gray>/drone socket blacklist <socket-name> <add|remove|list> [Spieler]</gray>"
   restart-return-items: "<yellow>Server-Neustart: Deine Drohne wurde storniert und die Items wurden zurückgegeben.</yellow>"
   drone-helmet-remove: "<red>Du kannst den Helm einer fliegenden Drohne nicht entfernen!</red>"
   drone-helmet-manipulate: "<red>Du kannst den Helm einer fliegenden Drohne nicht manipulieren!</red>"
@@ -175,8 +177,21 @@ messages:
   only-players: "<red>Nur Spieler können diesen Befehl verwenden.</red>"
   usage-send: "<gray>/drone send <Spieler></gray>"
   usage-admin: "<gray>/drone admin send <x> <y> <z> [world]</gray>"
-  usage-socket: "<gray>/drone socket <place|remove|list|send></gray>"
+  usage-toggle: "<gray>/drone toggle</gray>"
+  usage-decline: "<gray>/drone decline</gray>"
+  usage-cancel: "<gray>/drone cancel</gray>"
+  usage-preview: "<gray>/drone preview</gray>"
+  usage-reload: "<gray>/drone reload</gray>"
+  usage-list: "<gray>/drone list</gray>"
+  usage-blacklist: "<gray>/drone blacklist player <add|remove|list> [Spieler]</gray>"
+  usage-socket: "<gray>/drone socket <place|remove|list|send|manage|rename|trust|untrust|blacklist></gray>"
   usage-socket-place: "<gray>/drone socket place <name></gray>"
   usage-socket-remove: "<gray>/drone socket remove <name></gray>"
+  usage-socket-send: "<gray>/drone socket send <name> <Spieler></gray>"
+  usage-socket-manage: "<gray>/drone socket manage</gray>"
+  usage-socket-rename: "<gray>/drone socket rename <old> <new></gray>"
+  usage-socket-trust: "<gray>/drone socket trust <name> <Spieler></gray>"
+  usage-socket-untrust: "<gray>/drone socket untrust <name> <Spieler></gray>"
+  usage-socket-blacklist: "<gray>/drone socket blacklist <name> <add|remove|list> [Spieler]</gray>"
   no-active-drones: "<gray>Keine aktiven Drohnen.</gray>"
   active-drones-count: "<gold>Aktive Drohnen: <white><count></white></gold>"

@@ -509,7 +509,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length < 4) {
-            player.sendMessage("/drone socket rename <alter-name> <neuer-name>");
+            player.sendMessage(plugin.component("usage-socket-rename"));
             return true;
         }
         String oldName = args[2];
@@ -545,7 +545,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length < 4) {
-            player.sendMessage("/drone socket trust <socket-name> <player>");
+            player.sendMessage(plugin.component("usage-socket-trust"));
             return true;
         }
         String socketName = args[2];
@@ -577,7 +577,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length < 4) {
-            player.sendMessage("/drone socket untrust <socket-name> <player>");
+            player.sendMessage(plugin.component("usage-socket-untrust"));
             return true;
         }
         String socketName = args[2];
