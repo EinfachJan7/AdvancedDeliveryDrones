@@ -17,9 +17,9 @@ settings:
     carry-leashed-animals: true
     max-leashed-animals-per-drone: 1
     max-sockets-per-player: 1
-    # TRUE: Sockets (Lieferstationen) aktivieren
+    # TRUE: Enable Sockets (delivery stations)
     sockets-enabled: true
-    # TRUE: Spieler als Ziel aktivieren
+    # TRUE: Enable player as a target destination
     players-enabled: true
     blocked-worlds:
       - "world_nether"
@@ -36,10 +36,10 @@ settings:
     hologram:
       enabled: true
       offset-y: 1.0
-      format: "<gradient:#ffcc33:#ffaa00><bold>ᴘᴀᴋᴇᴛ ғᴜᴇʀ</bold></gradient> <white><receiver> <dark_gray>» <gray>ᴅᴇsᴘᴀᴡɴ: <#ffcc33><minutes>ᴍ <#ffcc33><seconds>s"
+      format: "<gradient:#ffcc33:#ffaa00><bold>ᴘᴀᴄᴋᴀɢᴇ ғᴏʀ</bold></gradient> <white><receiver> <dark_gray>» <gray>ᴅᴇsᴘᴀᴡɴ: <#ffcc33><minutes>ᴍ <#ffcc33><seconds>s"
     bossbar:
       enabled: true
-      format: "<gold>Distanz zur Drone: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>"
+      format: "<gold>Distance to drone: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>"
       # Available colors: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
       color: "RED"
     collection-animation:

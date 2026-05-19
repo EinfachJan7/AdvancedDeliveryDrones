@@ -9,7 +9,7 @@
 # SEND MODE GUI - Choose between sending animals or items
 # =============================================================================
 send-mode:
-  title: "<!italic><#222222>✦ <gradient:#a855f7:#ec4899>sᴇɴᴅᴇ-ᴍᴏᴅᴜs</gradient> <#222222>✦"
+  title: "<!italic><#222222>✦ <gradient:#a855f7:#ec4899>sᴇɴᴅ ᴍᴏᴅᴇ</gradient> <#222222>✦"
   size: 27
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -18,98 +18,98 @@ send-mode:
     animals:
       position: 11
       material: "LEAD"
-      name: "<!italic><gradient:#a855f7:#ec4899><bold>🐾 ᴛɪᴇʀᴇ sᴇɴᴅᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>🐾 sᴇɴᴅ ᴀnɪᴍᴀʟs</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  sᴇɴᴅᴇᴛ ᴀʟʟᴇ ᴀɴɢᴇʟᴇɪɴᴛᴇ"
-        - "<!italic><#9ca3af>  ᴛɪᴇʀᴇ ᴢᴜ ᴇɪɴᴇᴍ sᴘɪᴇʟᴇʀ."
+        - "<!italic><#9ca3af>  sᴇɴᴅs ᴀʟʟ ʟᴇᴀsʜᴇᴅ"
+        - "<!italic><#9ca3af>  ᴀnɪᴍᴀʟs ᴛᴏ ᴀ ᴘʟᴀʏᴇʀ."
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#a855f7>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
+        - "<!italic><#a855f7>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ sᴇʟᴇᴄᴛ</italic>"
     items:
       position: 15
       material: "CHEST"
-      name: "<!italic><gradient:#22d3ee:#3b82f6><bold>📦 ɪᴛᴇᴍs sᴇɴᴅᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#22d3ee:#3b82f6><bold>📦 sᴇɴᴅ ɪᴛᴇᴍs</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  öꜰꜰɴᴇᴛ ᴅᴀs ᴘᴀᴋᴇᴛ-ɪɴᴠᴇɴᴛᴀʀ"
-        - "<!italic><#9ca3af>  ꜰüʀ ɪɴᴅɪᴠɪᴅᴜᴇʟʟᴇ sᴇɴᴅᴜɴɢᴇɴ."
+        - "<!italic><#9ca3af>  ᴏᴘᴇɴs ᴛʜᴇ ᴘᴀᴄᴋᴀɢᴇ"
+        - "<!italic><#9ca3af>  ɪɴᴠᴇɴᴛᴏʀʏ ғᴏʀ sᴇɴᴅɪɴɢ."
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#22d3ee>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
+        - "<!italic><#22d3ee>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ sᴇʟᴇᴄᴛ</italic>"
 
 # =============================================================================
 # MAIN MENU GUI - Optimized Structure
 # =============================================================================
 main-menu:
-  title: "<!italic><gradient:#3b82f6:#22d3ee:#3b82f6>ᴅʀᴏʜɴᴇɴ-ᴍᴇɴü</gradient>"
+  title: "<!italic><gradient:#3b82f6:#22d3ee:#3b82f6>ᴅʀᴏɴᴇ ᴍᴇɴᴜ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
     name: " "
   items:
-    # --- Haupt-Aktionen (Reihe 2) ---
+    # --- Main Actions ---
     send:
       position: 20
       material: "PLAYER_HEAD"
-      name: "<!italic><gradient:#4ade80:#22c55e><bold>✈ ᴅʀᴏʜɴᴇ sᴇɴᴅᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#4ade80:#22c55e><bold>✈ sᴇɴᴅ ᴅʀᴏɴᴇ</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  sᴇɴᴅᴇ ᴇɪɴᴇ ᴅʀᴏʜɴᴇ ᴀɴ"
-        - "<!italic><#9ca3af>  ᴇɪɴᴇɴ sᴘɪᴇʟᴇʀ ᴏᴅᴇʀ sᴏᴄᴋᴇᴛ."
+        - "<!italic><#9ca3af>  sᴇɴᴅ ᴀ ᴅʀᴏɴᴇ ᴛᴏ"
+        - "<!italic><#9ca3af>  ᴀ ᴘʟᴀʏᴇʀ ᴏr sᴏᴄᴋᴇᴛ."
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴇɴᴅᴇɴ</italic>"
+        - "<!italic><#4ade80>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ sᴇɴᴅ</italic>"
     preview:
       position: 22
       material: "ENDER_EYE"
-      name: "<!italic><gradient:#22d3ee:#3b82f6><bold>👁 ᴅʀᴏʜɴᴇɴ-ᴠᴏʀsᴄʜᴀᴜ</bold></gradient>"
+      name: "<!italic><gradient:#22d3ee:#3b82f6><bold>👁 ᴅʀᴏɴᴇ ᴘʀᴇᴠɪᴇᴡ</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  ᴢᴇɪɢᴇ ᴇɪɴᴇ üʙᴇʀsɪᴄʜᴛ"
-        - "<!italic><#9ca3af>  ᴅᴇɪɴᴇʀ ᴀᴋᴛɪᴠᴇɴ ᴅʀᴏʜɴᴇɴ."
+        - "<!italic><#9ca3af>  sʜᴏᴡ ᴀɴ ᴏᴠᴇʀᴠɪᴇᴡ"
+        - "<!italic><#9ca3af>  ᴏғ ʏᴏᴜʀ ᴀᴄᴛɪᴠᴇ ᴅʀᴏɴᴇs."
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#22d3ee>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜʀ ᴠᴏʀsᴄʜᴀᴜ</italic>"
+        - "<!italic><#22d3ee>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴘʀᴇᴠɪᴇᴡ</italic>"
     socket-manage:
       position: 32
       material: "BEACON"
-      name: "<!italic><gradient:#a855f7:#ec4899><bold>📡 sᴏᴄᴋᴇᴛ-ᴠᴇʀᴡᴀʟᴛᴜɴɢ</bold></gradient>"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>📡 sᴏᴄᴋᴇᴛ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  ᴠᴇʀᴡᴀʟᴛᴇ ᴅᴇɪɴᴇ ᴇɪɢᴇɴᴇɴ"
-        - "<!italic><#9ca3af>  ʟɪᴇꜰᴇʀsᴛᴀᴛɪᴏɴᴇɴ."
+        - "<!italic><#9ca3af>  ᴍᴀɴᴀɢᴇ ʏᴏᴜʀ ᴏᴡɴ"
+        - "<!italic><#9ca3af>  ᴅᴇʟɪᴠᴇʀʏ sᴛᴀᴛɪᴏɴs."
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#a855f7>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴠᴇʀᴡᴀʟᴛᴇɴ</italic>"
+        - "<!italic><#a855f7>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴍᴀɴYWdl</italic>"
 
-    # --- Einstellungen (Reihe 3) ---
+    # --- Settings ---
     toggle:
       position: 30
       material: "REDSTONE"
-      name: "<!italic><gradient:#a855f7:#ec4899><bold>🔔 ᴇᴍᴘꜰᴀɴɢ ᴜᴍsᴄʜᴀʟᴛᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>🔔 ᴛᴏɢɢʟᴇ ʀᴇᴄᴇᴘᴛɪᴏɴ</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  ᴀᴋᴛɪᴠɪᴇʀᴇ ᴏᴅᴇʀ ᴅᴇᴀᴋᴛɪᴠɪᴇʀᴇ"
-        - "<!italic><#9ca3af>  ᴅᴇɴ ᴅʀᴏʜɴᴇɴ-ᴇᴍᴘꜰᴀɴɢ."
+        - "<!italic><#9ca3af>  ᴇɴᴀʙʟᴇ ᴏʀ ᴅɪsᴀʙʟᴇ"
+        - "<!italic><#9ca3af>  ᴅʀᴏɴᴇ ʀᴇᴄᴇᴘᴛɪᴏɴ."
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#a855f7>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴜᴍsᴄʜᴀʟᴛᴇɴ</italic>"
+        - "<!italic><#a855f7>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴛᴏɢɢʟᴇ</italic>"
     decline:
       position: 24
       material: "BARRIER"
-      name: "<!italic><gradient:#f87171:#ef4444><bold>✖ ᴅʀᴏʜɴᴇɴ ᴀʙʟᴇʜɴᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#f87171:#ef4444><bold>✖ ᴅᴇᴄʟɪɴᴇ ᴅʀᴏɴᴇs</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  ʟᴇʜɴᴛ ᴀʟʟᴇ ᴇɪɴɢᴇʜᴇɴᴅᴇɴ"
-        - "<!italic><#9ca3af>  ᴅʀᴏʜɴᴇɴ sᴏꜰᴏʀᴛ ᴀʙ."
+        - "<!italic><#9ca3af>  ᴅᴇᴄʟɪɴᴇs ᴀʟʟ ɪɴᴄᴏᴍɪɴɢ"
+        - "<!italic><#9ca3af>  ᴅʀᴏɴᴇs ɪᴍᴍᴇᴅɪᴀᴛᴇʟʏ."
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#f87171>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀʙʟᴇʜɴᴇɴ</italic>"
+        - "<!italic><#f87171>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴅᴇᴄʟɪɴᴇ</italic>"
     blacklist:
       position: 34
       material: "IRON_BARS"
       name: "<!italic><gradient:#f87171:#ef4444><bold>🚫 ʙʟᴀᴄᴋʟɪsᴛ</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀ sᴘᴇʀʀᴇɴ,"
-        - "<!italic><#9ca3af>  ᴅɪᴇ ᴅɪʀ ᴅʀᴏʜɴᴇɴ"
-        - "<!italic><#9ca3af>  sᴄʜɪᴄᴋᴇɴ ᴅüʀғᴇɴ."
+        - "<!italic><#9ca3af>  ʙʟᴏᴄᴋ ᴘʟᴀʏers ғʀᴏᴍ"
+        - "<!italic><#9ca3af>  sᴇɴᴅɪɴɢ ʏᴏᴜ ᴀɴʏ"
+        - "<!italic><#9ca3af>  ᴅᴇʟɪᴠᴇʀʏ ᴅʀᴏɴᴇs."
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#f87171>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴠᴇʀᴡᴀʟᴛᴇɴ</italic>"
+        - "<!italic><#f87171>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴍᴀɴYWdl</italic>"
 
 # =============================================================================
 # BLACKLIST MANAGEMENT GUI
@@ -123,29 +123,29 @@ blacklist-management:
   back-item:
     position: 18
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>ʜᴀᴜᴘᴛᴍᴇɴü</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>ᴍᴀɪɴ ᴍᴇɴᴜ</#f3f4f6>"
   items:
     player-add:
       position: 11
       material: "PLAYER_HEAD"
-      name: "<!italic><gradient:#f87171:#ef4444><bold>👤 sᴘɪᴇʟᴇʀ sᴘᴇʀʀᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#f87171:#ef4444><bold>👤 ʙʟᴏᴄᴋ ᴘʟᴀʏᴇʀ</bold></gradient>"
       lore:
-        - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀ ᴠᴏɴ ᴅɪʀᴇᴋᴛᴇɴ"
-        - "<!italic><#9ca3af>  ᴅʀᴏʜɴᴇɴ sᴘᴇʀʀᴇɴ"
+        - "<!italic><#9ca3af>  ʙʟᴏᴄᴋ ᴀ ᴘʟᴀʏᴇʀ ғʀᴏᴍ"
+        - "<!italic><#9ca3af>  sᴇɴᴅɪɴɢ ʏᴏᴜ ᴅʀᴏɴᴇs"
     player-remove:
       position: 15
       material: "BARRIER"
-      name: "<!italic><gradient:#4ade80:#22c55e><bold>👤 sᴘᴇʀʀᴇ ᴀᴜꜰʜᴇʙᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#4ade80:#22c55e><bold>👤 ᴜɴʙʟᴏᴄᴋ ᴘʟᴀʏᴇʀ</bold></gradient>"
       lore:
-        - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀ-sᴘᴇʀʀᴇ ᴇɴᴛꜰᴇʀɴᴇɴ"
+        - "<!italic><#9ca3af>  ʀᴇᴍᴏᴠᴇ ᴀ ᴘʟᴀʏᴇʀ ʙʟᴏᴄᴋ"
 
 # =============================================================================
 # BLACKLIST PLAYER ADD
 # =============================================================================
 blacklist-player-add-selection:
-  title: "<!italic><#222222>👤 <gradient:#f87171:#ef4444>sᴘɪᴇʟᴇʀ sᴘᴇʀʀᴇɴ</gradient>"
+  title: "<!italic><#222222>👤 <gradient:#f87171:#ef4444>ʙʟᴏᴄᴋ ᴘʟᴀʏᴇʀ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -153,23 +153,23 @@ blacklist-player-add-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜʀ <#f3f4f6>ʙʟᴀᴄᴋʟɪsᴛ</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>ʙʟᴀᴄᴋʟɪsᴛ</#f3f4f6>"
   player-head-item:
     name-format: "<!italic><gradient:#f87171:#ef4444><bold><player></bold></gradient>"
     lore:
       - "<!italic><#4b5563>┌────────────────────┐"
-      - "<!italic><#9ca3af>  ᴅʀᴏʜɴᴇɴ ᴠᴏɴ:"
+      - "<!italic><#9ca3af>  ʙʟᴏᴄᴋ ᴅʀᴏɴᴇs ғʀᴏᴍ:"
       - "<!italic><#f3f4f6>  ➤ <player>"
       - "<!italic><#4b5563>└────────────────────┘"
-      - "<!italic><#f87171>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴘᴇʀʀᴇɴ</italic>"
+      - "<!italic><#f87171>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ʙʟᴏᴄᴋ</italic>"
 
 # =============================================================================
 # BLACKLIST PLAYER REMOVE
 # =============================================================================
 blacklist-player-remove-selection:
-  title: "<!italic><#222222>👤 <gradient:#4ade80:#22c55e>sᴘɪᴇʟᴇʀ-sᴘᴇʀʀᴇ ᴀᴜꜰʜᴇʙᴇɴ</gradient>"
+  title: "<!italic><#222222>👤 <gradient:#4ade80:#22c55e>ᴜɴʙʟᴏᴄᴋ ᴘʟᴀʏᴇʀ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -177,23 +177,23 @@ blacklist-player-remove-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜʀ <#f3f4f6>ʙʟᴀᴄᴋʟɪsᴛ</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>ʙʟᴀᴄᴋʟɪsᴛ</#f3f4f6>"
   player-head-item:
     name-format: "<!italic><gradient:#4ade80:#22c55e><bold><player></bold></gradient>"
     lore:
       - "<!italic><#4b5563>┌────────────────────┐"
-      - "<!italic><#9ca3af>  sᴘᴇʀʀᴇ ᴀᴜꜰʜᴇʙᴇɴ:"
+      - "<!italic><#9ca3af>  ᴜɴʙʟᴏᴄᴋ ᴘʟᴀʏᴇʀ:"
       - "<!italic><#f3f4f6>  ➤ <player>"
       - "<!italic><#4b5563>└────────────────────┘"
-      - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴇɴᴛꜰᴇʀɴᴇɴ</italic>"
+      - "<!italic><#4ade80>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴜɴʙʟᴏᴄᴋ</italic>"
 
 # =============================================================================
 # BLACKLIST SOCKET ADD
 # =============================================================================
 blacklist-socket-add-selection:
-  title: "<!italic><#222222>📡 <gradient:#f87171:#ef4444>sᴏᴄᴋᴇᴛ sᴘᴇʀʀᴇɴ</gradient>"
+  title: "<!italic><#222222>📡 <gradient:#f87171:#ef4444>ʙʟᴏᴄᴋ ғʀᴏᴍ sᴏᴄᴋᴇᴛ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -201,24 +201,24 @@ blacklist-socket-add-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>sᴏᴄᴋᴇᴛ-sᴘᴇʀʀᴇ-ᴍᴇɴü</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>sᴏᴄᴋᴇᴛ ʙʟᴏᴄᴋ ᴍᴇɴᴜ</#f3f4f6>"
   player-head-item:
     name-format: "<!italic><gradient:#f87171:#ef4444><bold><player></bold></gradient>"
     lore:
       - "<!italic><#4b5563>┌────────────────────┐"
       - "<!italic><#9ca3af>  sᴏᴄᴋᴇᴛ <socket>"
-      - "<!italic><#9ca3af>  sᴘᴇʀʀᴇɴ:"
+      - "<!italic><#9ca3af>  ʙʟᴏᴄᴋ:"
       - "<!italic><#f3f4f6>  ➤ <player>"
       - "<!italic><#4b5563>└────────────────────┘"
-      - "<!italic><#f87171>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴘᴇʀʀᴇɴ</italic>"
+      - "<!italic><#f87171>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ʙʟᴏᴄᴋ</italic>"
 
 # =============================================================================
 # BLACKLIST SOCKET REMOVE
 # =============================================================================
 blacklist-socket-remove-selection:
-  title: "<!italic><#222222>📡 <gradient:#4ade80:#22c55e>sᴏᴄᴋᴇᴛ-sᴘᴇʀʀᴇ ᴀᴜꜰʜᴇʙᴇɴ</gradient>"
+  title: "<!italic><#222222>📡 <gradient:#4ade80:#22c55e>ᴜɴʙʟᴏᴄᴋ ғʀᴏᴍ sᴏᴄᴋᴇᴛ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -226,23 +226,23 @@ blacklist-socket-remove-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>sᴏᴄᴋᴇᴛ-sᴘᴇʀʀᴇ-ᴍᴇɴü</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>sᴏᴄᴋᴇᴛ ʙʟᴏᴄᴋ ᴍᴇɴᴜ</#f3f4f6>"
   player-head-item:
     name-format: "<!italic><gradient:#4ade80:#22c55e><bold><player></bold></gradient>"
     lore:
       - "<!italic><#4b5563>┌────────────────────┐"
-      - "<!italic><#9ca3af>  sᴏᴄᴋᴇᴛ-sᴘᴇʀʀᴇ ᴀᴜꜰʜᴇʙᴇɴ:"
+      - "<!italic><#9ca3af>  ᴜɴʙʟᴏᴄᴋ ғʀᴏᴍ sᴏᴄᴋᴇᴛ:"
       - "<!italic><#f3f4f6>  ➤ <player>"
       - "<!italic><#4b5563>└────────────────────┘"
-      - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴇɴᴛꜰᴇʀɴᴇɴ</italic>"
+      - "<!italic><#4ade80>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴜɴʙʟᴏᴄᴋ</italic>"
 
 # =============================================================================
 # PLAYER SELECTION GUI
 # =============================================================================
 player-selection:
-  title: "<!italic><#222222>👤 <gradient:#e0e7ff:#22d3ee>sᴘɪᴇʟᴇʀ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
+  title: "<!italic><#222222>👤 <gradient:#e0e7ff:#22d3ee>sᴇʟᴇᴄᴛ ᴘʟᴀʏᴇʀ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -250,23 +250,23 @@ player-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>ʜᴀᴜᴘᴛᴍᴇɴü</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>ᴍᴀɪɴ ᴍᴇɴᴜ</#f3f4f6>"
   player-head-item:
     name-format: "<!italic><gradient:#e0e7ff:#22d3ee><bold><player></bold></gradient>"
     lore:
       - "<!italic><#4b5563>┌────────────────────┐"
-      - "<!italic><#9ca3af>  ᴅʀᴏʜɴᴇ sᴇɴᴅᴇɴ ᴀɴ:"
+      - "<!italic><#9ca3af>  sᴇɴᴅ ᴅʀᴏɴᴇ ᴛᴏ:"
       - "<!italic><#f3f4f6>  ➤ <player>"
       - "<!italic><#4b5563>└────────────────────┘"
-      - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴇɴᴅᴇɴ</italic>"
+      - "<!italic><#4ade80>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ sᴇɴᴅ</italic>"
 
 # =============================================================================
 # TRUST PLAYER SELECTION GUI
 # =============================================================================
 trust-player-selection:
-  title: "<!italic><#222222>👤 <gradient:#4ade80:#22c55e>sᴘɪᴇʟᴇʀ ᴠᴇʀᴛʀᴀᴜᴇɴ</gradient>"
+  title: "<!italic><#222222>👤 <gradient:#4ade80:#22c55e>ᴛʀᴜsᴛ ᴘʟᴀʏᴇʀ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -274,24 +274,24 @@ trust-player-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>ᴠᴇʀᴛʀᴀᴜᴇɴ-ᴍᴇɴü</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>ᴛʀᴜsᴛ ᴍᴇɴᴜ</#f3f4f6>"
   player-head-item:
     name-format: "<!italic><gradient:#4ade80:#22c55e><bold><player></bold></gradient>"
     lore:
       - "<!italic><#4b5563>┌────────────────────┐"
-      - "<!italic><#9ca3af>  ᴠᴇʀᴛʀᴀᴜᴇ ᴅɪᴇsᴇᴍ"
-      - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀ:"
+      - "<!italic><#9ca3af>  ᴛʀᴜsᴛ ᴛʜɪs"
+      - "<!italic><#9ca3af>  ᴘʟᴀʏᴇʀ:"
       - "<!italic><#f3f4f6>  ➤ <player>"
       - "<!italic><#4b5563>└────────────────────┘"
-      - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴠᴇʀᴛʀᴀᴜᴇɴ</italic>"
+      - "<!italic><#4ade80>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴛʀᴜsᴛ</italic>"
 
 # =============================================================================
 # UNTRUST PLAYER SELECTION GUI
 # =============================================================================
 untrust-player-selection:
-  title: "<!italic><#222222>👤 <gradient:#f87171:#ef4444>ᴛʀᴀᴜᴇɴ ᴇɴᴛꜰᴇʀɴᴇɴ</gradient>"
+  title: "<!italic><#222222>👤 <gradient:#f87171:#ef4444>ʀᴇᴍᴏᴠᴇ ᴛʀᴜsᴛ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -299,24 +299,24 @@ untrust-player-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>ᴠᴇʀᴛʀᴀᴜᴇɴ-ᴍᴇɴü</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>ᴛʀᴜsᴛ ᴍᴇɴᴜ</#f3f4f6>"
   player-head-item:
     name-format: "<!italic><gradient:#f87171:#ef4444><bold><player></bold></gradient>"
     lore:
       - "<!italic><#4b5563>┌────────────────────┐"
-      - "<!italic><#9ca3af>  ᴇɴᴛꜰᴇʀɴᴇ ᴛʀᴀᴜᴇɴ"
-      - "<!italic><#9ca3af>  ᴠᴏɴ:"
+      - "<!italic><#9ca3af>  ʀᴇᴍᴏᴠᴇ ᴛʀᴜsᴛ"
+      - "<!italic><#9ca3af>  ғʀᴏᴍ:"
       - "<!italic><#f3f4f6>  ➤ <player>"
       - "<!italic><#4b5563>└────────────────────┘"
-      - "<!italic><#f87171>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴇɴᴛꜰᴇʀɴᴇɴ</italic>"
+      - "<!italic><#f87171>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ʀᴇᴍᴏᴠᴇ</italic>"
 
 # =============================================================================
 # TARGET SELECTION GUI
 # =============================================================================
 target-selection:
-  title: "<!italic><#222222>🎯 <gradient:#22d3ee:#4ade80>ᴢɪᴇʟ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
+  title: "<!italic><#222222>🎯 <gradient:#22d3ee:#4ade80>sᴇʟᴇᴄᴛ ᴛᴀʀɢᴇᴛ</gradient>"
   size: 27
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -324,36 +324,36 @@ target-selection:
   back-item:
     position: 26
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>ʜᴀᴜᴘᴛᴍᴇɴü</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>ᴍᴀɪɴ ᴍᴇɴᴜ</#f3f4f6>"
   items:
     player:
       position: 11
       material: "PLAYER_HEAD"
-      name: "<!italic><gradient:#4ade80:#22c55e><bold>👤 sᴘɪᴇʟᴇʀ ᴀᴜsᴡäʜʟᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#4ade80:#22c55e><bold>👤 sᴇʟᴇᴄᴛ ᴘʟᴀʏᴇʀ</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  sᴇɴᴅᴇ ᴅɪᴇ ᴅʀᴏʜɴᴇ ᴅɪʀᴇᴋᴛ"
-        - "<!italic><#9ca3af>  ᴀɴ ᴇɪɴᴇɴ ᴏɴʟɪɴᴇ-sᴘɪᴇʟᴇʀ."
+        - "<!italic><#9ca3af>  sᴇɴᴅ ᴛʜᴇ ᴅʀᴏɴᴇ ᴅɪʀᴇᴄᴛʟʏ"
+        - "<!italic><#9ca3af>  ᴛᴏ ᴀɴ ᴏɴʟɪɴᴇ ᴘʟᴀʏᴇʀ."
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
+        - "<!italic><#4ade80>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ sᴇʟᴇᴄᴛ</italic>"
     socket:
       position: 15
       material: "BEACON"
-      name: "<!italic><gradient:#a855f7:#ec4899><bold>📡 sᴏᴄᴋᴇᴛ ᴀᴜsᴡäʜʟᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>📡 sᴇʟᴇᴄᴛ sᴏᴄᴋᴇᴛ</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  sᴇɴᴅᴇ ᴅɪᴇ ᴅʀᴏʜɴᴇ ᴢᴜ ᴇɪɴᴇʀ"
-        - "<!italic><#9ca3af>  ꜰᴇsᴛᴇɴ ʟɪᴇꜰᴇʀsᴛᴀᴛɪᴏɴ."
+        - "<!italic><#9ca3af>  sᴇɴᴅ ᴛʜᴇ ᴅʀᴏɴᴇ ᴛᴏ ᴀ"
+        - "<!italic><#9ca3af>  ꜰɪxᴇᴅ ᴅᴇʟɪᴠᴇʀʏ sᴛᴀᴛɪᴏɴ."
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#a855f7>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ᴀᴜsᴡäʜʟᴇɴ</italic>"
+        - "<!italic><#a855f7>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ sᴇʟᴇᴄᴛ</italic>"
 
 # =============================================================================
 # SOCKET SELECTION
 # =============================================================================
 socket-selection:
-  title: "<!italic><#222222>📡 <gradient:#a855f7:#ec4899>sᴏᴄᴋᴇᴛ ᴀᴜsᴡäʜʟᴇɴ</gradient>"
+  title: "<!italic><#222222>📡 <gradient:#a855f7:#ec4899>sᴇʟᴇᴄᴛ sᴏᴄᴋᴇᴛ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -361,14 +361,14 @@ socket-selection:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜʀ <#f3f4f6>ᴢɪᴇʟᴀᴜsᴡᴀʜʟ</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>ᴛᴀʀɢᴇᴛ sᴇʟᴇᴄᴛɪᴏɴ</#f3f4f6>"
 
 socket-item-format:
   name-format: "<!italic><gradient:#a855f7:#ec4899><bold>📡 <name></bold></gradient>"
-  owner-format: "<!italic><#9ca3af>  ʙᴇsɪᴛᴢᴇʀ: <#f3f4f6><owner>"
-  click-hint: "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ sᴇɴᴅᴇɴ</italic>"
+  owner-format: "<!italic><#9ca3af>  ᴏᴡɴᴇʀ: <#f3f4f6><owner>"
+  click-hint: "<!italic><#4ade80>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ sᴇɴᴅ</italic>"
   empty-line: " "
   material: "BEACON"
 
@@ -376,7 +376,7 @@ socket-item-format:
 # SOCKET MANAGEMENT
 # =============================================================================
 socket-management:
-  title: "<!italic><#222222>📡 <gradient:#a855f7:#ec4899>sᴏᴄᴋᴇᴛ-ᴠᴇʀᴡᴀʟᴛᴜɴɢ</gradient>"
+  title: "<!italic><#222222>📡 <gradient:#a855f7:#ec4899>sᴏᴄᴋᴇᴛ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ</gradient>"
   size: 54
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -384,31 +384,31 @@ socket-management:
   back-item:
     position: 45
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>ʜᴀᴜᴘᴛᴍᴇɴü</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>ᴍᴀɪɴ ᴍᴇɴᴜ</#f3f4f6>"
   socket-management-item:
     name-format: "<!italic><gradient:#a855f7:#ec4899><bold>📡 <name></bold></gradient>"
-    location-format: "<!italic><#9ca3af>  ᴏʀᴛ: <#f3f4f6><world>, <x>, <y>, <z>"
-    delete-hint: "<!italic><#f87171>⬥ <italic>ʀᴇᴄʜᴛs ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ ʟösᴄʜᴇɴ</italic>"
+    location-format: "<!italic><#9ca3af>  ʟᴏᴄᴀᴛɪᴏɴ: <#f3f4f6><world>, <x>, <y>, <z>"
+    delete-hint: "<!italic><#f87171>⬥ <italic>ʀɪɢʜᴛ ᴄʟɪᴄᴋ ᴛᴏ ᴅᴇʟᴇᴛᴇ</italic>"
     empty-line: " "
     material: "BEACON"
   no-sockets-item:
     position: 22
     material: "BARRIER"
-    name: "<!italic><gradient:#f87171:#ef4444><bold>✖ ᴋᴇɪɴᴇ sᴏᴄᴋᴇᴛs</bold></gradient>"
+    name: "<!italic><gradient:#f87171:#ef4444><bold>✖ ɴᴏ sᴏᴄᴋᴇᴛs</bold></gradient>"
     lore:
       - "<!italic><#4b5563>┌────────────────────┐"
-      - "<!italic><#9ca3af>  ᴅᴜ ʜᴀsᴛ ɴᴏᴄʜ ᴋᴇɪɴᴇ"
-      - "<!italic><#9ca3af>  sᴏᴄᴋᴇᴛs ᴇʀsᴛᴇʟʟᴛ."
-      - "<!italic><#9ca3af>  ɴᴜᴛᴢᴇ <#f3f4f6>/drone socket place</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʏᴏᴜ ʜᴀᴠᴇ ɴᴏᴛ ᴄʀᴇᴀᴛᴇᴅ"
+      - "<!italic><#9ca3af>  ᴀɴʏ sᴏᴄᴋᴇᴛs ʏᴇᴛ."
+      - "<!italic><#9ca3af>  uѕe <#f3f4f6>/drone socket place</#f3f4f6>"
       - "<!italic><#4b5563>└────────────────────┘"
 
 # =============================================================================
 # SOCKET TRUST SUBMENU (from socket editor)
 # =============================================================================
 socket-trust-menu:
-  title: "<!italic><#222222>✓ <gradient:#4ade80:#22c55e>ᴠᴇʀᴛʀᴀᴜᴇɴ</gradient>"
+  title: "<!italic><#222222>✓ <gradient:#4ade80:#22c55e>ᴛʀᴜsᴛ</gradient>"
   size: 27
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -416,30 +416,30 @@ socket-trust-menu:
   back-item:
     position: 18
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>sᴏᴄᴋᴇᴛ-ᴇᴅɪᴛᴏʀ</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>sᴏᴄᴋᴇᴛ ᴇᴅɪᴛᴏʀ</#f3f4f6>"
   items:
     trust:
       position: 11
       material: "EMERALD"
-      name: "<!italic><gradient:#4ade80:#22c55e><bold>✓ sᴘɪᴇʟᴇʀ ᴠᴇʀᴛʀᴀᴜᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#4ade80:#22c55e><bold>✓ ᴛʀᴜsᴛ ᴘʟᴀʏᴇʀ</bold></gradient>"
       lore:
-        - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀ ᴢᴜ ᴅɪᴇsᴇᴍ"
-        - "<!italic><#9ca3af>  sᴏᴄᴋᴇᴛ ʜɪɴᴢᴜꜰüɢᴇɴ"
+        - "<!italic><#9ca3af>  ᴀᴅᴅ ᴘʟᴀʏᴇʀ ᴛᴏ"
+        - "<!italic><#9ca3af>  ᴛʜɪs sᴏᴄᴋᴇᴛ"
     untrust:
       position: 15
       material: "REDSTONE"
-      name: "<!italic><gradient:#f87171:#ef4444><bold>✗ ᴠᴇʀᴛʀᴀᴜᴇɴ ᴇɴᴛꜰᴇʀɴᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#f87171:#ef4444><bold>✗ ʀᴇᴍᴏᴠᴇ ᴛʀᴜsᴛ</bold></gradient>"
       lore:
-        - "<!italic><#9ca3af>  ᴠᴇʀᴛʀᴀᴜᴇɴ ᴇɪɴᴇs"
-        - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀs ᴇɴᴛꜰᴇʀɴᴇɴ"
+        - "<!italic><#9ca3af>  ʀᴇᴍᴏᴠᴇ ᴛʀᴜsᴛ ғᴏʀ"
+        - "<!italic><#9ca3af>  ᴀ ᴘʟᴀʏᴇʀ"
 
 # =============================================================================
 # SOCKET BLACKLIST SUBMENU (from socket editor)
 # =============================================================================
 socket-blacklist-menu:
-  title: "<!italic><#222222>🚫 <gradient:#f87171:#ef4444>sᴏᴄᴋᴇᴛ-sᴘᴇʀʀᴇ</gradient>"
+  title: "<!italic><#222222>🚫 <gradient:#f87171:#ef4444>sᴏᴄᴋᴇᴛ ʙʟᴏᴄᴋ</gradient>"
   size: 27
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -447,29 +447,29 @@ socket-blacklist-menu:
   back-item:
     position: 18
     material: "ARROW"
-    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+    name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
     lore:
-      - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜᴍ <#f3f4f6>sᴏᴄᴋᴇᴛ-ᴇᴅɪᴛᴏʀ</#f3f4f6>"
+      - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>sᴏᴄᴋᴇᴛ ᴇᴅɪᴛᴏʀ</#f3f4f6>"
   items:
     blacklist-add:
       position: 11
       material: "IRON_BARS"
-      name: "<!italic><gradient:#f87171:#ef4444><bold>🚫 sᴘɪᴇʟᴇʀ sᴘᴇʀʀᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#f87171:#ef4444><bold>🚫 ʙʟᴏᴄᴋ ᴘʟᴀʏᴇʀ</bold></gradient>"
       lore:
-        - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀ ᴠᴏɴ ᴅɪᴇsᴇᴍ"
-        - "<!italic><#9ca3af>  sᴏᴄᴋᴇᴛ sᴘᴇʀʀᴇɴ"
+        - "<!italic><#9ca3af>  ʙʟᴏᴄᴋ ᴀ ᴘʟᴀʏᴇʀ ғʀᴏᴍ"
+        - "<!italic><#9ca3af>  ᴛʜɪs sᴏᴄᴋᴇᴛ"
     blacklist-remove:
       position: 15
       material: "BARRIER"
-      name: "<!italic><gradient:#4ade80:#22c55e><bold>✓ sᴘᴇʀʀᴇ ᴀᴜꜰʜᴇʙᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#4ade80:#22c55e><bold>✓ ᴜɴʙʟᴏᴄᴋ ᴘʟᴀʏᴇʀ</bold></gradient>"
       lore:
-        - "<!italic><#9ca3af>  sᴘᴇʀʀᴇ ᴀᴜꜰʜᴇʙᴇɴ"
+        - "<!italic><#9ca3af>  ʀᴇᴍᴏᴠᴇ ʙʟᴏᴄᴋ ғʀᴏᴍ sᴏᴄᴋᴇᴛ"
 
 # =============================================================================
 # SOCKET EDIT GUI
 # =============================================================================
 socket-edit:
-  title: "<!italic><#222222>✏️ <gradient:#a855f7:#ec4899>sᴏᴄᴋᴇᴛ-ᴇᴅɪᴛᴏʀ</gradient>"
+  title: "<!italic><#222222>✏️ <gradient:#a855f7:#ec4899>sᴏᴄᴋᴇᴛ ᴇᴅɪᴛᴏʀ</gradient>"
   size: 27
   fill-item:
     material: "GRAY_STAINED_GLASS_PANE"
@@ -478,54 +478,54 @@ socket-edit:
     rename:
       position: 10
       material: "NAME_TAG"
-      name: "<!italic><gradient:#a855f7:#ec4899><bold>✏️ ᴜᴍʙᴇɴᴇɴᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>✏️ ʀᴇɴᴀᴍᴇ</bold></gradient>"
       lore:
-        - "<!italic><#9ca3af>  ᴋʟɪᴄᴋᴇ ᴜᴍ ᴅᴇɴ"
-        - "<!italic><#9ca3af>  ɴᴀᴍᴇɴ ᴢᴜ äɴᴅᴇʀɴ"
+        - "<!italic><#9ca3af>  ᴄʟɪᴄᴋ ᴛᴏ"
+        - "<!italic><#9ca3af>  ᴄʜᴀɴɢᴇ ᴛʜᴇ ɴᴀᴍᴇ"
     relocate:
       position: 12
       material: "COMPASS"
-      name: "<!italic><gradient:#a855f7:#ec4899><bold>📍 ɴᴇᴜ sᴇᴛᴢᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#a855f7:#ec4899><bold>📍 ʀᴇʟᴏᴄᴀᴛᴇ</bold></gradient>"
       lore:
-        - "<!italic><#9ca3af>  ᴋʟɪᴄᴋᴇ ᴜᴍ ᴅɪᴇ"
-        - "<!italic><#9ca3af>  ᴘᴏsɪᴛɪᴏɴ ᴢᴜ ᴀᴋᴛᴜᴀʟɪsɪᴇʀᴇɴ"
+        - "<!italic><#9ca3af>  ᴄʟɪᴄᴋ ᴛᴏ"
+        - "<!italic><#9ca3af>  ᴜᴘᴅᴀᴛᴇ ᴛʜᴇ ᴘᴏsɪᴛɪᴏɴ"
     trust-management:
       position: 14
       material: "EMERALD"
-      name: "<!italic><gradient:#4ade80:#22c55e><bold>✓ ᴠᴇʀᴛʀᴀᴜᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#4ade80:#22c55e><bold>✓ ᴛʀᴜsᴛ</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀ ᴠᴇʀᴛʀᴀᴜᴇɴ"
-        - "<!italic><#9ca3af>  ᴏᴅᴇʀ ᴇɴᴛꜰᴇʀɴᴇɴ"
+        - "<!italic><#9ca3af>  ᴛʀᴜsᴛ ᴏʀ ᴜɴᴛʀᴜsᴛ"
+        - "<!italic><#9ca3af>  ᴘʟᴀʏᴇʀs ғᴏʀ sᴏᴄᴋᴇᴛ"
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#4ade80>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ öғғɴᴇɴ</italic>"
+        - "<!italic><#4ade80>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴏᴘᴇɴ</italic>"
     blacklist-management:
       position: 16
       material: "IRON_BARS"
-      name: "<!italic><gradient:#f87171:#ef4444><bold>🚫 sᴘᴇʀʀᴇ</bold></gradient>"
+      name: "<!italic><gradient:#f87171:#ef4444><bold>🚫 ʙʟᴏᴄᴋs</bold></gradient>"
       lore:
         - "<!italic><#4b5563>┌────────────────────┐"
-        - "<!italic><#9ca3af>  sᴘɪᴇʟᴇʀ sᴘᴇʀʀᴇɴ"
-        - "<!italic><#9ca3af>  ᴏᴅᴇʀ ᴇɴᴛꜱᴘᴇʀʀᴇɴ"
+        - "<!italic><#9ca3af>  ʙʟᴏᴄᴋ ᴏʀ ᴜɴʙʟᴏᴄᴋ"
+        - "<!italic><#9ca3af>  ᴘʟᴀʏᴇʀs ғᴏʀ sᴏᴄᴋᴇᴛ"
         - "<!italic><#4b5563>└────────────────────┘"
-        - "<!italic><#f87171>⬥ <italic>ᴋʟɪᴄᴋᴇɴ ᴢᴜᴍ öғғɴᴇɴ</italic>"
+        - "<!italic><#f87171>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴏᴘᴇɴ</italic>"
     delete:
       position: 22
       material: "BARRIER"
-      name: "<!italic><gradient:#f87171:#ef4444><bold>✖ ʟösᴄʜᴇɴ</bold></gradient>"
+      name: "<!italic><gradient:#f87171:#ef4444><bold>✖ ᴅᴇʟᴇᴛᴇ</bold></gradient>"
       lore:
-        - "<!italic><#9ca3af>  ᴋʟɪᴄᴋᴇ ᴜᴍ ᴅɪᴇsᴇɴ"
-        - "<!italic><#9ca3af>  sᴏᴄᴋᴇᴛ ᴢᴜ ᴇɴᴛꜰᴇʀɴᴇɴ"
+        - "<!italic><#9ca3af>  ᴄʟɪᴄᴋ ᴛᴏ ʀᴇᴍᴏᴠᴇ"
+        - "<!italic><#9ca3af>  ᴛʜɪs sᴏᴄᴋᴇᴛ"
     back:
       position: 18
       material: "ARROW"
-      name: "<!italic><gradient:#a855f7:#ec4899>⟵ ᴢᴜʀüᴄᴋ</gradient>"
+      name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
       lore:
-        - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ ᴢᴜʀ <#f3f4f6>ᴠᴇʀᴡᴀʟᴛᴜɴɢ</#f3f4f6>"
+        - "<!italic><#9ca3af>  ʙᴀᴄᴋ ᴛᴏ <#f3f4f6>ᴍᴀɴᴀɢᴇᴍᴇɴᴛ</#f3f4f6>"
 
 # =============================================================================
 # SIGN RENAME CONFIGURATION
 # =============================================================================
 sign-rename:
   border-line: "⚡────────────⚡"
-  title-line: "Neuer Name:"
+  title-line: "New Name:"
