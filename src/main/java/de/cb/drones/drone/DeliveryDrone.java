@@ -497,7 +497,13 @@ public final class DeliveryDrone {
                         
                         Vector dir = target.toVector().subtract(current.toVector());
                         double dist = dir.length();
-                        double step = settings.speed();
+                        
+                        double step;
+                        if (dist <= settings.approachDistance()) {
+                            step = settings.approachSpeed();
+                        } else {
+                            step = settings.speed() * 0.6;
+                        }
                         
                         Location newLoc;
                         if (dist <= step) {
@@ -544,6 +550,9 @@ public final class DeliveryDrone {
                         flightStartTick = nowTick;
                         approachPhaseStartTick = -1L;
                         wasGlidingFollowed = false;
+                        
+                        // Send landing update message to receiver
+                        manager.sendMessage(receiver, "glide-follow-landed");
                     }
                 } else if (wasGlidingFollowed) {
                     wasGlidingFollowed = false;

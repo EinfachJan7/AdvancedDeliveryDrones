@@ -127,3 +127,5 @@ usage-socket-untrust: "<gray>/drone socket untrust <name> <player></gray>"
 usage-socket-blacklist: "<gray>/drone socket blacklist <name> <add|remove|list> [player]</gray>"
 no-active-drones: "<gray>No active drones.</gray>"
 active-drones-count: "<gold>Active drones: <white><count></white></gold>"
+glide-follow-landed: "<gold>You landed! The drone has set its landing target to your current location.</gold>"
+

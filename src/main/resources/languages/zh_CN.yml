@@ -127,3 +127,5 @@ usage-socket-untrust: "<gray>/drone socket untrust <名称> <玩家></gray>"
 usage-socket-blacklist: "<gray>/drone socket blacklist <名称> <add|remove|list> [玩家]</gray>"
 no-active-drones: "<gray>无活动无人机。</gray>"
 active-drones-count: "<gold>活动无人机数：<white><count></white></gold>"
+glide-follow-landed: "<gold>你已降落！无人机已将降落目标设定为你的当前位置。</gold>"
+

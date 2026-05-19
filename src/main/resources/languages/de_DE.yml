@@ -127,3 +127,5 @@ usage-socket-untrust: "<gray>/drone socket untrust <name> <Spieler></gray>"
 usage-socket-blacklist: "<gray>/drone socket blacklist <name> <add|remove|list> [Spieler]</gray>"
 no-active-drones: "<gray>Keine aktiven Drohnen.</gray>"
 active-drones-count: "<gold>Aktive Drohnen: <white><count></white></gold>"
+glide-follow-landed: "<gold>Du bist gelandet! Die Drohne hat ihr Landeziel auf deine aktuelle Position gesetzt.</gold>"
+
