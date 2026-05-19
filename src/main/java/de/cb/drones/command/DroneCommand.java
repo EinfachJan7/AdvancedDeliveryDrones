@@ -918,19 +918,26 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> commands = new ArrayList<>(List.of("send", "admin", "preview", "toggle", "reload", "list", "decline", "cancel", "blacklist"));
+            List<String> commands = new ArrayList<>(List.of("admin", "preview", "toggle", "reload", "list", "decline", "cancel"));
+            if (droneSettings.playersEnabled()) {
+                commands.add("send");
+                commands.add("blacklist");
+            }
             if (droneSettings.socketsEnabled()) {
                 commands.add("socket");
             }
             return commands;
         }
         if (args.length == 2 && "blacklist".equalsIgnoreCase(args[0])) {
+            if (!droneSettings.playersEnabled()) return List.of();
             return List.of("player");
         }
         if (args.length == 3 && "blacklist".equalsIgnoreCase(args[0]) && "player".equalsIgnoreCase(args[1])) {
+            if (!droneSettings.playersEnabled()) return List.of();
             return List.of("add", "remove", "list");
         }
         if (args.length == 4 && "blacklist".equalsIgnoreCase(args[0]) && "player".equalsIgnoreCase(args[1]) && sender instanceof Player player) {
+            if (!droneSettings.playersEnabled()) return List.of();
             if ("add".equalsIgnoreCase(args[2])) {
                 List<String> results = new ArrayList<>();
                 for (Player online : Bukkit.getOnlinePlayers()) {
@@ -962,6 +969,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return worlds;
         }
         if (args.length == 2 && "send".equalsIgnoreCase(args[0])) {
+            if (!droneSettings.playersEnabled()) return List.of();
             List<String> results = new ArrayList<>();
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (settingsRepository.canReceive(online.getUniqueId())) {
