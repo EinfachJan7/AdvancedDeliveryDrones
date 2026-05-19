@@ -46,7 +46,9 @@ public record DroneSettings(
         int launchAnimationSeconds,
         Sound launchSound,
         float launchSoundVolume,
-        boolean followGlidingPlayer
+        boolean followGlidingPlayer,
+        boolean locateParticlesEnabled,
+        ParticleEffect locateParticle
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg, FileConfiguration guiConfig) {
         String section = "settings.drone.";
@@ -86,6 +88,8 @@ public record DroneSettings(
         Sound launchSound = parseSound(cfg.getString(section + "launch-animation.sound", "entity.firework_rocket.launch"));
         float launchSoundVolume = (float) cfg.getDouble(section + "launch-animation.sound-volume", 1.0D);
         boolean followGlidingPlayer = cfg.getBoolean(section + "follow-gliding-player", true);
+        boolean locateParticlesEnabled = cfg.getBoolean(section + "locate-particles.enabled", true);
+        ParticleEffect locateParticle = parseParticleEffect(cfg.getString(section + "locate-particles.particle", "HAPPY_VILLAGER"));
 
         // Create GUI configuration from separate file
         GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
@@ -125,7 +129,9 @@ public record DroneSettings(
                 launchAnimationSeconds,
                 launchSound,
                 launchSoundVolume,
-                followGlidingPlayer
+                followGlidingPlayer,
+                locateParticlesEnabled,
+                locateParticle
         );
     }
 

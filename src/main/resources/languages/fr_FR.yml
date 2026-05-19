@@ -128,4 +128,7 @@ usage-socket-blacklist: "<gray>/drone socket blacklist <nom> <add|remove|list> [
 no-active-drones: "<gray>Aucun drone actif.</gray>"
 active-drones-count: "<gold>Drones actifs : <white><count></white></gold>"
 glide-follow-landed: "<gold>Vous avez atterri ! Le drone a défini sa cible d'atterrissage sur votre position actuelle.</gold>"
+locate-none: "<red>Aucun drone atterri trouvé pour vous dans ce monde.</red>"
+locate-started: "<green>Localisation du drone atterri le plus proche... Cherchez la trace de particules !</green>"
+
 

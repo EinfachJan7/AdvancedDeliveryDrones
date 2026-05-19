@@ -128,4 +128,7 @@ usage-socket-blacklist: "<gray>/drone socket blacklist <名称> <add|remove|list
 no-active-drones: "<gray>无活动无人机。</gray>"
 active-drones-count: "<gold>活动无人机数：<white><count></white></gold>"
 glide-follow-landed: "<gold>你已降落！无人机已将降落目标设定为你的当前位置。</gold>"
+locate-none: "<red>在这个世界中未找到发送给你的已降落无人机。</red>"
+locate-started: "<green>正在定位最近的已降落无人机... 请寻找粒子轨迹！</green>"
+
 

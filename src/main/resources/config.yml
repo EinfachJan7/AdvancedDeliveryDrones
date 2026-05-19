@@ -19,6 +19,10 @@ settings:
     max-sockets-per-player: 1
     # TRUE: If the player is gliding (using an elytra), the drone follows them in the air until they land, and then lands there.
     follow-gliding-player: true
+    # Settings for locating landed drones with particles
+    locate-particles:
+      enabled: true
+      particle: "HAPPY_VILLAGER"
     # TRUE: Enable Sockets (delivery stations)
     sockets-enabled: true
     # TRUE: Enable player as a target destination

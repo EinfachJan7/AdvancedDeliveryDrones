@@ -97,8 +97,24 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "cancel" -> executeCancel(player);
             case "socket" -> executeSocket(player, args);
             case "blacklist" -> executeBlacklist(player, args);
+            case "locate" -> {
+                if (!droneSettings.locateParticlesEnabled()) {
+                    player.sendMessage(plugin.component("usage-main"));
+                    yield true;
+                }
+                yield executeLocate(player);
+            }
             default -> {
-                player.sendMessage(plugin.component("usage-main"));
+                if (droneSettings.locateParticlesEnabled()) {
+                    String prefix = plugin.getLanguageManager().getString("prefix", "");
+                    String body = plugin.getLanguageManager().getString("usage-main", "");
+                    if (body.contains("blacklist>")) {
+                        body = body.replace("blacklist>", "blacklist|locate>");
+                    }
+                    player.sendMessage(MINI_MESSAGE.deserialize(prefix + body));
+                } else {
+                    player.sendMessage(plugin.component("usage-main"));
+                }
                 yield true;
             }
         };
@@ -370,6 +386,75 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         droneManager.sendMessage(player, "cancel-success", "<count>", String.valueOf(cancelled));
+        return true;
+    }
+
+    private boolean executeLocate(Player player) {
+        if (!player.hasPermission("drone.locate")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
+        java.util.List<de.cb.drones.drone.DeliveryDrone> landedDrones = new ArrayList<>();
+        for (de.cb.drones.drone.DeliveryDrone drone : droneManager.activeDronesSnapshot()) {
+            if (drone.receiverId().equals(player.getUniqueId()) && drone.isLanded() && drone.currentLocation().getWorld().equals(player.getWorld())) {
+                landedDrones.add(drone);
+            }
+        }
+        if (landedDrones.isEmpty()) {
+            droneManager.sendMessage(player, "locate-none");
+            return true;
+        }
+        
+        de.cb.drones.drone.DeliveryDrone targetDrone = null;
+        double minDistanceSq = Double.MAX_VALUE;
+        for (de.cb.drones.drone.DeliveryDrone drone : landedDrones) {
+            double distSq = drone.currentLocation().distanceSquared(player.getLocation());
+            if (distSq < minDistanceSq) {
+                minDistanceSq = distSq;
+                targetDrone = drone;
+            }
+        }
+        
+        final de.cb.drones.drone.DeliveryDrone finalTargetDrone = targetDrone;
+        
+        droneManager.sendMessage(player, "locate-started");
+        
+        new org.bukkit.scheduler.BukkitRunnable() {
+            int runs = 0;
+            @Override
+            public void run() {
+                if (!player.isOnline() || !droneManager.activeDronesSnapshot().contains(finalTargetDrone) 
+                        || !finalTargetDrone.isLanded() || !finalTargetDrone.currentLocation().getWorld().equals(player.getWorld())) {
+                    cancel();
+                    return;
+                }
+                Location from = player.getLocation().add(0, 0.2, 0);
+                Location to = finalTargetDrone.currentLocation().add(0, 0.5, 0);
+                org.bukkit.util.Vector dir = to.toVector().subtract(from.toVector());
+                double dist = dir.length();
+                if (dist > 1.5) {
+                    dir.normalize();
+                    for (double d = 1.0; d < dist; d += 1.5) {
+                        Location loc = from.clone().add(dir.clone().multiply(d));
+                        DroneSettings.ParticleEffect pe = droneSettings.locateParticle();
+                        if (pe != null && pe.particle() != null) {
+                            if (pe.data() != null) {
+                                player.spawnParticle(pe.particle(), loc, 1, 0.0, 0.0, 0.0, 0.0, pe.data());
+                            } else {
+                                player.spawnParticle(pe.particle(), loc, 1, 0.0, 0.0, 0.0, 0.0);
+                            }
+                        } else {
+                            player.spawnParticle(org.bukkit.Particle.HAPPY_VILLAGER, loc, 1, 0.0, 0.0, 0.0, 0.0);
+                        }
+                    }
+                }
+                runs++;
+                if (runs >= 20) {
+                    cancel();
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 10L);
+        
         return true;
     }
 
@@ -925,6 +1010,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             }
             if (droneSettings.socketsEnabled()) {
                 commands.add("socket");
+            }
+            if (droneSettings.locateParticlesEnabled()) {
+                commands.add("locate");
             }
             return commands;
         }
