@@ -71,6 +71,7 @@ public final class DeliveryDrone {
     private int lastBossBarDistanceM = -1;
     private long lastBossBarEta = -1L;
     private long approachPhaseStartTick = -1L; // -1 means not in approach phase yet
+    private boolean wasGlidingFollowed = false;
     
     // Performance caches
     private long lastTraveledDistanceTick = -1L;
@@ -481,6 +482,75 @@ public final class DeliveryDrone {
 
         long nowTick = Bukkit.getCurrentTick();
         Location expected = expectedLocation(nowTick);
+
+        // Elytra follow check
+        boolean isGlidingTarget = false;
+        if (!exactSocketTarget && settings.followGlidingPlayer()) {
+            Player receiver = Bukkit.getPlayer(receiverId);
+            if (receiver != null && receiver.isOnline()) {
+                if (receiver.getWorld().equals(fixedTarget.getWorld())) {
+                    if (receiver.isGliding()) {
+                        isGlidingTarget = true;
+                        
+                        Location current = currentLocation();
+                        Location target = receiver.getLocation().clone().add(0.0, 5.0, 0.0);
+                        
+                        Vector dir = target.toVector().subtract(current.toVector());
+                        double dist = dir.length();
+                        double step = settings.speed();
+                        
+                        Location newLoc;
+                        if (dist <= step) {
+                            newLoc = target;
+                        } else {
+                            newLoc = current.add(dir.normalize().multiply(step));
+                        }
+                        
+                        if (dist > 0.01) {
+                            float yaw = (float) Math.toDegrees(Math.atan2(-dir.getX(), dir.getZ()));
+                            newLoc.setYaw(yaw);
+                        }
+                        
+                        // Overwrite startLocation and fixedTarget
+                        fixedTarget.setX(receiver.getLocation().getX());
+                        fixedTarget.setY(receiver.getLocation().getY() + 5.0);
+                        fixedTarget.setZ(receiver.getLocation().getZ());
+                        
+                        startLocation.setX(newLoc.getX());
+                        startLocation.setY(newLoc.getY());
+                        startLocation.setZ(newLoc.getZ());
+                        startLocation.setWorld(newLoc.getWorld());
+                        
+                        pathComputed = false;
+                        flightStartTick = nowTick;
+                        approachPhaseStartTick = -1L;
+                        pendingLanding = null;
+                        smoothLanding = false;
+                        wasGlidingFollowed = true;
+                        
+                        expected = newLoc;
+                    } else if (wasGlidingFollowed) {
+                        fixedTarget.setX(receiver.getLocation().getX());
+                        fixedTarget.setY(receiver.getLocation().getY());
+                        fixedTarget.setZ(receiver.getLocation().getZ());
+                        
+                        Location current = currentLocation();
+                        startLocation.setX(current.getX());
+                        startLocation.setY(current.getY());
+                        startLocation.setZ(current.getZ());
+                        startLocation.setWorld(current.getWorld());
+                        
+                        pathComputed = false;
+                        flightStartTick = nowTick;
+                        approachPhaseStartTick = -1L;
+                        wasGlidingFollowed = false;
+                    }
+                } else if (wasGlidingFollowed) {
+                    wasGlidingFollowed = false;
+                }
+            }
+        }
+
         // Keep virtual position progressing even when chunks are unloaded.
         // Reference the same location object instead of cloning
         lastKnownLocation = expected;
@@ -500,7 +570,7 @@ public final class DeliveryDrone {
                 ? (landedLocation != null ? landedLocation : (standLocation != null ? standLocation : lastKnownLocation))
                 : expected;
 
-        if (!landed && distanceSquaredToTarget(expected) <= deliveryRadiusSq) {
+        if (!isGlidingTarget && !landed && distanceSquaredToTarget(expected) <= deliveryRadiusSq) {
             if (pendingLanding == null) {
                 pendingLanding = fixedTarget.clone();
             }

@@ -45,7 +45,8 @@ public record DroneSettings(
         boolean launchAnimationEnabled,
         int launchAnimationSeconds,
         Sound launchSound,
-        float launchSoundVolume
+        float launchSoundVolume,
+        boolean followGlidingPlayer
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg, FileConfiguration guiConfig) {
         String section = "settings.drone.";
@@ -84,6 +85,7 @@ public record DroneSettings(
         int launchAnimationSeconds = Math.max(1, cfg.getInt(section + "launch-animation.seconds", 3));
         Sound launchSound = parseSound(cfg.getString(section + "launch-animation.sound", "entity.firework_rocket.launch"));
         float launchSoundVolume = (float) cfg.getDouble(section + "launch-animation.sound-volume", 1.0D);
+        boolean followGlidingPlayer = cfg.getBoolean(section + "follow-gliding-player", true);
 
         // Create GUI configuration from separate file
         GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
@@ -122,7 +124,8 @@ public record DroneSettings(
                 launchAnimationEnabled,
                 launchAnimationSeconds,
                 launchSound,
-                launchSoundVolume
+                launchSoundVolume,
+                followGlidingPlayer
         );
     }
 

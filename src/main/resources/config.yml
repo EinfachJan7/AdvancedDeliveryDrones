@@ -17,6 +17,8 @@ settings:
     carry-leashed-animals: true
     max-leashed-animals-per-drone: 1
     max-sockets-per-player: 1
+    # TRUE: If the player is gliding (using an elytra), the drone follows them in the air until they land, and then lands there.
+    follow-gliding-player: true
     # TRUE: Enable Sockets (delivery stations)
     sockets-enabled: true
     # TRUE: Enable player as a target destination
