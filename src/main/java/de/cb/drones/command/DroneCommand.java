@@ -98,7 +98,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "socket" -> executeSocket(player, args);
             case "blacklist" -> executeBlacklist(player, args);
             default -> {
-                player.sendMessage(plugin.component("usage-unknown"));
+                player.sendMessage(plugin.component("usage-main"));
                 yield true;
             }
         };
@@ -209,8 +209,11 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         droneManager.sendMessage(player, "active-drones-count", "<count>", String.valueOf(drones.size()));
         for (de.cb.drones.drone.DeliveryDrone drone : drones) {
             Location loc = drone.currentLocation();
+            String command = "/tp " + loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ();
             Component line = MINI_MESSAGE.deserialize(
-                    plugin.getLanguageManager().getString("active-drones-list-entry"),
+                    "<gray>- <yellow><receiver></yellow> <dark_gray>|</dark_gray> "
+                            + "<white><world></white> <gray>(<x> <y> <z>)</gray> "
+                            + "<click:run_command:'" + command + "'><green>[Teleport]</green></click>",
                     Placeholder.unparsed("receiver", drone.receiverName()),
                     Placeholder.unparsed("world", loc.getWorld() == null ? "world" : loc.getWorld().getName()),
                     Placeholder.unparsed("x", String.valueOf(loc.getBlockX())),
@@ -479,7 +482,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         droneManager.sendMessage(player, "socket-list-header", "<count>", String.valueOf(sockets.size()));
         for (DeliverySocket socket : sockets) {
             Component line = MINI_MESSAGE.deserialize(
-                    plugin.getLanguageManager().getString("socket-list-entry"),
+                    "<gray>- <yellow><name></yellow> <dark_gray>|</dark_gray> "
+                            + "<white><world></white> <gray>(<coords>)</gray> "
+                            + "<click:run_command:'/drone socket send " + socket.name() + "'><green>[Send]</green></click> "
+                            + "<click:run_command:'/drone socket remove " + socket.name() + "'><red>[Remove]</red></click>",
                     Placeholder.unparsed("name", socket.name()),
                     Placeholder.unparsed("world", socket.getWorldName()),
                     Placeholder.unparsed("coords", socket.getCoordinates())
@@ -694,7 +700,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length < 3) {
-            player.sendMessage(plugin.component("usage-socket-send-command"));
+            player.sendMessage(plugin.component("usage-socket-send"));
             return true;
         }
         String socketName = args[2];
@@ -825,7 +831,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (args.length < 2) {
-            player.sendMessage(plugin.component("usage-preview-command"));
+            player.sendMessage(plugin.component("usage-preview"));
             return true;
         }
         UUID droneId;
@@ -1268,11 +1274,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                         + droneManager.message("sent-cancel-button", null, null)
         );
         sender.sendMessage(sent);
-        Component incoming = MINI_MESSAGE.deserialize(
-                droneManager.message("incoming-drone", "<player>", sender.getName())
-                        + " <click:run_command:'/drone preview " + drone.droneId() + "'>"
-                        + "<green><bold>[Vorschau]</bold></green></click>"
-        );
+        String incomingBody = plugin.getLanguageManager().getString("incoming-drone", "incoming-drone").replace("<player>", sender.getName());
+        String buttonBody = plugin.getLanguageManager().getString("incoming-drone-preview-button", "incoming-drone-preview-button").replace("<id>", drone.droneId().toString());
+        String prefix = plugin.getLanguageManager().getString("prefix", "");
+        Component incoming = MINI_MESSAGE.deserialize(prefix + incomingBody + buttonBody);
         receiver.sendMessage(incoming);
     }
 
