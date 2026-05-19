@@ -105,6 +105,10 @@ public final class DeliveryDrone {
     private double crossDimensionDescentHeight;
     private double crossDimensionMidpointX;
     private double crossDimensionMidpointZ;
+    private double crossDimensionTargetMidpointX;
+    private double crossDimensionTargetMidpointZ;
+    private double crossDimensionHorizontalDistance1;
+    private double crossDimensionHorizontalDistance2;
 
     // Socket pickup tracking
     private UUID socketPickupPlayerId;
@@ -741,6 +745,17 @@ public final class DeliveryDrone {
         return new Location(world, bestX + 0.5, bestY + 0.1, bestZ + 0.5);
     }
 
+    private double getCoordinateScale(World world) {
+        if (world == null) {
+            return 1.0;
+        }
+        String name = world.getName().toLowerCase();
+        if (name.contains("nether")) {
+            return 8.0;
+        }
+        return 1.0;
+    }
+
     private void recomputeFlightPath() {
         if (startLocation.getWorld() == null || fixedTarget.getWorld() == null) {
             pathComputed = false;
@@ -758,16 +773,37 @@ public final class DeliveryDrone {
 
             crossDimensionAscentHeight = Math.abs(crossDimensionH1 - startLocation.getY());
             
-            double dx = fixedTarget.getX() - startLocation.getX();
-            double dz = fixedTarget.getZ() - startLocation.getZ();
-            crossDimensionHorizontalDistance = Math.sqrt(dx * dx + dz * dz);
+            double startScale = getCoordinateScale(startLocation.getWorld());
+            double targetScale = getCoordinateScale(fixedTarget.getWorld());
+
+            double startXProj = startLocation.getX() * startScale;
+            double startZProj = startLocation.getZ() * startScale;
+
+            double targetXProj = fixedTarget.getX() * targetScale;
+            double targetZProj = fixedTarget.getZ() * targetScale;
+
+            double projMidpointX = (startXProj + targetXProj) / 2.0;
+            double projMidpointZ = (startZProj + targetZProj) / 2.0;
+
+            crossDimensionMidpointX = projMidpointX / startScale;
+            crossDimensionMidpointZ = projMidpointZ / startScale;
+
+            crossDimensionTargetMidpointX = projMidpointX / targetScale;
+            crossDimensionTargetMidpointZ = projMidpointZ / targetScale;
+
+            double dx1 = crossDimensionMidpointX - startLocation.getX();
+            double dz1 = crossDimensionMidpointZ - startLocation.getZ();
+            crossDimensionHorizontalDistance1 = Math.sqrt(dx1 * dx1 + dz1 * dz1);
+
+            double dx2 = fixedTarget.getX() - crossDimensionTargetMidpointX;
+            double dz2 = fixedTarget.getZ() - crossDimensionTargetMidpointZ;
+            crossDimensionHorizontalDistance2 = Math.sqrt(dx2 * dx2 + dz2 * dz2);
+
+            crossDimensionHorizontalDistance = crossDimensionHorizontalDistance1 + crossDimensionHorizontalDistance2;
             
             crossDimensionDescentHeight = Math.abs(crossDimensionH2 - (fixedTarget.getY() + 0.1));
             
             pathTotalDistance = crossDimensionAscentHeight + crossDimensionHorizontalDistance + crossDimensionDescentHeight;
-
-            crossDimensionMidpointX = (startLocation.getX() + fixedTarget.getX()) / 2.0;
-            crossDimensionMidpointZ = (startLocation.getZ() + fixedTarget.getZ()) / 2.0;
         } else {
             double targetX = fixedTarget.getX();
             double targetY = fixedTarget.getY() + 0.1;
@@ -817,8 +853,8 @@ public final class DeliveryDrone {
             double d = Math.max(0.0D, Math.min(pathTotalDistance, traveled));
 
             double d1 = crossDimensionAscentHeight;
-            double d2 = d1 + crossDimensionHorizontalDistance / 2.0;
-            double d3 = d1 + crossDimensionHorizontalDistance;
+            double d2 = d1 + crossDimensionHorizontalDistance1;
+            double d3 = d2 + crossDimensionHorizontalDistance2;
 
             Location result;
             if (d < d1) {
@@ -833,8 +869,7 @@ public final class DeliveryDrone {
                         fixedTarget.getPitch()
                 );
             } else if (d < d2) {
-                double horizontalPart = crossDimensionHorizontalDistance / 2.0;
-                double fraction = horizontalPart > 0.001 ? (d - d1) / horizontalPart : 1.0;
+                double fraction = crossDimensionHorizontalDistance1 > 0.001 ? (d - d1) / crossDimensionHorizontalDistance1 : 1.0;
                 double x = startLocation.getX() + fraction * (crossDimensionMidpointX - startLocation.getX());
                 double z = startLocation.getZ() + fraction * (crossDimensionMidpointZ - startLocation.getZ());
                 result = new Location(
@@ -846,10 +881,9 @@ public final class DeliveryDrone {
                         fixedTarget.getPitch()
                 );
             } else if (d < d3) {
-                double horizontalPart = crossDimensionHorizontalDistance / 2.0;
-                double fraction = horizontalPart > 0.001 ? (d - d2) / horizontalPart : 1.0;
-                double x = crossDimensionMidpointX + fraction * (fixedTarget.getX() - crossDimensionMidpointX);
-                double z = crossDimensionMidpointZ + fraction * (fixedTarget.getZ() - crossDimensionMidpointZ);
+                double fraction = crossDimensionHorizontalDistance2 > 0.001 ? (d - d2) / crossDimensionHorizontalDistance2 : 1.0;
+                double x = crossDimensionTargetMidpointX + fraction * (fixedTarget.getX() - crossDimensionTargetMidpointX);
+                double z = crossDimensionTargetMidpointZ + fraction * (fixedTarget.getZ() - crossDimensionTargetMidpointZ);
                 result = new Location(
                         fixedTarget.getWorld(),
                         x,

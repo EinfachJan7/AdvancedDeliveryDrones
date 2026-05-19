@@ -1269,14 +1269,13 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return;
         }
         String targetName = holder.socketName() != null ? holder.socketName() : receiver.getName();
-        Component sent = MINI_MESSAGE.deserialize(
-                droneManager.message("sent-success", "<player>", targetName)
-                        + droneManager.message("sent-cancel-button", null, null)
-        );
+        String prefix = plugin.getLanguageManager().getString("prefix", "");
+        String sentSuccess = plugin.getLanguageManager().getString("sent-success", "sent-success").replace("<player>", targetName);
+        String cancelBtn = plugin.getLanguageManager().getString("sent-cancel-button", "");
+        Component sent = MINI_MESSAGE.deserialize(prefix + sentSuccess + cancelBtn);
         sender.sendMessage(sent);
         String incomingBody = plugin.getLanguageManager().getString("incoming-drone", "incoming-drone").replace("<player>", sender.getName());
         String buttonBody = plugin.getLanguageManager().getString("incoming-drone-preview-button", "incoming-drone-preview-button").replace("<id>", drone.droneId().toString());
-        String prefix = plugin.getLanguageManager().getString("prefix", "");
         Component incoming = MINI_MESSAGE.deserialize(prefix + incomingBody + buttonBody);
         receiver.sendMessage(incoming);
     }

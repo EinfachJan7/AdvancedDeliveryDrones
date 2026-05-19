@@ -164,6 +164,9 @@ public class DroneMenuGUI {
             }
             meta.lore(loreComponents);
 
+            // Store player UUID
+            meta.getPersistentDataContainer().set(playerUuidKey, PersistentDataType.STRING, player.getUniqueId().toString());
+
             // Set player head texture
             if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
                 skullMeta.setOwningPlayer(player);

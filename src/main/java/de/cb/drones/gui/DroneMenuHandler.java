@@ -335,13 +335,32 @@ public class DroneMenuHandler implements Listener {
         org.bukkit.inventory.meta.ItemMeta meta = clicked.getItemMeta();
         if (meta == null) return;
 
-        String targetName = meta.getDisplayName();
-        org.bukkit.entity.Player target = player.getServer().getPlayer(targetName);
+        UUID targetUUID = null;
+        NamespacedKey playerUuidKey = new NamespacedKey("advanced-delivery-drones", "player_uuid");
+        if (meta.getPersistentDataContainer().has(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING)) {
+            String uuidString = meta.getPersistentDataContainer().get(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING);
+            if (uuidString != null) {
+                try {
+                    targetUUID = UUID.fromString(uuidString);
+                } catch (IllegalArgumentException ignored) {
+                }
+            }
+        }
+
+        org.bukkit.entity.Player target = null;
+        if (targetUUID != null) {
+            target = player.getServer().getPlayer(targetUUID);
+        }
+
+        if (target == null) {
+            String targetName = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
+            target = player.getServer().getPlayer(targetName);
+        }
 
         if (target != null && target.isOnline()) {
             player.closeInventory();
             // Execute the send command
-            player.performCommand("drone send " + targetName);
+            player.performCommand("drone send " + target.getName());
         }
     }
 
