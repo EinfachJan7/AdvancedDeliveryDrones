@@ -51,20 +51,15 @@ public class LanguageManager {
     }
 
     private void saveDefaultLangFiles(File folder) {
-        File deFile = new File(folder, "de_DE.yml");
-        if (!deFile.exists()) {
-            try {
-                plugin.saveResource("languages/de_DE.yml", false);
-            } catch (Exception e) {
-                plugin.getLogger().warning("Could not save languages/de_DE.yml from JAR: " + e.getMessage());
-            }
-        }
-        File enFile = new File(folder, "en_EN.yml");
-        if (!enFile.exists()) {
-            try {
-                plugin.saveResource("languages/en_EN.yml", false);
-            } catch (Exception e) {
-                plugin.getLogger().warning("Could not save languages/en_EN.yml from JAR: " + e.getMessage());
+        String[] languages = {"de_DE", "en_EN", "es_ES", "fr_FR", "ru_RU", "zh_CN"};
+        for (String lang : languages) {
+            File file = new File(folder, lang + ".yml");
+            if (!file.exists()) {
+                try {
+                    plugin.saveResource("languages/" + lang + ".yml", false);
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Could not save languages/" + lang + ".yml from JAR: " + e.getMessage());
+                }
             }
         }
     }
