@@ -80,6 +80,7 @@ socket-relocated: "<green>Точка <white><name></white> перемещена 
 socket-renamed: "<green>Точка <white><old></white> переименована в <white><new></white>!</green>"
 socket-drone-incoming: "<red>Дрон летит к точке <white><name></white>. Позицию изменить нельзя.</red>"
 socket-error: "<red>Ошибка при обработке точки: <white><error></white></red>"
+socket-error-no-name: "Имя не введено."
 socket-trust-added: "<green><player></green> добавлен в доверенные лица точки <white><socket></white>."
 socket-trust-already: "<yellow><player></yellow> уже является доверенным лицом точки <white><socket></white>."
 socket-trust-removed: "<green><player></green> удален из доверенных лиц точки <white><socket></white>."

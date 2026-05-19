@@ -21,9 +21,7 @@ settings:
     sockets-enabled: true
     # TRUE: Enable player as a target destination
     players-enabled: true
-    blocked-worlds:
-      - "world_nether"
-      - "world_the_end"
+    blocked-worlds: []
     particle-types:
       - "ELECTRIC_SPARK"
       # Example RGB dust particle (red, size 1.0):

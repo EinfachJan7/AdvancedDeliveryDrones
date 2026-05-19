@@ -80,6 +80,7 @@ socket-relocated: "<green>接口 <white><name></white> 已移至你当前位置�
 socket-renamed: "<green>接口 <white><old></white> 已重命名为 <white><new></white>！</green>"
 socket-drone-incoming: "<red>无人机正在前往接口 <white><name></white> 的路上。位置无法更改。</red>"
 socket-error: "<red>处理接口时出错：<white><error></white></red>"
+socket-error-no-name: "未输入名称。"
 socket-trust-added: "<green><player></green> 已被信任至接口 <white><socket></white>。"
 socket-trust-already: "<yellow><player></yellow> 已经是接口 <white><socket></white> 的信任玩家。"
 socket-trust-removed: "<green><player></green> 已从接口 <white><socket></white> 的信任列表中移除。"

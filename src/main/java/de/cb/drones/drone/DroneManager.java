@@ -426,7 +426,7 @@ public final class DroneManager {
     }
 
     public int receiverChangedDimension(UUID receiverId) {
-        handlePlayerUnavailable(receiverId, true);
+        // Cross-dimension delivery allows players to change dimensions without canceling active drones.
         return 0;
     }
 

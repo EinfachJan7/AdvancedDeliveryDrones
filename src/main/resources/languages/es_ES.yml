@@ -80,6 +80,7 @@ socket-relocated: "<green>¡Socket <white><name></white> trasladado a tu posici�
 socket-renamed: "<green>¡Socket <white><old></white> renombrado a <white><new></white>!</green>"
 socket-drone-incoming: "<red>Un dron está en camino al socket <white><name></white>. La posición no se puede cambiar.</red>"
 socket-error: "<red>Error al procesar el socket: <white><error></white></red>"
+socket-error-no-name: "No se ha introducido ningún nombre."
 socket-trust-added: "<green><player></green> ha sido añadido a la confianza del socket <white><socket></white>."
 socket-trust-already: "<yellow><player></yellow> ya tiene confianza en el socket <white><socket></white>."
 socket-trust-removed: "<green><player></green> ha sido eliminado de la confianza del socket <white><socket></white>."
