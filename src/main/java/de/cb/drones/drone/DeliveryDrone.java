@@ -691,6 +691,52 @@ public final class DeliveryDrone {
         initBossbar(manager);
     }
 
+    private boolean isSafeGround(World world, int x, int y, int z) {
+        org.bukkit.block.Block ground = world.getBlockAt(x, y, z);
+        org.bukkit.block.Block feet = world.getBlockAt(x, y + 1, z);
+        org.bukkit.block.Block head = world.getBlockAt(x, y + 2, z);
+        
+        return ground.getType().isSolid() && 
+               !ground.isLiquid() &&
+               ground.getType() != org.bukkit.Material.BEDROCK && 
+               !feet.getType().isSolid() && 
+               !feet.isLiquid() &&
+               !head.getType().isSolid() && 
+               !head.isLiquid();
+    }
+
+    private int findSafeLandingY(World world, int x, int startY, int z) {
+        for (int dy = 0; dy <= 16; dy++) {
+            // Check downwards
+            int yDown = startY - dy;
+            if (yDown >= world.getMinHeight() && yDown < world.getMaxHeight() - 2) {
+                if (isSafeGround(world, x, yDown, z)) {
+                    return yDown + 1;
+                }
+            }
+            // Check upwards
+            if (dy > 0) {
+                int yUp = startY + dy;
+                if (yUp >= world.getMinHeight() && yUp < world.getMaxHeight() - 2) {
+                    if (isSafeGround(world, x, yUp, z)) {
+                        return yUp + 1;
+                    }
+                }
+            }
+        }
+        
+        // Fallback to highest block if no safe block found close to player/socket height
+        int highest = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
+        if (world.getName().toLowerCase().contains("nether") && highest >= 120) {
+            for (int y = 115; y > world.getMinHeight(); y--) {
+                if (isSafeGround(world, x, y, z)) {
+                    return y + 1;
+                }
+            }
+        }
+        return highest + 1;
+    }
+
     private Location computeLandingFrom(Location at) {
         World world = at.getWorld();
         if (world == null) {
@@ -698,51 +744,54 @@ public final class DeliveryDrone {
         }
         
         if (exactSocketTarget) {
-            // For sockets, use exact position + 1 block height
             int x = at.getBlockX();
             int z = at.getBlockZ();
-            int y = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
-            y = Math.max(y, world.getMinHeight() + 1);
-            return new Location(world, x + 0.5, y + 0.1, z + 0.5);
+            int y = at.getBlockY();
+            if (isSafeGround(world, x, y, z)) {
+                return new Location(world, x + 0.5, y + 1.1, z + 0.5);
+            }
+            int safeY = findSafeLandingY(world, x, y, z);
+            return new Location(world, x + 0.5, safeY + 0.1, z + 0.5);
         }
         
-        // For player targets, scan for highest safe position in radius
         double scanRadius = settings.deliveryRadius();
         int centerX = at.getBlockX();
+        int centerY = at.getBlockY();
         int centerZ = at.getBlockZ();
         double scanRadiusSq = scanRadius * scanRadius;
         
-        int bestY = world.getMinHeight();
+        int bestY = -999;
         double bestDistanceSq = Double.MAX_VALUE;
         int bestX = centerX;
         int bestZ = centerZ;
         
-        // Scan in a square around the target for best landing spot
         int scanRange = (int) Math.ceil(scanRadius);
         for (int dx = -scanRange; dx <= scanRange; dx++) {
             for (int dz = -scanRange; dz <= scanRange; dz++) {
-                // Check if within radius (using squared distance to avoid sqrt)
                 int distSq = dx * dx + dz * dz;
                 if (distSq > scanRadiusSq) continue;
                 
                 int x = centerX + dx;
                 int z = centerZ + dz;
                 
-                // Get highest safe block at this position
-                int y = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES) + 1;
-                y = Math.max(y, world.getMinHeight() + 1);
+                int y = findSafeLandingY(world, x, centerY, z);
+                double dy = y - centerY;
+                double totalDistSq = distSq + dy * dy;
                 
-                // Check if this spot is better (higher and closer to target)
-                if (y > bestY || (y == bestY && distSq < bestDistanceSq)) {
+                if (totalDistSq < bestDistanceSq) {
+                    bestDistanceSq = totalDistSq;
                     bestY = y;
-                    bestDistanceSq = distSq;
                     bestX = x;
                     bestZ = z;
                 }
             }
         }
         
-        return new Location(world, bestX + 0.5, bestY + 0.1, bestZ + 0.5);
+        if (bestY != -999) {
+            return new Location(world, bestX + 0.5, bestY + 0.1, bestZ + 0.5);
+        }
+        
+        return new Location(world, at.getX(), at.getY() + 0.1, at.getZ());
     }
 
     private double getCoordinateScale(World world) {
