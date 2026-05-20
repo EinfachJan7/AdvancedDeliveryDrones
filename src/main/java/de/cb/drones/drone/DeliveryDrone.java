@@ -12,6 +12,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.boss.BossBar;
+import de.cb.drones.socket.DeliverySocket;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -138,7 +139,6 @@ public final class DeliveryDrone {
         this.receiverId = receiverId;
         this.receiverName = receiverName;
         this.fixedTarget = fixedTarget;
-        this.startLocation = stand.getLocation().clone();
         this.flightStartTick = createdTick;
         this.inventory = inventory;
         this.attachedAnimalTypes = attachedAnimalTypes == null ? List.of() : List.copyOf(attachedAnimalTypes);
@@ -149,8 +149,15 @@ public final class DeliveryDrone {
         this.settings = settings;
         refreshDerivedSettings();
         this.stand = stand;
-        this.standId = stand.getUniqueId();
-        this.lastKnownLocation = stand.getLocation().clone();
+        if (stand != null) {
+            this.standId = stand.getUniqueId();
+            this.startLocation = stand.getLocation().clone();
+            this.lastKnownLocation = stand.getLocation().clone();
+        } else {
+            this.standId = null;
+            this.startLocation = fixedTarget.clone(); // Will be overwritten in fromPersistentData
+            this.lastKnownLocation = fixedTarget.clone(); // Will be overwritten in fromPersistentData
+        }
         this.lastInteractionTick = createdTick;
         Player receiver = Bukkit.getPlayer(receiverId);
         this.allowGlideFollow = receiver != null && receiver.isOnline() && receiver.isGliding();
@@ -1415,19 +1422,35 @@ public final class DeliveryDrone {
         if (!settings.bossbarEnabled()) {
             return;
         }
+        
+        boolean shouldInit = false;
         Player receiver = Bukkit.getPlayer(receiverId);
-        if (receiver == null) {
+        if (receiver != null) {
+            shouldInit = true;
+        } else if (socketName != null) {
+            DeliverySocket socket = manager.getSocketRepository().getSocket(receiverId, socketName);
+            if (socket != null) {
+                for (UUID trustedId : socket.trustedPlayers()) {
+                    if (Bukkit.getPlayer(trustedId) != null) {
+                        shouldInit = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (!shouldInit) {
             return;
         }
+        
         if (bossBar == null) {
             bossBar = Bukkit.createBossBar("Drone", settings.bossbarColor(), org.bukkit.boss.BarStyle.SEGMENTED_10);
         }
-        bossBar.addPlayer(receiver);
+        
+        if (receiver != null) {
+            bossBar.addPlayer(receiver);
+        }
         bossBar.setVisible(true);
-        Location refLoc = landed
-                ? (landedLocation != null ? landedLocation : (stand != null ? stand.getLocation() : lastKnownLocation))
-                : (stand != null ? stand.getLocation() : expectedLocation(Bukkit.getCurrentTick()));
-        updateBossBar(manager, refLoc, Bukkit.getCurrentTick());
     }
 
     private void updateBossBar(DroneManager manager, Location droneRefLocation, long currentTick) {
@@ -1440,13 +1463,44 @@ public final class DeliveryDrone {
         }
         lastBossBarUpdate = currentTick;
 
-        Player receiver = Bukkit.getPlayer(receiverId);
-        if (receiver == null || bossBar == null || droneRefLocation.getWorld() == null) {
+        if (bossBar == null) {
+            initBossbar(manager);
+            if (bossBar == null) {
+                return;
+            }
+        }
+        
+        if (droneRefLocation.getWorld() == null) {
             return;
         }
-        Location receiverLoc = receiver.getLocation();
+
+        // Add online players to bossbar once per second
+        if (currentTick % 20 == 0) {
+            Player receiver = Bukkit.getPlayer(receiverId);
+            if (receiver != null && !bossBar.getPlayers().contains(receiver)) {
+                bossBar.addPlayer(receiver);
+            }
+            if (socketName != null) {
+                DeliverySocket socket = manager.getSocketRepository().getSocket(receiverId, socketName);
+                if (socket != null) {
+                    for (UUID trustedId : socket.trustedPlayers()) {
+                        Player trusted = Bukkit.getPlayer(trustedId);
+                        if (trusted != null && !bossBar.getPlayers().contains(trusted)) {
+                            bossBar.addPlayer(trusted);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bossBar.getPlayers().isEmpty()) {
+            return;
+        }
+
         int distanceM;
-        if (receiverLoc.getWorld().equals(droneRefLocation.getWorld())) {
+        Player receiver = Bukkit.getPlayer(receiverId);
+        if (socketName == null && receiver != null && receiver.getLocation().getWorld().equals(droneRefLocation.getWorld())) {
+            Location receiverLoc = receiver.getLocation();
             double dx = receiverLoc.getX() - droneRefLocation.getX();
             double dy = receiverLoc.getY() - droneRefLocation.getY();
             double dz = receiverLoc.getZ() - droneRefLocation.getZ();
@@ -1634,5 +1688,92 @@ public final class DeliveryDrone {
         }
         hologramStand = null;
         manager.onDroneStandChanged(this, previous, null);
+    }
+
+    public Location getFixedTarget() { return fixedTarget; }
+    public long getFlightStartTick() { return flightStartTick; }
+    public boolean isForceTargetChunkLoad() { return forceTargetChunkLoad; }
+    public boolean isExactSocketTarget() { return exactSocketTarget; }
+    public boolean isStandParked() { return standParked; }
+
+    public static DeliveryDrone fromPersistentData(
+            UUID droneId, UUID senderId, UUID receiverId, String receiverName,
+            Location fixedTarget, Location startLocation, Location lastKnownLocation,
+            long flightStartTick, ItemStack[] inventoryContents, List<EntityType> attachedAnimalTypes,
+            boolean animalsOnlyDelivery, boolean forceTargetChunkLoad, boolean exactSocketTarget,
+            String socketName, boolean landed, boolean openedByReceiver,
+            long lastInteractionTick, boolean standParked, DroneManager manager
+    ) {
+        int invSize = inventoryContents.length > 0 && inventoryContents.length % 9 == 0 ? inventoryContents.length : 27;
+        Inventory inv = Bukkit.createInventory(null, invSize, manager.componentMessage("drone-inventory-title", null, null));
+        inv.setContents(inventoryContents);
+        
+        // Temporarily null stand, we'll restore it
+        DeliveryDrone drone = new DeliveryDrone(
+                droneId, senderId, receiverId, receiverName, fixedTarget,
+                inv, attachedAnimalTypes, animalsOnlyDelivery, forceTargetChunkLoad,
+                exactSocketTarget, socketName, manager.settings(), null, flightStartTick
+        );
+        
+        drone.droneManager = manager;
+        drone.startLocation.setX(startLocation.getX());
+        drone.startLocation.setY(startLocation.getY());
+        drone.startLocation.setZ(startLocation.getZ());
+        drone.startLocation.setWorld(startLocation.getWorld());
+        drone.startLocation.setYaw(startLocation.getYaw());
+        drone.startLocation.setPitch(startLocation.getPitch());
+        
+        drone.lastKnownLocation = lastKnownLocation;
+        drone.flightStartTick = flightStartTick;
+        drone.landed = landed;
+        drone.openedByReceiver = openedByReceiver;
+        drone.lastInteractionTick = lastInteractionTick;
+        drone.standParked = standParked;
+        
+        drone.recomputeFlightPath();
+        drone.initBossbar(manager);
+        
+        if (!standParked) {
+            drone.ensureStandPresent(manager, lastKnownLocation);
+        }
+        
+        if (landed) {
+            if (drone.stand != null && !drone.stand.isDead()) {
+                drone.landedLocation = drone.stand.getLocation().clone();
+            } else {
+                drone.landedLocation = lastKnownLocation.clone();
+            }
+            if (manager.settings().hologramEnabled()) {
+                drone.updateHologram(Bukkit.getCurrentTick(), manager);
+            }
+        }
+        
+        drone.ticker = new org.bukkit.scheduler.BukkitRunnable() {
+            @Override
+            public void run() {
+                drone.tickFlight(manager);
+            }
+        }.runTaskTimer(manager.plugin(), 1L, 1L);
+        
+        if (landed && !openedByReceiver) {
+            drone.beaconTicker = Bukkit.getScheduler().runTaskTimer(
+                    manager.plugin(),
+                    () -> {
+                        Player onlineReceiver = Bukkit.getPlayer(receiverId);
+                        if (onlineReceiver != null && onlineReceiver.isOnline()) {
+                            drone.renderReceiverBeacon(onlineReceiver);
+                        }
+                    },
+                    20L,
+                    20L
+            );
+        }
+        
+        // Register with performance optimizer
+        if (manager.getPerformanceOptimizer() != null) {
+            manager.getPerformanceOptimizer().registerDrone(droneId);
+        }
+        
+        return drone;
     }
 }

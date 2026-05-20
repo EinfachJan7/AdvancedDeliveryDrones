@@ -4,6 +4,7 @@ import de.cb.drones.AdvancedDeliveryDronesPlugin;
 import de.cb.drones.config.SocketPendingReturnsRepository;
 import de.cb.drones.discord.DiscordWebhookManager;
 import de.cb.drones.performance.PerformanceOptimizer;
+import de.cb.drones.config.DronePersistence;
 import de.cb.drones.socket.DeliverySocket;
 import de.cb.drones.socket.SocketRepository;
 import java.util.logging.Level;
@@ -44,6 +45,7 @@ public final class DroneManager {
     private final Map<UUID, List<ItemStack>> pendingReturns = new HashMap<>();
     private DroneSettings settings;
     private BukkitTask cleanupTask;
+    private final DronePersistence persistence;
 
     public DroneManager(
             AdvancedDeliveryDronesPlugin plugin,
@@ -58,6 +60,7 @@ public final class DroneManager {
         this.socketRepository = socketRepository;
         this.socketPendingReturns = socketPendingReturns;
         this.performanceOptimizer = new PerformanceOptimizer(plugin);
+        this.persistence = new DronePersistence(plugin);
     }
 
     public AdvancedDeliveryDronesPlugin plugin() {
@@ -109,8 +112,7 @@ public final class DroneManager {
         // Clean up any old drone ArmorStands from previous sessions
         cleanupAllOldDrones();
         
-        // Load saved drones asynchronously
-        // loadSavedDronesAsync();
+        persistence.loadDrones(this);
         
         this.cleanupTask = Bukkit.getScheduler().runTaskTimer(plugin, this::cleanupExpired, 20L, 20L);
     }
@@ -119,11 +121,17 @@ public final class DroneManager {
         return performanceOptimizer;
     }
 
+    public SocketRepository getSocketRepository() {
+        return socketRepository;
+    }
+
     public void shutdown() {
         if (cleanupTask != null) {
             cleanupTask.cancel();
         }
         performanceOptimizer.shutdown();
+        
+        persistence.saveDrones(activeDrones.values());
         
         // Handle restart-safe cleanup for all active drones
         handleRestartSafeCleanup();
@@ -196,6 +204,15 @@ public final class DroneManager {
         discordWebhookManager.sendDeliveryNotification(sender, receiver, drone);
 
         return drone;
+    }
+
+    public void addLoadedDrone(DeliveryDrone drone) {
+        activeDrones.put(drone.droneId(), drone);
+        if (drone.standId() != null) {
+            byEntityUuid.put(drone.standId(), drone);
+        }
+        byInventory.put(drone.inventory(), drone);
+        incrementSenderCounter(drone.senderId());
     }
 
     public DeliveryDrone findByEntity(UUID entityId) {
@@ -743,28 +760,19 @@ public final class DroneManager {
         // Synchronously process all drones to ensure completion before shutdown
         for (DeliveryDrone drone : new ArrayList<>(activeDrones.values())) {
             try {
-                plugin.getLogger().info("Processing drone " + drone.droneId() + " for restart cleanup...");
-                
-                // Step 1: Kill all drone Armor Stands immediately
+                // Kill all drone Armor Stands immediately, as they will be respawned on load
                 killDroneArmorStands(drone);
                 
-                // Step 2: Return items to sender (synchronous)
-                returnItemsToSenderRestart(drone);
-                
-                // Step 3: Return transported animals to their original locations (synchronous)
-                returnAnimalsToOriginalLocation(drone);
-                
-                // Step 4: Send Discord notification for restart cleanup
-                Player sender = Bukkit.getPlayer(drone.senderId());
-                Player receiver = Bukkit.getPlayer(drone.receiverId());
-                if (sender != null && receiver != null) {
-                    discordWebhookManager.sendDeliveryDeclined(sender, receiver, drone);
+                // Animals that were spawned because of landing need to be removed as they'll be respawned
+                for (UUID animalId : drone.getSpawnedTransportAnimalIds()) {
+                    Entity entity = Bukkit.getEntity(animalId);
+                    if (entity != null) {
+                        entity.remove();
+                    }
                 }
                 
-                // Step 5: Clean up drone data
+                // Clean up drone data
                 cleanupDroneData(drone);
-                
-                plugin.getLogger().info("Restart-safe cleanup completed for drone " + drone.droneId());
             } catch (Exception e) {
                 plugin.getLogger().warning("Error during restart-safe cleanup for drone " + drone.droneId() + ": " + e.getMessage());
                 e.printStackTrace();
@@ -917,13 +925,14 @@ public final class DroneManager {
             }
             
             // Kill any hologram ArmorStands
-            for (Entity entity : Bukkit.selectEntities(null, "@e[type=armor_stand,custom_name=Drone]")) {
-                if (entity instanceof ArmorStand hologram && !hologram.isDead()) {
-                    // Check if this hologram belongs to our drone by proximity
-                    Location droneLoc = drone.currentLocation();
-                    if (droneLoc != null && hologram.getLocation().distanceSquared(droneLoc) <= 25.0) {
-                        hologram.remove();
-                        plugin.getLogger().info("Killed hologram ArmorStand for drone " + drone.droneId());
+            Location droneLoc = drone.currentLocation();
+            if (droneLoc != null && droneLoc.getWorld() != null) {
+                for (Entity entity : droneLoc.getWorld().getNearbyEntities(droneLoc, 5.0, 5.0, 5.0)) {
+                    if (entity instanceof ArmorStand hologram && !hologram.isDead()) {
+                        if (hologram.isCustomNameVisible() && hologram.getCustomName() != null && hologram.getCustomName().contains("Drone")) {
+                            hologram.remove();
+                            plugin.getLogger().info("Killed hologram ArmorStand near drone " + drone.droneId());
+                        }
                     }
                 }
             }
