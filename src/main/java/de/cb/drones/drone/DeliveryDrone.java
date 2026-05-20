@@ -631,6 +631,7 @@ public final class DeliveryDrone {
                                         if (onlineReceiver != null && onlineReceiver.isOnline()) {
                                             renderReceiverBeacon(onlineReceiver);
                                         }
+                                        tickHopperIntegration(manager);
                                     },
                                     20L,
                                     20L
@@ -1139,6 +1140,54 @@ public final class DeliveryDrone {
             return false;
         }
         return world.isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4);
+    }
+
+    private void tickHopperIntegration(DroneManager manager) {
+        if (!manager.settings().hopperIntegrationEnabled() || socketName == null) {
+            return;
+        }
+        
+        org.bukkit.block.Block socketBlock = fixedTarget.getBlock();
+        org.bukkit.block.Block blockBelow = socketBlock.getRelative(org.bukkit.block.BlockFace.DOWN);
+        
+        org.bukkit.inventory.Inventory targetInv = null;
+        if (socketBlock.getState() instanceof org.bukkit.inventory.InventoryHolder holder) {
+            targetInv = holder.getInventory();
+        } else if (blockBelow.getState() instanceof org.bukkit.inventory.InventoryHolder holder) {
+            targetInv = holder.getInventory();
+        }
+        
+        if (targetInv != null) {
+            boolean transferredAny = false;
+            for (int i = 0; i < inventory.getSize(); i++) {
+                org.bukkit.inventory.ItemStack item = inventory.getItem(i);
+                if (item != null && item.getType() != Material.AIR) {
+                    java.util.HashMap<Integer, org.bukkit.inventory.ItemStack> leftover = targetInv.addItem(item);
+                    if (leftover.isEmpty()) {
+                        inventory.setItem(i, null);
+                        transferredAny = true;
+                    } else {
+                        org.bukkit.inventory.ItemStack left = leftover.values().iterator().next();
+                        if (left.getAmount() < item.getAmount()) {
+                            inventory.setItem(i, left);
+                            transferredAny = true;
+                        }
+                    }
+                }
+            }
+            if (transferredAny && isInventoryEmpty() && attachedAnimalTypes.isEmpty()) {
+                manager.destroyDrone(this, false);
+            }
+        }
+    }
+
+    private boolean isInventoryEmpty() {
+        for (org.bukkit.inventory.ItemStack item : inventory.getContents()) {
+            if (item != null && item.getType() != Material.AIR) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void updateHologram(long currentTick, DroneManager manager) {
@@ -1767,6 +1816,7 @@ public final class DeliveryDrone {
                         if (onlineReceiver != null && onlineReceiver.isOnline()) {
                             drone.renderReceiverBeacon(onlineReceiver);
                         }
+                        drone.tickHopperIntegration(manager);
                     },
                     20L,
                     20L

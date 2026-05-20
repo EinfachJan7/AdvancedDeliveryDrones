@@ -25,6 +25,8 @@ settings:
       particle: "HAPPY_VILLAGER"
     # TRUE: Enable Sockets (delivery stations)
     sockets-enabled: true
+    # TRUE: Enable Hopper integration (automatically unload to Hoppers/Chests below socket)
+    hopper-integration: true
     # TRUE: Enable player as a target destination
     players-enabled: true
     blocked-worlds: []
