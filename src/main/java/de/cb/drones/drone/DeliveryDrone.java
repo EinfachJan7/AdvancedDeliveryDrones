@@ -631,7 +631,7 @@ public final class DeliveryDrone {
                                         if (onlineReceiver != null && onlineReceiver.isOnline()) {
                                             renderReceiverBeacon(onlineReceiver);
                                         }
-                                        tickHopperIntegration(manager);
+                                        tickContainerIntegration(manager);
                                     },
                                     20L,
                                     20L
@@ -1142,8 +1142,8 @@ public final class DeliveryDrone {
         return world.isChunkLoaded(location.getBlockX() >> 4, location.getBlockZ() >> 4);
     }
 
-    private void tickHopperIntegration(DroneManager manager) {
-        if (!manager.settings().hopperIntegrationEnabled() || socketName == null) {
+    private void tickContainerIntegration(DroneManager manager) {
+        if (!manager.settings().containerIntegrationEnabled() || socketName == null) {
             return;
         }
         
@@ -1151,13 +1151,20 @@ public final class DeliveryDrone {
         org.bukkit.block.Block blockBelow = socketBlock.getRelative(org.bukkit.block.BlockFace.DOWN);
         
         org.bukkit.inventory.Inventory targetInv = null;
+        org.bukkit.block.Block targetBlock = null;
         if (socketBlock.getState() instanceof org.bukkit.inventory.InventoryHolder holder) {
             targetInv = holder.getInventory();
+            targetBlock = socketBlock;
         } else if (blockBelow.getState() instanceof org.bukkit.inventory.InventoryHolder holder) {
             targetInv = holder.getInventory();
+            targetBlock = blockBelow;
         }
         
         if (targetInv != null) {
+            if (manager.settings().containerIntegrationBlacklist().contains(targetBlock.getType().name())) {
+                return;
+            }
+            
             boolean transferredAny = false;
             for (int i = 0; i < inventory.getSize(); i++) {
                 org.bukkit.inventory.ItemStack item = inventory.getItem(i);
@@ -1176,6 +1183,14 @@ public final class DeliveryDrone {
                 }
             }
             if (transferredAny && isInventoryEmpty() && attachedAnimalTypes.isEmpty()) {
+                Player sender = Bukkit.getPlayer(senderId);
+                if (sender != null && sender.isOnline()) {
+                    manager.sendMessage(sender, "container-unload-success", "<socket>", socketName);
+                }
+                Player receiver = Bukkit.getPlayer(receiverId);
+                if (receiver != null && receiver.isOnline() && !receiverId.equals(senderId)) {
+                    manager.sendMessage(receiver, "container-unload-success", "<socket>", socketName);
+                }
                 manager.destroyDrone(this, false);
             }
         }
@@ -1816,7 +1831,7 @@ public final class DeliveryDrone {
                         if (onlineReceiver != null && onlineReceiver.isOnline()) {
                             drone.renderReceiverBeacon(onlineReceiver);
                         }
-                        drone.tickHopperIntegration(manager);
+                        drone.tickContainerIntegration(manager);
                     },
                     20L,
                     20L

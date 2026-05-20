@@ -32,7 +32,8 @@ public record DroneSettings(
         int maxLeashedAnimalsPerDrone,
         int maxSocketsPerPlayer,
         boolean socketsEnabled,
-        boolean hopperIntegrationEnabled,
+        boolean containerIntegrationEnabled,
+        List<String> containerIntegrationBlacklist,
         boolean playersEnabled,
         List<String> blockedWorlds,
         boolean hologramEnabled,
@@ -74,7 +75,10 @@ public record DroneSettings(
         int maxLeashedAnimalsPerDrone = Math.max(0, cfg.getInt(section + "max-leashed-animals-per-drone", 1));
         int maxSocketsPerPlayer = Math.max(1, cfg.getInt(section + "max-sockets-per-player", 3));
         boolean socketsEnabled = cfg.getBoolean(section + "sockets-enabled", true);
-        boolean hopperIntegrationEnabled = cfg.getBoolean(section + "hopper-integration", true);
+        boolean containerIntegrationEnabled = cfg.getBoolean(section + "container-integration.enabled", true);
+        List<String> containerIntegrationBlacklist = cfg.getStringList(section + "container-integration.blacklist").stream()
+                .map(String::toUpperCase)
+                .toList();
         boolean playersEnabled = cfg.getBoolean(section + "players-enabled", true);
         List<String> blockedWorlds = cfg.getStringList(section + "blocked-worlds").stream()
                 .map(String::toLowerCase)
@@ -119,7 +123,8 @@ public record DroneSettings(
                 maxLeashedAnimalsPerDrone,
                 maxSocketsPerPlayer,
                 socketsEnabled,
-                hopperIntegrationEnabled,
+                containerIntegrationEnabled,
+                containerIntegrationBlacklist,
                 playersEnabled,
                 blockedWorlds,
                 hologramEnabled,
