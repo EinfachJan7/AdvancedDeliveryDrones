@@ -652,6 +652,15 @@ public final class DroneManager {
         return PlainTextComponentSerializer.plainText().serialize(component);
     }
 
+    public String renderBossbarSocket(String socketName, long etaSeconds) {
+        Component component = miniMessage.deserialize(
+                settings.bossbarFormatSocket(),
+                Placeholder.unparsed("socket", socketName),
+                Placeholder.unparsed("eta", String.valueOf(Math.max(0L, etaSeconds)))
+        );
+        return PlainTextComponentSerializer.plainText().serialize(component);
+    }
+
     private void cleanupExpired() {
         long tick = currentTick();
         List<DeliveryDrone> toRemove = activeDrones.values().stream()

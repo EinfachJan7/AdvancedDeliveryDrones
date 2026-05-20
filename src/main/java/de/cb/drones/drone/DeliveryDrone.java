@@ -1516,7 +1516,11 @@ public final class DeliveryDrone {
         lastBossBarDistanceM = distanceM;
         lastBossBarEta = eta;
         bossBar.setProgress(1.0D);
-        bossBar.setTitle(manager.renderBossbar(distanceM, eta));
+        if (socketName != null) {
+            bossBar.setTitle(manager.renderBossbarSocket(socketName, eta));
+        } else {
+            bossBar.setTitle(manager.renderBossbar(distanceM, eta));
+        }
     }
 
     private long etaSeconds(long nowTick) {

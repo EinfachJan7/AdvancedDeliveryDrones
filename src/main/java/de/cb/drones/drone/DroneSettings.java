@@ -39,6 +39,7 @@ public record DroneSettings(
         double hologramOffset,
         boolean bossbarEnabled,
         String bossbarFormat,
+        String bossbarFormatSocket,
         org.bukkit.boss.BarColor bossbarColor,
         boolean collectionAnimationEnabled,
         GuiConfiguration guiConfig,
@@ -81,6 +82,7 @@ public record DroneSettings(
         double hologramOffset = cfg.getDouble(section + "hologram.offset-y", 1.0D);
         boolean bossbarEnabled = cfg.getBoolean(section + "bossbar.enabled", true);
         String bossbarFormat = cfg.getString(section + "bossbar.format", "<gold>Distanz: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>");
+        String bossbarFormatSocket = cfg.getString(section + "bossbar.format-socket", "<gold>Drohne zu Socket <white><socket></white></gold> <gray>| ETA: <white><eta>s</white></gray>");
         org.bukkit.boss.BarColor bossbarColor = parseBarColor(cfg.getString(section + "bossbar.color", "YELLOW"));
         boolean collectionAnimationEnabled = cfg.getBoolean(section + "collection-animation.enabled", true);
         boolean launchAnimationEnabled = cfg.getBoolean(section + "launch-animation.enabled", true);
@@ -122,6 +124,7 @@ public record DroneSettings(
                 hologramOffset,
                 bossbarEnabled,
                 bossbarFormat,
+                bossbarFormatSocket,
                 bossbarColor,
                 collectionAnimationEnabled,
                 guiConfigObj,

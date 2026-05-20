@@ -44,6 +44,7 @@ settings:
     bossbar:
       enabled: true
       format: "<gold>Distance to drone: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>"
+      format-socket: "<gold>Drone to Socket <white><socket></white></gold> <gray>| ETA: <white><eta>s</white></gray>"
       # Available colors: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
       color: "RED"
     collection-animation:
