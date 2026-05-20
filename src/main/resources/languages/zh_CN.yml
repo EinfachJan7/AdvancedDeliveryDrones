@@ -132,3 +132,4 @@ locate-none: "<red>在这个世界中未找到发送给你的已降落无人机�
 locate-started: "<green>正在定位最近的已降落无人机... 请寻找粒子轨迹！</green>"
 
 
+container-unload-success: "<green>无人机已将物品卸载到插槽 <white><socket></white> 的容器中！</green>"

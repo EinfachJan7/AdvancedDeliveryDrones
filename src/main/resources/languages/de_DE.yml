@@ -132,3 +132,6 @@ locate-none: "<red>Keine gelandeten Drohnen für dich in dieser Welt gefunden.</
 locate-started: "<green>Suche die nächste gelandete Drohne... Achte auf die Partikelspur!</green>"
 
 
+d r o n e - u n l o a d e d :  
+ < g o l d > D e i n e   D r o h n e   h a t   i h r e   I t e m s   i n   e i n e n   C o n t a i n e r   b e i   S o c k e t   < w h i t e > < s o c k e t > < / w h i t e >   e n t l a d e n . < / g o l d >  
+ container-unload-success: "<green>Die Drohne hat ihre Items in einen Container bei Socket <white><socket></white> entladen!</green>"

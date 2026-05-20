@@ -132,3 +132,4 @@ locate-none: "<red>В этом мире не найдено приземливш
 locate-started: "<green>Поиск ближайшего приземлившегося дрона... Ищите след из частиц!</green>"
 
 
+container-unload-success: "<green>Дрон выгрузил свои предметы в контейнер на разъеме <white><socket></white>!</green>"

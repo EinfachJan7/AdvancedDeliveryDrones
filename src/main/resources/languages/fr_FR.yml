@@ -132,3 +132,4 @@ locate-none: "<red>Aucun drone atterri trouvé pour vous dans ce monde.</red>"
 locate-started: "<green>Localisation du drone atterri le plus proche... Cherchez la trace de particules !</green>"
 
 
+container-unload-success: "<green>Le drone a déchargé ses objets dans un conteneur au socket <white><socket></white> !</green>"
