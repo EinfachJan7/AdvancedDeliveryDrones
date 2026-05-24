@@ -24,6 +24,8 @@ settings:
     follow-airborne-player-before-landing: true
     # Minimum blocks above solid ground to count as "in the air" (jumps are typically below this).
     airborne-follow-min-height: 5.0
+    # After this many seconds from flight start, airborne follow can no longer begin (elytra is unaffected).
+    airborne-follow-max-seconds-after-start: 15
     # Settings for locating landed drones with particles
     locate-particles:
       enabled: true

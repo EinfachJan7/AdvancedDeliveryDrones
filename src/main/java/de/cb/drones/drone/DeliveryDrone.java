@@ -34,6 +34,8 @@ public final class DeliveryDrone {
     private final Location fixedTarget;
     private final Location startLocation;
     private long flightStartTick;
+    /** Wall-clock flight start for airborne follow window (not reset by mid-flight follow). */
+    private long deliveryFlightStartTick = -1L;
     private final Inventory inventory;
     private final List<EntityType> attachedAnimalTypes;
     private final boolean animalsOnlyDelivery;
@@ -523,10 +525,55 @@ public final class DeliveryDrone {
         }
     }
 
+    private boolean canStartAirborneFollow(long nowTick) {
+        if (!allowAirborneFollow) {
+            return false;
+        }
+        int maxSeconds = settings.airborneFollowMaxSecondsAfterStart();
+        if (maxSeconds <= 0 || deliveryFlightStartTick < 0L) {
+            return true;
+        }
+        return nowTick - deliveryFlightStartTick < maxSeconds * 20L;
+    }
+
+    private void expireAirborneFollowWindow(long nowTick) {
+        int maxSeconds = settings.airborneFollowMaxSecondsAfterStart();
+        if (maxSeconds > 0 && deliveryFlightStartTick >= 0L
+                && nowTick - deliveryFlightStartTick >= maxSeconds * 20L) {
+            allowAirborneFollow = false;
+        }
+    }
+
+    private boolean isInStartupPhase(long nowTick) {
+        long startupTicks = settings.startupSeconds() * 20L;
+        if (startupTicks <= 0L) {
+            return false;
+        }
+        return nowTick - flightStartTick < startupTicks;
+    }
+
+    /**
+     * Teleport during startup/landing (slow, precise); velocity during cruise for performance.
+     */
+    private void syncStandToExpected(Location expected, long nowTick, boolean forceTeleport) {
+        if (!isStandAlive() || expected.getWorld() == null) {
+            return;
+        }
+        if (forceTeleport || isInStartupPhase(nowTick)) {
+            stand.teleport(expected);
+            return;
+        }
+        moveStandToward(expected, expected.getYaw());
+    }
+
     private void startFlightInternal(DroneManager manager) {
         long nowTick = Bukkit.getCurrentTick();
+        this.deliveryFlightStartTick = nowTick;
         this.flightStartTick = nowTick;
         this.approachPhaseStartTick = -1L;
+        if (isStandAlive()) {
+            this.lastKnownLocation = stand.getLocation().clone();
+        }
         invalidateMovementCache();
         recomputeFlightPath();
 
@@ -625,13 +672,16 @@ public final class DeliveryDrone {
         if (!exactSocketTarget
                 && !isGlidingTarget
                 && !landed
-                && settings.followAirbornePlayerBeforeLanding()
-                && allowAirborneFollow) {
+                && settings.followAirbornePlayerBeforeLanding()) {
+            expireAirborneFollowWindow(nowTick);
+            if (allowAirborneFollow || wasAirborneFollowed) {
             Player receiver = Bukkit.getPlayer(receiverId);
             if (receiver != null && receiver.isOnline() && receiver.getWorld().equals(fixedTarget.getWorld())) {
                 if (wasAirborneFollowed && receiver.isOnGround()) {
                     relocateToReceiverOnGround(receiver, manager, nowTick, true);
-                } else if (distanceSquaredToTarget(expected) <= deliveryRadiusSq && isSignificantlyAirborne(receiver)) {
+                } else if (canStartAirborneFollow(nowTick)
+                        && distanceSquaredToTarget(expected) <= deliveryRadiusSq
+                        && isSignificantlyAirborne(receiver)) {
                     isAirFollowTarget = true;
 
                     Location current = currentLocation();
@@ -682,11 +732,11 @@ public final class DeliveryDrone {
             } else if (wasAirborneFollowed) {
                 wasAirborneFollowed = false;
             }
+            }
         }
 
         // Keep virtual position progressing even when chunks are unloaded.
-        // Reference the same location object instead of cloning
-        lastKnownLocation = expected;
+        lastKnownLocation = expected.clone();
         preloadTargetChunkIfNeeded(expected);
         Location standAnchor = landed
                 ? (landedLocation != null ? landedLocation : fixedTarget)
@@ -785,7 +835,7 @@ public final class DeliveryDrone {
                         movementScratch.setY(current.getY());
                         movementScratch.setZ(current.getZ());
                         if (standAvailable && nowTick - lastMovementTick >= MOVEMENT_INTERVAL) {
-                            moveStandToward(movementScratch, null);
+                            syncStandToExpected(movementScratch, nowTick, true);
                             lastMovementTick = nowTick;
                         }
 
@@ -811,7 +861,7 @@ public final class DeliveryDrone {
                 }
             } else if (standAvailable) {
                 if (nowTick - lastMovementTick >= MOVEMENT_INTERVAL) {
-                    moveStandToward(expected, expected.getYaw());
+                    syncStandToExpected(expected, nowTick, false);
                     lastMovementTick = nowTick;
                 }
                 tickAttachedAnimalFollow(expected);
@@ -2044,6 +2094,7 @@ public final class DeliveryDrone {
         
         drone.lastKnownLocation = lastKnownLocation;
         drone.flightStartTick = flightStartTick;
+        drone.deliveryFlightStartTick = flightStartTick;
         drone.landed = landed;
         drone.openedByReceiver = openedByReceiver;
         drone.lastInteractionTick = lastInteractionTick;

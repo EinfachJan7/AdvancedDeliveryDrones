@@ -52,6 +52,7 @@ public record DroneSettings(
         boolean followGlidingPlayer,
         boolean followAirbornePlayerBeforeLanding,
         double airborneFollowMinHeight,
+        int airborneFollowMaxSecondsAfterStart,
         boolean locateParticlesEnabled,
         ParticleEffect locateParticle
 ) {
@@ -100,6 +101,7 @@ public record DroneSettings(
         boolean followGlidingPlayer = cfg.getBoolean(section + "follow-gliding-player", true);
         boolean followAirbornePlayerBeforeLanding = cfg.getBoolean(section + "follow-airborne-player-before-landing", true);
         double airborneFollowMinHeight = Math.max(3.0D, cfg.getDouble(section + "airborne-follow-min-height", 5.0D));
+        int airborneFollowMaxSecondsAfterStart = Math.max(0, cfg.getInt(section + "airborne-follow-max-seconds-after-start", 15));
         boolean locateParticlesEnabled = cfg.getBoolean(section + "locate-particles.enabled", true);
         ParticleEffect locateParticle = parseParticleEffect(cfg.getString(section + "locate-particles.particle", "HAPPY_VILLAGER"));
 
@@ -147,6 +149,7 @@ public record DroneSettings(
                 followGlidingPlayer,
                 followAirbornePlayerBeforeLanding,
                 airborneFollowMinHeight,
+                airborneFollowMaxSecondsAfterStart,
                 locateParticlesEnabled,
                 locateParticle
         );
