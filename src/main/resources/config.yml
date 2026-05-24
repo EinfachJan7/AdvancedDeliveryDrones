@@ -20,6 +20,10 @@ settings:
     # Send cooldown settings (in seconds)
     send-cooldown-seconds-player: 0
     send-cooldown-seconds-socket: 0
+    # Allow sending drones to yourself
+    allow-send-to-self-player: false
+    # Allow sending drones to your own sockets
+    allow-send-to-self-socket: false
     # TRUE: If the player is gliding (using an elytra), the drone follows them in the air until they land, and then lands there.
     follow-gliding-player: true
     # TRUE: Before landing, follow a receiver who is significantly in the air (e.g. long fall) until grounded, relocate once, then land.

@@ -155,6 +155,14 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
 
+        // Check if sending to self is allowed
+        if (sender.getUniqueId().equals(target.getUniqueId())) {
+            if (!plugin.getConfig().getBoolean("settings.drone.allow-send-to-self-player", false)) {
+                droneManager.sendMessage(sender, "cannot-send-to-self-player");
+                return true;
+            }
+        }
+
         // Check player send cooldown
         int playerCooldownSeconds = plugin.getConfig().getInt("settings.drone.send-cooldown-seconds-player", 0);
         if (playerCooldownSeconds > 0) {
@@ -870,6 +878,14 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (!droneManager.canSenderLaunch(player.getUniqueId())) {
             droneManager.sendMessage(player, "sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender()));
             return true;
+        }
+
+        // Check if sending to own socket is allowed
+        if (player.getUniqueId().equals(targetSocket.ownerId())) {
+            if (!plugin.getConfig().getBoolean("settings.drone.allow-send-to-self-socket", false)) {
+                droneManager.sendMessage(player, "cannot-send-to-self-socket");
+                return true;
+            }
         }
 
         // Check socket send cooldown
