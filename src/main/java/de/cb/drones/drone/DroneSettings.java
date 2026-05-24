@@ -50,6 +50,8 @@ public record DroneSettings(
         Sound launchSound,
         float launchSoundVolume,
         boolean followGlidingPlayer,
+        boolean followAirbornePlayerBeforeLanding,
+        double airborneFollowMinHeight,
         boolean locateParticlesEnabled,
         ParticleEffect locateParticle
 ) {
@@ -96,6 +98,8 @@ public record DroneSettings(
         Sound launchSound = parseSound(cfg.getString(section + "launch-animation.sound", "entity.firework_rocket.launch"));
         float launchSoundVolume = (float) cfg.getDouble(section + "launch-animation.sound-volume", 1.0D);
         boolean followGlidingPlayer = cfg.getBoolean(section + "follow-gliding-player", true);
+        boolean followAirbornePlayerBeforeLanding = cfg.getBoolean(section + "follow-airborne-player-before-landing", true);
+        double airborneFollowMinHeight = Math.max(3.0D, cfg.getDouble(section + "airborne-follow-min-height", 5.0D));
         boolean locateParticlesEnabled = cfg.getBoolean(section + "locate-particles.enabled", true);
         ParticleEffect locateParticle = parseParticleEffect(cfg.getString(section + "locate-particles.particle", "HAPPY_VILLAGER"));
 
@@ -141,6 +145,8 @@ public record DroneSettings(
                 launchSound,
                 launchSoundVolume,
                 followGlidingPlayer,
+                followAirbornePlayerBeforeLanding,
+                airborneFollowMinHeight,
                 locateParticlesEnabled,
                 locateParticle
         );

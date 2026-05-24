@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.GameMode;
 import org.bukkit.World;
 import org.bukkit.boss.BossBar;
 import de.cb.drones.socket.DeliverySocket;
@@ -73,7 +74,10 @@ public final class DeliveryDrone {
     private long lastBossBarEta = -1L;
     private long approachPhaseStartTick = -1L; // -1 means not in approach phase yet
     private boolean wasGlidingFollowed = false;
+    private boolean wasAirborneFollowed = false;
     private boolean allowGlideFollow = false;
+    /** One airborne follow + relocate cycle per delivery (like elytra glide follow). */
+    private boolean allowAirborneFollow = true;
     
     // Performance caches
     private long lastTraveledDistanceTick = -1L;
@@ -495,6 +499,7 @@ public final class DeliveryDrone {
 
         // Elytra follow check
         boolean isGlidingTarget = false;
+        boolean isAirFollowTarget = false;
         if (!exactSocketTarget && settings.followGlidingPlayer() && allowGlideFollow) {
             Player receiver = Bukkit.getPlayer(receiverId);
             if (receiver != null && receiver.isOnline()) {
@@ -545,28 +550,74 @@ public final class DeliveryDrone {
                         wasGlidingFollowed = true;
                         
                         expected = newLoc;
-                    } else if (wasGlidingFollowed) {
-                        fixedTarget.setX(receiver.getLocation().getX());
-                        fixedTarget.setY(receiver.getLocation().getY());
-                        fixedTarget.setZ(receiver.getLocation().getZ());
-                        
-                        Location current = currentLocation();
-                        startLocation.setX(current.getX());
-                        startLocation.setY(current.getY());
-                        startLocation.setZ(current.getZ());
-                        startLocation.setWorld(current.getWorld());
-                        
-                        pathComputed = false;
-                        flightStartTick = nowTick;
-                        approachPhaseStartTick = -1L;
+                    } else if (wasGlidingFollowed && receiver.isOnGround()) {
+                        relocateToReceiverOnGround(receiver, manager, nowTick, false);
                         wasGlidingFollowed = false;
-                        
-                        // Send landing update message to receiver
-                        manager.sendMessage(receiver, "glide-follow-landed");
                     }
                 } else if (wasGlidingFollowed) {
                     wasGlidingFollowed = false;
                 }
+            }
+        }
+
+        // Airborne follow (major falls) — relocate on first ground contact, then land
+        if (!exactSocketTarget
+                && !isGlidingTarget
+                && !landed
+                && settings.followAirbornePlayerBeforeLanding()
+                && allowAirborneFollow) {
+            Player receiver = Bukkit.getPlayer(receiverId);
+            if (receiver != null && receiver.isOnline() && receiver.getWorld().equals(fixedTarget.getWorld())) {
+                if (wasAirborneFollowed && receiver.isOnGround()) {
+                    relocateToReceiverOnGround(receiver, manager, nowTick, true);
+                } else if (distanceSquaredToTarget(expected) <= deliveryRadiusSq && isSignificantlyAirborne(receiver)) {
+                    isAirFollowTarget = true;
+
+                    Location current = currentLocation();
+                    Location target = receiver.getLocation().clone().add(0.0, 5.0, 0.0);
+
+                    Vector dir = target.toVector().subtract(current.toVector());
+                    double dist = dir.length();
+
+                    double step;
+                    if (dist <= settings.approachDistance()) {
+                        step = settings.approachSpeed();
+                    } else {
+                        step = settings.speed() * 0.6;
+                    }
+
+                    Location newLoc;
+                    if (dist <= step) {
+                        newLoc = target;
+                    } else {
+                        newLoc = current.add(dir.normalize().multiply(step));
+                    }
+
+                    if (dist > 0.01) {
+                        float yaw = (float) Math.toDegrees(Math.atan2(-dir.getX(), dir.getZ()));
+                        newLoc.setYaw(yaw);
+                    }
+
+                    fixedTarget.setX(receiver.getLocation().getX());
+                    fixedTarget.setY(receiver.getLocation().getY() + 5.0);
+                    fixedTarget.setZ(receiver.getLocation().getZ());
+
+                    startLocation.setX(newLoc.getX());
+                    startLocation.setY(newLoc.getY());
+                    startLocation.setZ(newLoc.getZ());
+                    startLocation.setWorld(newLoc.getWorld());
+
+                    pathComputed = false;
+                    flightStartTick = nowTick;
+                    approachPhaseStartTick = -1L;
+                    pendingLanding = null;
+                    smoothLanding = false;
+                    wasAirborneFollowed = true;
+
+                    expected = newLoc;
+                }
+            } else if (wasAirborneFollowed) {
+                wasAirborneFollowed = false;
             }
         }
 
@@ -589,7 +640,7 @@ public final class DeliveryDrone {
                 ? (landedLocation != null ? landedLocation : (standLocation != null ? standLocation : lastKnownLocation))
                 : expected;
 
-        if (!isGlidingTarget && !landed && distanceSquaredToTarget(expected) <= deliveryRadiusSq) {
+        if (!isGlidingTarget && !isAirFollowTarget && !landed && distanceSquaredToTarget(expected) <= deliveryRadiusSq) {
             if (pendingLanding == null) {
                 pendingLanding = fixedTarget.clone();
             }
@@ -608,8 +659,14 @@ public final class DeliveryDrone {
                 if (smoothLanding) {
                     long elapsedTicks = nowTick - smoothLandingStartTick;
                     if (elapsedTicks >= smoothLandingDuration) {
-                        // Landing animation complete
-                        landAt(manager, landingSpot);
+                        // Landing animation complete — recompute safe spot once before touchdown
+                        Location finalSpot = exactSocketTarget ? pendingLanding.clone() : computeLandingFrom(pendingLanding);
+                        if (!isLandingLocationSafe(finalSpot)) {
+                            Location retryBase = pendingLanding != null ? pendingLanding : fixedTarget;
+                            finalSpot = exactSocketTarget ? retryBase.clone() : computeLandingFrom(retryBase);
+                        }
+
+                        landAt(manager, finalSpot);
                         pendingLanding = null;
                         smoothLanding = false;
                         if (!landingNotified) {
@@ -619,7 +676,8 @@ public final class DeliveryDrone {
                                 if (socketName != null) {
                                     manager.sendMessage(receiver, "landing-notif-socket", "<socket>", socketName);
                                 } else {
-                                    manager.sendMessage(receiver, "landing-notif", "<radius>", String.valueOf((int) settings.deliveryRadius()));
+                                    int distanceM = (int) Math.round(receiver.getLocation().distance(finalSpot));
+                                    manager.sendMessage(receiver, "landing-notif", "<distance>", String.valueOf(distanceM));
                                 }
                             }
                         }
@@ -882,6 +940,74 @@ public final class DeliveryDrone {
         }
         
         return new Location(world, at.getX(), at.getY() + 0.1, at.getZ());
+    }
+
+    private void relocateToReceiverOnGround(Player receiver, DroneManager manager, long nowTick, boolean airborneCycle) {
+        Location receiverLoc = receiver.getLocation();
+        fixedTarget.setX(receiverLoc.getX());
+        fixedTarget.setY(receiverLoc.getY());
+        fixedTarget.setZ(receiverLoc.getZ());
+
+        Location current = currentLocation();
+        startLocation.setX(current.getX());
+        startLocation.setY(current.getY());
+        startLocation.setZ(current.getZ());
+        startLocation.setWorld(current.getWorld());
+
+        pathComputed = false;
+        flightStartTick = nowTick;
+        approachPhaseStartTick = -1L;
+        pendingLanding = null;
+        smoothLanding = false;
+        if (airborneCycle) {
+            wasAirborneFollowed = false;
+            allowAirborneFollow = false;
+        }
+
+        manager.sendMessage(receiver, "glide-follow-landed");
+    }
+
+    private boolean isLandingLocationSafe(Location landing) {
+        World world = landing.getWorld();
+        if (world == null) {
+            return false;
+        }
+        int x = landing.getBlockX();
+        int y = landing.getBlockY();
+        int z = landing.getBlockZ();
+        // Landing position is at/just above ground, so validate the block below as "ground"
+        return isSafeGround(world, x, y - 1, z);
+    }
+
+    /**
+     * True when the receiver is clearly airborne (long fall), not a normal jump or short hop.
+     */
+    private boolean isSignificantlyAirborne(Player receiver) {
+        if (receiver.isOnGround() || receiver.isGliding() || receiver.isFlying()) {
+            return false;
+        }
+        if (receiver.getGameMode() == GameMode.SPECTATOR) {
+            return false;
+        }
+        return heightAboveSolidGround(receiver) >= settings.airborneFollowMinHeight();
+    }
+
+    private double heightAboveSolidGround(Player player) {
+        Location loc = player.getLocation();
+        World world = loc.getWorld();
+        if (world == null) {
+            return 0.0;
+        }
+        int x = loc.getBlockX();
+        int z = loc.getBlockZ();
+        int startY = (int) Math.floor(loc.getY());
+        for (int y = startY; y >= world.getMinHeight(); y--) {
+            org.bukkit.block.Block block = world.getBlockAt(x, y, z);
+            if (block.getType().isSolid() && !block.isLiquid()) {
+                return loc.getY() - (y + 1);
+            }
+        }
+        return settings.airborneFollowMinHeight();
     }
 
     private double getCoordinateScale(World world) {

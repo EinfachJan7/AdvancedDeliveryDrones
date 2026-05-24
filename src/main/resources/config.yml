@@ -1,5 +1,5 @@
 # Select the language file to use from the languages/ directory (without .yml extension)
-# Default is de_DE (German), en_EN is also available.
+# Default is de_DE (German), en_EN, es_Es, fr_FR, ru_RU, zh_CN are also available.
 language: de_DE
 
 settings:
@@ -19,6 +19,11 @@ settings:
     max-sockets-per-player: 1
     # TRUE: If the player is gliding (using an elytra), the drone follows them in the air until they land, and then lands there.
     follow-gliding-player: true
+    # TRUE: Before landing, follow a receiver who is significantly in the air (e.g. long fall) until grounded, relocate once, then land.
+    # Does NOT trigger for normal jumps — see airborne-follow-min-height.
+    follow-airborne-player-before-landing: true
+    # Minimum blocks above solid ground to count as "in the air" (jumps are typically below this).
+    airborne-follow-min-height: 5.0
     # Settings for locating landed drones with particles
     locate-particles:
       enabled: true

@@ -1,6 +1,6 @@
 name: AdvancedDeliveryDrones
 main: de.cb.drones.AdvancedDeliveryDronesPlugin
-version: 1.0.0
+version: 1.0.1
 api-version: "1.21"
 authors: [CB]
 commands:
@@ -21,6 +21,7 @@ permissions:
       drone.preview: true
       drone.toggle: true
       drone.decline: true
+      drone.locate: true
       drone.blacklist: true
   drone.admin:
     default: op
@@ -61,6 +62,9 @@ permissions:
   drone.decline:
     default: true
     description: Erlaubt das Ablehnen aller eingehenden Drohnen
+  drone.locate:
+    default: true
+    description: Erlaubt das Auffinden gelandeter Drohnen per Partikelspur
   
   # Admin-Befehle
   drone.admin.send:

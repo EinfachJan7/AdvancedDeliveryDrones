@@ -1,15 +1,18 @@
 # 📦 Advanced Delivery Drones
 
+**Version 1.0.1**
+
 Licensed under the [MIT License](LICENSE).
 
 Physical drone deliveries for Minecraft Paper servers: visible flight, package inventories, sockets, animal transport, blacklists, Discord webhooks, and fully configurable GUIs.
 
-> **🗺️ Roadmap:** 
+> **🗺️ Roadmap**
 > - ✅ **Hierarchical permission system** — fine-grained permissions for all commands
 > - ✅ **Feature toggles** — enable/disable sockets and player-to-player deliveries
-> - ⏳ **Dedicated translation files** (locale bundles) — replace config-based messages with translation files
-> - ⏳ **Cross-dimension delivery** — send drones between the Overworld, Nether, and End
-> - 📋 Future: Advanced logistics, multi-target routing, performance enhancements
+> - ✅ **Translation files** — `languages/*.yml` (de_DE, en_EN, es_ES, fr_FR, ru_RU, zh_CN)
+> - ✅ **Cross-dimension delivery** — drones between Overworld, Nether, and End
+> - ✅ **Landing improvements (1.0.1)** — elytra/airborne follow, pre-landing safety check, distance-based landing notification
+> - 📋 **Future:** Advanced logistics, multi-target routing, further performance tuning
 
 ---
 
@@ -22,8 +25,14 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 - **Cruise**: main speed via `speed` (blocks per tick)
 - **Approach**: slower final segment inside `approach-distance` at `approach-speed`
 - **Smooth landing**: eased descent into the delivery zone (not an instant snap)
+- **Pre-landing safety check**: landing spot is recomputed once before touchdown so the drone does not hover in unsafe air
 - Virtual progress continues when chunks are unloaded; the drone reappears at the correct position when the chunk loads again
 - Admin coordinate sends can **preload** the destination chunk before arrival
+- **Cross-dimension flight**: arc path between worlds (Overworld ↔ Nether ↔ End)
+
+### 🪂 Elytra & airborne follow (player deliveries)
+- **Elytra follow** (`follow-gliding-player`): while the receiver glides, the drone tracks them in the air; when they land, the target is **relocated once** and the drone lands there
+- **Airborne follow** (`follow-airborne-player-before-landing`): before landing, if the receiver is **significantly** in the air (e.g. long fall, not a normal jump), the drone follows until they touch the ground, **relocates once**, then lands — controlled by `airborne-follow-min-height` (default `5` blocks above solid ground)
 
 ### 📦 Package & inventory
 - Compose GUI (9–54 slots, multiple of 9) — close to send
@@ -31,6 +40,7 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 - Preview incoming drones read-only (`/drone preview <uuid>`) with item and animal summary
 - Despawn timer starts **after** landing (`despawn-time-minutes`)
 - Despawn modes: `DELETE` (remove contents) or `COLLECT` (return unopened items to sender)
+- **Collection animation** when the receiver picks up the drone (`collection-animation.enabled`)
 
 ### 🎨 Hologram & boss bar
 - Hologram above landed drones: recipient name + despawn countdown (`hologram.*`)
@@ -41,6 +51,9 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 - Flight sound while airborne (`flight-sound`)
 - Receiver beacon particles after landing
 
+### 📍 Locate landed drones
+- `/drone locate` — particle trail toward your nearest **landed** drone in the current world (`locate-particles.*`, permission `drone.locate`)
+
 ### 🚫 Receive toggle, decline & cancel
 - Toggle whether you accept drones (`/drone toggle`, GUI)
 - Decline all incoming deliveries — items returned to senders (`/drone decline`)
@@ -49,7 +62,11 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 
 ### 🔢 Limits & worlds
 - Max active outgoing drones per sender (`max-active-per-sender`)
-- Blocked worlds list (`blocked-worlds`, Nether/End by default)
+- Blocked worlds list (`blocked-worlds`)
+
+### ⚙️ Feature toggles
+- `players-enabled` — allow/disable player-to-player deliveries (GUI + commands)
+- `sockets-enabled` — allow/disable socket system
 
 ### ⛔ Player blacklist
 - Block specific players from sending **direct** deliveries to you
@@ -62,6 +79,7 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 - Per-socket blacklist for blocked senders
 - Rename, relocate, remove; management GUI (`/drone socket manage`)
 - Exact landing on socket coordinates
+- **Container integration**: auto-unload package into hoppers/chests below the socket (`container-integration.*`)
 - Pending returns if the socket owner is unreachable (`socket-pending-returns.yml`)
 
 ### 🐾 Animal transport
@@ -87,19 +105,21 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 - `blacklists.yml` — player blacklists
 - `sockets.yml` — sockets, trust, socket blacklists
 - `socket-pending-returns.yml` — stranded socket deliveries
+- `drones.yml` — active in-flight/landed drones (survives restarts where applicable)
 - Server restart: returns items/animals to senders, cleans orphaned entities
 - Receiver offline / dimension change: outgoing drone cancelled, items returned
 - Flying drone armor stand cannot be manipulated
 
 ### ⚡ Performance
-- Throttled particles (distance culling, drone count)
-- Chunk preload and boss bar updates are rate-limited
-- Flight path math is cached per drone
+- `PerformanceOptimizer`: throttling when many drones are active
+- Distance-culled particles and rate-limited boss bar / hologram updates
+- Chunk preload and flight path math cached per drone
 
-### 🌐 Messages & formatting
-- All strings in `config.yml` (MiniMessage)
-- GUI labels in `gui.yml`
-- **Planned:** separate translation/locale files instead of a single config
+### 🌐 Languages
+- Messages in `plugins/AdvancedDeliveryDrones/languages/` (not in `config.yml`)
+- Select locale via `language:` in `config.yml` (`de_DE`, `en_EN`, `es_ES`, `fr_FR`, `ru_RU`, `zh_CN`)
+- MiniMessage formatting; reload with `/drone reload`
+- Landing notification shows **distance to the drone** in metres (`<distance>`), not delivery radius
 
 ---
 
@@ -111,57 +131,70 @@ Root command: **`/drone`** (players only — opens the main GUI when run without
 
 | Command | Description | Permission |
 |--------|-------------|------------|
-| `/drone send <player>` | Open compose flow and send to a player | `drone.send` |
-| `/drone cancel` | Cancel all your outgoing drones | `drone.send` |
-| `/drone preview <uuid>` | Preview an incoming drone (read-only) | `drone.use` |
-| `/drone toggle` | Enable/disable receiving drones | `drone.use` |
-| `/drone decline` | Decline all incoming drones | `drone.use` |
+| `/drone send <player>` | Open compose flow and send to a player | `drone.send.players` |
+| `/drone cancel` | Cancel all your outgoing drones | `drone.cancel` |
+| `/drone preview <uuid>` | Preview an incoming drone (read-only) | `drone.preview` |
+| `/drone toggle` | Enable/disable receiving drones | `drone.toggle` |
+| `/drone decline` | Decline all incoming drones | `drone.decline` |
+| `/drone locate` | Particle trail to nearest landed drone (this world) | `drone.locate` |
 
 ### ⛔ Player blacklist
 
 | Command | Description | Permission |
 |--------|-------------|------------|
-| `/drone blacklist` | Open blacklist GUI | `drone.use` |
-| `/drone blacklist player add [player]` | Block a player (GUI if name omitted) | `drone.use` |
-| `/drone blacklist player remove [player]` | Unblock a player | `drone.use` |
-| `/drone blacklist player list` | List blocked players | `drone.use` |
+| `/drone blacklist` | Open blacklist GUI | `drone.blacklist` |
+| `/drone blacklist player add [player]` | Block a player (GUI if name omitted) | `drone.blacklist.player.add` |
+| `/drone blacklist player remove [player]` | Unblock a player | `drone.blacklist.player.remove` |
+| `/drone blacklist player list` | List blocked players | `drone.blacklist.player.list` |
 
 ### 🏗 Sockets
 
 | Command | Description | Permission |
 |--------|-------------|------------|
-| `/drone socket place <name>` | Place a socket at your location | `drone.socket` |
-| `/drone socket remove <name>` | Remove your socket | `drone.socket` |
-| `/drone socket list` | List your sockets | `drone.socket` |
-| `/drone socket send <name>` | Send to a socket (global name) | `drone.socket` |
-| `/drone socket manage` | Socket management GUI | `drone.socket` |
-| `/drone socket rename <old> <new>` | Rename a socket | `drone.socket` |
-| `/drone socket trust <socket> <player>` | Allow pickup on your socket | `drone.socket` |
-| `/drone socket untrust <socket> <player>` | Revoke trust | `drone.socket` |
-| `/drone socket blacklist add <socket> [player]` | Block sender for a socket | `drone.socket` |
-| `/drone socket blacklist remove <socket> [player]` | Unblock sender | `drone.socket` |
-| `/drone socket blacklist list <socket>` | List socket blacklist | `drone.socket` |
+| `/drone socket place <name>` | Place a socket at your location | `drone.socket.place` |
+| `/drone socket remove <name>` | Remove your socket | `drone.socket.remove` |
+| `/drone socket list` | List your sockets | `drone.socket.list` |
+| `/drone socket send <name>` | Send to a socket (global name) | `drone.socket.send` |
+| `/drone socket manage` | Socket management GUI | `drone.socket.manage` |
+| `/drone socket rename <old> <new>` | Rename a socket | `drone.socket.rename` |
+| `/drone socket trust <socket> <player>` | Allow pickup on your socket | `drone.socket.trust` |
+| `/drone socket untrust <socket> <player>` | Revoke trust | `drone.socket.untrust` |
+| `/drone socket blacklist add <socket> [player]` | Block sender for a socket | `drone.socket.blacklist` |
+| `/drone socket blacklist remove <socket> [player]` | Unblock sender | `drone.socket.blacklist` |
+| `/drone socket blacklist list <socket>` | List socket blacklist | `drone.socket.blacklist` |
 
 ### 🛠 Admin
 
 | Command | Description | Permission |
 |--------|-------------|------------|
-| `/drone admin send <x> <y> <z> [world]` | Send to coordinates (admin as receiver) | `drone.admin` |
-| `/drone list` | List active drones + teleport links | `drone.admin` |
-| `/drone reload` | Reload `config.yml` and `gui.yml` | `drone.admin` |
+| `/drone admin send <x> <y> <z> [world]` | Send to coordinates (admin as receiver) | `drone.admin.send` |
+| `/drone list` | List active drones + teleport links | `drone.admin.list` |
+| `/drone reload` | Reload `config.yml`, `gui.yml`, and language files | `drone.admin.reload` |
+
+Parent permissions (`drone.send`, `drone.use`, `drone.socket`, `drone.admin`, `drone.blacklist`) grant their children — see `plugin.yml`.
 
 ---
 
 ## 🔐 Permissions
 
-Current permission nodes (more granular permissions are planned):
-
 | Permission | Description | Default |
 |------------|-------------|---------|
-| `drone.send` | Send and cancel drones | `true` |
-| `drone.use` | Toggle, decline, preview, player blacklist | `true` |
-| `drone.socket` | All `/drone socket` subcommands | `true` |
-| `drone.admin` | Admin send, list, reload | OP |
+| `drone.send` | Send and cancel drones (parent) | `true` |
+| `drone.send.players` | Send to players | `true` |
+| `drone.cancel` | Cancel outgoing drones | `true` |
+| `drone.use` | Preview, toggle, decline, blacklist (parent) | `true` |
+| `drone.preview` | Preview incoming drones | `true` |
+| `drone.toggle` | Toggle receiving drones | `true` |
+| `drone.decline` | Decline incoming drones | `true` |
+| `drone.locate` | Locate landed drones | `true` |
+| `drone.blacklist` | Blacklist management (parent) | `true` |
+| `drone.blacklist.player.*` | Add / remove / list player blacklist | `true` |
+| `drone.socket` | All socket commands (parent) | `true` |
+| `drone.socket.*` | Individual socket subcommands | `true` |
+| `drone.admin` | Admin commands (parent) | OP |
+| `drone.admin.send` | Admin coordinate send | OP |
+| `drone.admin.list` | List active drones | OP |
+| `drone.admin.reload` | Reload configs | OP |
 
 ---
 
@@ -169,21 +202,15 @@ Current permission nodes (more granular permissions are planned):
 
 | File | Purpose |
 |------|---------|
-| `config.yml` | Flight, particles, sounds, hologram, boss bar, Discord, messages |
+| `config.yml` | Flight, particles, sounds, hologram, boss bar, Discord, feature toggles, follow settings |
 | `gui.yml` | Menu layouts, items, titles |
+| `languages/*.yml` | All player-facing messages (MiniMessage) |
 | `players.yml` | Per-player receive toggle (auto-generated) |
 | `blacklists.yml` | Player blacklists (auto-generated) |
 | `sockets.yml` | Sockets, trust, socket blacklists (auto-generated) |
 | `socket-pending-returns.yml` | Pending socket returns (auto-generated) |
+| `drones.yml` | Active drones (auto-generated) |
 
-Key `settings.drone` options: `speed`, `startup-speed`, `startup-seconds`, `approach-speed`, `approach-distance`, `delivery-radius`, `despawn-time-minutes`, `despawn-mode`, `max-active-per-sender`, `carry-leashed-animals`, `max-leashed-animals-per-drone`, `max-sockets-per-player`, `blocked-worlds`, particles, `flight-sound`, `inventory-size`, `hologram.*`, `bossbar.*`, `collection-animation.enabled`, `launch-animation.*`.
+Key `settings.drone` options: `speed`, `startup-speed`, `startup-seconds`, `approach-speed`, `approach-distance`, `delivery-radius`, `despawn-time-minutes`, `despawn-mode`, `max-active-per-sender`, `carry-leashed-animals`, `max-leashed-animals-per-drone`, `max-sockets-per-player`, `players-enabled`, `sockets-enabled`, `follow-gliding-player`, `follow-airborne-player-before-landing`, `airborne-follow-min-height`, `blocked-worlds`, particles, `flight-sound`, `inventory-size`, `hologram.*`, `bossbar.*`, `locate-particles.*`, `container-integration.*`, `collection-animation.enabled`, `launch-animation.*`.
 
 ---
-
-## 🔨 Build
-
-```bash
-mvn package
-```
-
-Output: `target/advanced-delivery-drones-1.0.0.jar`
