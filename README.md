@@ -1,6 +1,6 @@
 # 📦 Advanced Delivery Drones
 
-**Version 1.0.2**
+**Version 1.0.4**
 
 Licensed under the [MIT License](LICENSE).
 
@@ -13,6 +13,8 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 > - ✅ **Cross-dimension delivery** — drones between Overworld, Nether, and End
 > - ✅ **Landing improvements (1.0.1)** — elytra/airborne follow, pre-landing safety check, distance-based landing notification
 > - ✅ **Performance (1.0.2)** — cached landing spots, optimized ground scan, velocity-based cruise flight
+> - ✅ **Cooldown system (1.0.3)** — configurable send cooldowns for players and sockets
+> - ✅ **Self-send blocking (1.0.4)** — prevent sending to yourself and own sockets
 > - 📋 **Future:** Advanced logistics, multi-target routing, further performance tuning
 
 ---
@@ -64,6 +66,8 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 ### 🔢 Limits & worlds
 - Max active outgoing drones per sender (`max-active-per-sender`)
 - Blocked worlds list (`blocked-worlds`)
+- **Send cooldown** (`send-cooldown-seconds-player`, `send-cooldown-seconds-socket`) — configurable cooldown in seconds between drone sends
+- **Self-send blocking** (`allow-send-to-self-player`, `allow-send-to-self-socket`) — prevent sending drones to yourself and your own sockets
 
 ### ⚙️ Feature toggles
 - `players-enabled` — allow/disable player-to-player deliveries (GUI + commands)
