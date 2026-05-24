@@ -15,7 +15,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class VersionChecker {
-    private static final String MODRINTH_API = "https://api.modrinth.com/v2/project/advanceddeliverydrones";
+    private static final String MODRINTH_API = "https://api.modrinth.com/v2/project/advanceddeliverydrones/version?include_changelog=false";
     private static final String MODRINTH_LINK = "https://modrinth.com/plugin/advanceddeliverydrones";
 
     private final JavaPlugin plugin;
@@ -52,7 +52,6 @@ public final class VersionChecker {
     }
 
     private String fetchLatestVersion() throws Exception {
-        // Step 1: Get the project to find the latest version ID
         HttpURLConnection connection = (HttpURLConnection) new URL(MODRINTH_API).openConnection();
         connection.setRequestMethod("GET");
         connection.setConnectTimeout(5000);
@@ -71,37 +70,8 @@ public final class VersionChecker {
         }
         reader.close();
 
-        // Extract the latest version ID from the versions array
-        Pattern versionIdPattern = Pattern.compile("\"versions\":\\[(\"[^\"]+\")");
-        Matcher versionIdMatcher = versionIdPattern.matcher(response.toString());
-
-        String latestVersionId = null;
-        if (versionIdMatcher.find()) {
-            latestVersionId = versionIdMatcher.group(1).replace("\"", "");
-        } else {
-            throw new Exception("Could not find version ID in project data");
-        }
-
-        // Step 2: Get the version details to extract the version number
-        String versionUrl = "https://api.modrinth.com/v2/version/" + latestVersionId;
-        connection = (HttpURLConnection) new URL(versionUrl).openConnection();
-        connection.setRequestMethod("GET");
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(5000);
-        connection.setRequestProperty("User-Agent", "AdvancedDeliveryDrones");
-
-        if (connection.getResponseCode() != 200) {
-            throw new Exception("API returned status code: " + connection.getResponseCode());
-        }
-
-        reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        response = new StringBuilder();
-        while ((line = reader.readLine()) != null) {
-            response.append(line);
-        }
-        reader.close();
-
-        // Extract version_number from JSON: "version_number":"1.0.5"
+        // Extract the first version_number from the array (latest version)
+        // Response format: [{"version_number":"1.0.5",...}, {"version_number":"1.0.4",...}, ...]
         Pattern versionPattern = Pattern.compile("\"version_number\":\"([^\"]+)\"");
         Matcher versionMatcher = versionPattern.matcher(response.toString());
 
