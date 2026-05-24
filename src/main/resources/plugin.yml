@@ -1,6 +1,6 @@
 name: AdvancedDeliveryDrones
 main: de.cb.drones.AdvancedDeliveryDronesPlugin
-version: 1.0.3
+version: 1.0.4
 api-version: "1.21"
 authors: [CB]
 commands:
@@ -30,6 +30,7 @@ permissions:
       drone.admin.send: true
       drone.admin.reload: true
       drone.admin.list: true
+      drone.admin.update-notify: true
   drone.socket:
     default: true
     description: Erlaubt die Nutzung von Delivery-Sockets
@@ -76,6 +77,9 @@ permissions:
   drone.admin.list:
     default: op
     description: Erlaubt das Anzeigen aller aktiven Drohnen
+  drone.admin.update-notify:
+    default: op
+    description: Erlaubt Benachrichtigungen über verfügbare Updates
   
   # Blacklist-Befehle
   drone.blacklist:

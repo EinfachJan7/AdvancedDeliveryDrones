@@ -10,6 +10,7 @@ import de.cb.drones.drone.DroneInteractionListener;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.socket.SocketRepository;
+import de.cb.drones.update.VersionChecker;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.PluginCommand;
@@ -68,6 +69,10 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         }
 
         getServer().getPluginManager().registerEvents(new DroneInteractionListener(droneManager, socketRepository), this);
+
+        // Check for updates
+        VersionChecker versionChecker = new VersionChecker(this, getDescription().getVersion());
+        versionChecker.checkForUpdates();
     }
 
     @Override
