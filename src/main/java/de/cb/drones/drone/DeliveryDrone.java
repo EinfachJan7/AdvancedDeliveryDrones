@@ -64,6 +64,10 @@ public final class DeliveryDrone {
     private long lastInteractionTick;
     private BukkitTask ticker;
     private BukkitTask beaconTicker;
+    /** Blacklisted container detected — do not scan again for this drone. */
+    private boolean containerIntegrationAborted;
+    private boolean containerTargetCached;
+    private Location cachedContainerBlock;
     private BossBar bossBar;
     private boolean smoothLanding;
     private Location smoothLandingStart;
@@ -1460,57 +1464,117 @@ public final class DeliveryDrone {
     }
 
     private void tickContainerIntegration(DroneManager manager) {
-        if (!manager.settings().containerIntegrationEnabled() || socketName == null) {
+        if (!manager.settings().containerIntegrationEnabled() || socketName == null || containerIntegrationAborted) {
             return;
         }
-        
-        org.bukkit.block.Block socketBlock = fixedTarget.getBlock();
-        org.bukkit.block.Block blockBelow = socketBlock.getRelative(org.bukkit.block.BlockFace.DOWN);
-        
-        org.bukkit.inventory.Inventory targetInv = null;
-        org.bukkit.block.Block targetBlock = null;
-        if (socketBlock.getState() instanceof org.bukkit.inventory.InventoryHolder holder) {
-            targetInv = holder.getInventory();
-            targetBlock = socketBlock;
-        } else if (blockBelow.getState() instanceof org.bukkit.inventory.InventoryHolder holder) {
-            targetInv = holder.getInventory();
-            targetBlock = blockBelow;
+
+        org.bukkit.inventory.Inventory targetInv = resolveContainerInventory(manager);
+        if (targetInv == null) {
+            return;
         }
-        
-        if (targetInv != null) {
-            if (manager.settings().containerIntegrationBlacklist().contains(targetBlock.getType().name())) {
-                return;
-            }
-            
-            boolean transferredAny = false;
-            for (int i = 0; i < inventory.getSize(); i++) {
-                org.bukkit.inventory.ItemStack item = inventory.getItem(i);
-                if (item != null && item.getType() != Material.AIR) {
-                    java.util.HashMap<Integer, org.bukkit.inventory.ItemStack> leftover = targetInv.addItem(item);
-                    if (leftover.isEmpty()) {
-                        inventory.setItem(i, null);
+
+        boolean transferredAny = false;
+        for (int i = 0; i < inventory.getSize(); i++) {
+            org.bukkit.inventory.ItemStack item = inventory.getItem(i);
+            if (item != null && item.getType() != Material.AIR) {
+                java.util.HashMap<Integer, org.bukkit.inventory.ItemStack> leftover = targetInv.addItem(item);
+                if (leftover.isEmpty()) {
+                    inventory.setItem(i, null);
+                    transferredAny = true;
+                } else {
+                    org.bukkit.inventory.ItemStack left = leftover.values().iterator().next();
+                    if (left.getAmount() < item.getAmount()) {
+                        inventory.setItem(i, left);
                         transferredAny = true;
-                    } else {
-                        org.bukkit.inventory.ItemStack left = leftover.values().iterator().next();
-                        if (left.getAmount() < item.getAmount()) {
-                            inventory.setItem(i, left);
-                            transferredAny = true;
-                        }
                     }
                 }
             }
-            if (transferredAny && isInventoryEmpty() && attachedAnimalTypes.isEmpty()) {
-                Player sender = Bukkit.getPlayer(senderId);
-                if (sender != null && sender.isOnline()) {
-                    manager.sendMessage(sender, "container-unload-success", "<socket>", socketName);
+        }
+        if (transferredAny && isInventoryEmpty() && attachedAnimalTypes.isEmpty()) {
+            Player sender = Bukkit.getPlayer(senderId);
+            if (sender != null && sender.isOnline()) {
+                manager.sendMessage(sender, "container-unload-success", "<socket>", socketName);
+            }
+            Player receiver = Bukkit.getPlayer(receiverId);
+            if (receiver != null && receiver.isOnline() && !receiverId.equals(senderId)) {
+                manager.sendMessage(receiver, "container-unload-success", "<socket>", socketName);
+            }
+            manager.destroyDrone(this, false);
+        }
+    }
+
+    private org.bukkit.inventory.Inventory resolveContainerInventory(DroneManager manager) {
+        if (containerTargetCached && cachedContainerBlock != null) {
+            org.bukkit.block.Block block = cachedContainerBlock.getBlock();
+            if (block.getState() instanceof org.bukkit.inventory.InventoryHolder holder) {
+                if (isContainerBlacklisted(manager, block)) {
+                    containerIntegrationAborted = true;
+                    containerTargetCached = false;
+                    cachedContainerBlock = null;
+                    return null;
                 }
-                Player receiver = Bukkit.getPlayer(receiverId);
-                if (receiver != null && receiver.isOnline() && !receiverId.equals(senderId)) {
-                    manager.sendMessage(receiver, "container-unload-success", "<socket>", socketName);
+                return holder.getInventory();
+            }
+            containerTargetCached = false;
+            cachedContainerBlock = null;
+        }
+
+        org.bukkit.block.Block socketBlock = fixedTarget.getBlock();
+        org.bukkit.block.Block bestBlock = null;
+        org.bukkit.inventory.Inventory bestInv = null;
+        double bestDistSq = Double.MAX_VALUE;
+        boolean sawBlacklistedOnly = false;
+
+        int radius = manager.settings().containerIntegrationSearchRadius();
+        int centerX = socketBlock.getX();
+        int centerY = socketBlock.getY();
+        int centerZ = socketBlock.getZ();
+        World world = socketBlock.getWorld();
+        if (world == null) {
+            return null;
+        }
+
+        int radiusSq = radius * radius;
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                if (radius > 0 && dx * dx + dz * dz > radiusSq) {
+                    continue;
                 }
-                manager.destroyDrone(this, false);
+                int minDy = radius > 0 ? -radius : -1;
+                int maxDy = radius > 0 ? 1 : 0;
+                for (int dy = minDy; dy <= maxDy; dy++) {
+                    org.bukkit.block.Block block = world.getBlockAt(centerX + dx, centerY + dy, centerZ + dz);
+                    if (!(block.getState() instanceof org.bukkit.inventory.InventoryHolder holder)) {
+                        continue;
+                    }
+                    if (isContainerBlacklisted(manager, block)) {
+                        sawBlacklistedOnly = true;
+                        continue;
+                    }
+                    double distSq = block.getLocation().distanceSquared(socketBlock.getLocation());
+                    if (distSq < bestDistSq) {
+                        bestDistSq = distSq;
+                        bestBlock = block;
+                        bestInv = holder.getInventory();
+                    }
+                }
             }
         }
+
+        if (bestBlock != null && bestInv != null) {
+            cachedContainerBlock = bestBlock.getLocation();
+            containerTargetCached = true;
+            return bestInv;
+        }
+
+        if (sawBlacklistedOnly) {
+            containerIntegrationAborted = true;
+        }
+        return null;
+    }
+
+    private boolean isContainerBlacklisted(DroneManager manager, org.bukkit.block.Block block) {
+        return manager.settings().containerIntegrationBlacklist().contains(block.getType().name());
     }
 
     private boolean isInventoryEmpty() {

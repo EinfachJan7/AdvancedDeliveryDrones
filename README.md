@@ -80,7 +80,7 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 - Per-socket blacklist for blocked senders
 - Rename, relocate, remove; management GUI (`/drone socket manage`)
 - Exact landing on socket coordinates
-- **Container integration**: auto-unload package into hoppers/chests below the socket (`container-integration.*`)
+- **Container integration**: auto-unload into chests/hoppers near the socket (`container-integration.search-radius`, blacklist skips permanently)
 - Pending returns if the socket owner is unreachable (`socket-pending-returns.yml`)
 
 ### 🐾 Animal transport

@@ -32,9 +32,11 @@ settings:
       particle: "HAPPY_VILLAGER"
     # TRUE: Enable Sockets (delivery stations)
     sockets-enabled: true
-    # Container integration (automatically unload to containers like Hoppers/Chests below socket)
+    # Container integration (automatically unload to containers like Hoppers/Chests near socket)
     container-integration:
       enabled: true
+      # Horizontal search radius from socket (0 = only socket block and block directly below)
+      search-radius: 0
       blacklist:
         - "TRAPPED_CHEST"
     # TRUE: Enable player as a target destination

@@ -33,6 +33,7 @@ public record DroneSettings(
         int maxSocketsPerPlayer,
         boolean socketsEnabled,
         boolean containerIntegrationEnabled,
+        int containerIntegrationSearchRadius,
         List<String> containerIntegrationBlacklist,
         boolean playersEnabled,
         List<String> blockedWorlds,
@@ -79,6 +80,7 @@ public record DroneSettings(
         int maxSocketsPerPlayer = Math.max(1, cfg.getInt(section + "max-sockets-per-player", 3));
         boolean socketsEnabled = cfg.getBoolean(section + "sockets-enabled", true);
         boolean containerIntegrationEnabled = cfg.getBoolean(section + "container-integration.enabled", true);
+        int containerIntegrationSearchRadius = Math.max(0, cfg.getInt(section + "container-integration.search-radius", 0));
         List<String> containerIntegrationBlacklist = cfg.getStringList(section + "container-integration.blacklist").stream()
                 .map(String::toUpperCase)
                 .toList();
@@ -130,6 +132,7 @@ public record DroneSettings(
                 maxSocketsPerPlayer,
                 socketsEnabled,
                 containerIntegrationEnabled,
+                containerIntegrationSearchRadius,
                 containerIntegrationBlacklist,
                 playersEnabled,
                 blockedWorlds,
