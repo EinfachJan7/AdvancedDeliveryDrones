@@ -2,6 +2,11 @@
 # Default is de_DE (German), en_EN, es_Es, fr_FR, ru_RU, zh_CN are also available.
 language: de_DE
 
+# Plugin settings
+plugin:
+  # Check for updates on Modrinth on startup
+  check-updates: true
+
 settings:
   drone:
     speed: 5.0

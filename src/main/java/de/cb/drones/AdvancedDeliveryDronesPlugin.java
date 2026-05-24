@@ -71,7 +71,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new DroneInteractionListener(droneManager, socketRepository), this);
 
         // Check for updates
-        VersionChecker versionChecker = new VersionChecker(this, getDescription().getVersion());
+        VersionChecker versionChecker = new VersionChecker(this, getDescription().getVersion(), languageManager);
         versionChecker.checkForUpdates();
     }
 

@@ -133,7 +133,10 @@ active-drones-count: "<gold>Drones activos: <white><count></white></gold>"
 glide-follow-landed: "<gold>¡Has aterrizado! El dron ha establecido su objetivo de aterrizaje en tu ubicación actual.</gold>"
 locate-none: "<red>No se encontraron drones aterrizados para ti en este mundo.</red>"
 locate-started: "<green>Localizando el dron aterrizado más cercano... ¡Busca el rastro de partículas!</green>"
-
+update-available: "<gold><bold>¡Actualización de AdvancedDeliveryDrones disponible!</bold></gold>"
+update-current-version: "<gray>Tu versión: <white><current></white></gray>"
+update-latest-version: "<gray>Nueva versión: <white><latest></white></gray>"
+update-download: "<gold>Descargar: <click:open_url:'<link>'><aqua><link></aqua></click></gold>"
 
 drone-unloaded: "<gold>Tu dron ha descargado sus art�culos en un contenedor en el socket <white><socket></white>.</gold>"
 container-unload-success: "<green>¡El dron ha descargado sus artículos en un contenedor en el socket <white><socket></white>!</green>"

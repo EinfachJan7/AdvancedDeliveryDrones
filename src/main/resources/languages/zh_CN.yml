@@ -133,6 +133,10 @@ active-drones-count: "<gold>活动无人机数：<white><count></white></gold>"
 glide-follow-landed: "<gold>你已降落！无人机已将降落目标设定为你的当前位置。</gold>"
 locate-none: "<red>在这个世界中未找到发送给你的已降落无人机。</red>"
 locate-started: "<green>正在定位最近的已降落无人机... 请寻找粒子轨迹！</green>"
+update-available: "<gold><bold>AdvancedDeliveryDrones 更新可用！</bold></gold>"
+update-current-version: "<gray>你的版本: <white><current></white></gray>"
+update-latest-version: "<gray>新版本: <white><latest></white></gray>"
+update-download: "<gold>下载: <click:open_url:'<link>'><aqua><link></aqua></click></gold>"
 
 
 container-unload-success: "<green>无人机已将物品卸载到插槽 <white><socket></white> 的容器中！</green>"

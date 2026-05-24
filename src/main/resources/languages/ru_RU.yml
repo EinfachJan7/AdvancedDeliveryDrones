@@ -133,6 +133,10 @@ active-drones-count: "<gold>Активные дроны: <white><count></white><
 glide-follow-landed: "<gold>Вы приземлились! Дрон установил точку посадки на ваше текущее местоположение.</gold>"
 locate-none: "<red>В этом мире не найдено приземлившихся дронов, отправленных вам.</red>"
 locate-started: "<green>Поиск ближайшего приземлившегося дрона... Ищите след из частиц!</green>"
+update-available: "<gold><bold>Обновление AdvancedDeliveryDrones доступно!</bold></gold>"
+update-current-version: "<gray>Ваша версия: <white><current></white></gray>"
+update-latest-version: "<gray>Новая версия: <white><latest></white></gray>"
+update-download: "<gold>Скачать: <click:open_url:'<link>'><aqua><link></aqua></click></gold>"
 
 
 container-unload-success: "<green>Дрон выгрузил свои предметы в контейнер на разъеме <white><socket></white>!</green>"

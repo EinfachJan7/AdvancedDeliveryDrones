@@ -1,5 +1,8 @@
 package de.cb.drones.update;
 
+import de.cb.drones.config.LanguageManager;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -17,18 +20,30 @@ public final class VersionChecker {
 
     private final JavaPlugin plugin;
     private final String currentVersion;
+    private final LanguageManager languageManager;
+    private final MiniMessage miniMessage;
 
-    public VersionChecker(JavaPlugin plugin, String currentVersion) {
+    public VersionChecker(JavaPlugin plugin, String currentVersion, LanguageManager languageManager) {
         this.plugin = plugin;
         this.currentVersion = currentVersion;
+        this.languageManager = languageManager;
+        this.miniMessage = MiniMessage.miniMessage();
     }
 
     public void checkForUpdates() {
+        if (!plugin.getConfig().getBoolean("plugin.check-updates", true)) {
+            return;
+        }
+
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 String latestVersion = fetchLatestVersion();
-                if (latestVersion != null && !latestVersion.equals(currentVersion)) {
-                    notifyAdmins(latestVersion);
+                if (latestVersion != null) {
+                    if (latestVersion.equals(currentVersion)) {
+                        plugin.getLogger().info("AdvancedDeliveryDrones is up to date! (version: " + currentVersion + ")");
+                    } else {
+                        notifyAdmins(latestVersion);
+                    }
                 }
             } catch (Exception e) {
                 plugin.getLogger().log(Level.WARNING, "Could not check for updates: " + e.getMessage());
@@ -66,15 +81,25 @@ public final class VersionChecker {
     }
 
     private void notifyAdmins(String latestVersion) {
-        String message = String.format(
-                "§e§lAdvancedDeliveryDrones§r §eUpdate available!\n" +
-                "§eYour version: §f%s\n" +
-                "§eLatest version: §f%s\n" +
-                "§eDownload at: §f%s",
-                currentVersion, latestVersion, MODRINTH_LINK
-        );
-
         Bukkit.getScheduler().runTask(plugin, () -> {
+            // Get language strings and replace placeholders
+            String prefixStr = languageManager.getString("prefix");
+            String updateAvailableStr = languageManager.getString("update-available");
+            String currentVersionStr = languageManager.getString("update-current-version")
+                    .replace("<current>", currentVersion);
+            String latestVersionStr = languageManager.getString("update-latest-version")
+                    .replace("<latest>", latestVersion);
+            String downloadStr = languageManager.getString("update-download")
+                    .replace("<link>", MODRINTH_LINK);
+
+            // Combine all messages
+            String fullMessage = prefixStr + updateAvailableStr + "\n" +
+                    prefixStr + currentVersionStr + "\n" +
+                    prefixStr + latestVersionStr + "\n" +
+                    prefixStr + downloadStr;
+
+            // Convert to Component and send to admins
+            Component message = miniMessage.deserialize(fullMessage);
             Bukkit.getOnlinePlayers().forEach(player -> {
                 if (player.hasPermission("drone.admin.update-notify")) {
                     player.sendMessage(message);
