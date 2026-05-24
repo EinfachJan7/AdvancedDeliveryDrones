@@ -1,0 +1,95 @@
+# Select the language file to use from the languages/ directory (without .yml extension)
+# Default is de_DE (German), en_EN, es_Es, fr_FR, ru_RU, zh_CN are also available.
+language: de_DE
+
+settings:
+  drone:
+    speed: 5.0
+    startup-speed: 0.2
+    startup-seconds: 3
+    approach-speed: 0.2
+    approach-distance: 100.0
+    skull-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzM1YWEzZTJiZjE4NTQ0Zjc1ZTZlMTViMDI2Zjc0N2I1OTllMThmOTZhOWVjNTQ1N2JkNTFhZDhkZjA0YTE2YiJ9fX0="
+    delivery-radius: 10.0
+    despawn-time-minutes: 10
+    despawn-mode: "DELETE"
+    max-active-per-sender: 1
+    carry-leashed-animals: true
+    max-leashed-animals-per-drone: 1
+    max-sockets-per-player: 1
+    # Send cooldown settings (in seconds)
+    send-cooldown-seconds-player: 0
+    send-cooldown-seconds-socket: 0
+    # TRUE: If the player is gliding (using an elytra), the drone follows them in the air until they land, and then lands there.
+    follow-gliding-player: true
+    # TRUE: Before landing, follow a receiver who is significantly in the air (e.g. long fall) until grounded, relocate once, then land.
+    # Does NOT trigger for normal jumps — see airborne-follow-min-height.
+    follow-airborne-player-before-landing: true
+    # Minimum blocks above solid ground to count as "in the air" (jumps are typically below this).
+    airborne-follow-min-height: 5.0
+    # After this many seconds from flight start, airborne follow can no longer begin (elytra is unaffected).
+    airborne-follow-max-seconds-after-start: 15
+    # Settings for locating landed drones with particles
+    locate-particles:
+      enabled: true
+      particle: "HAPPY_VILLAGER"
+    # TRUE: Enable Sockets (delivery stations)
+    sockets-enabled: true
+    # Container integration (automatically unload to containers like Hoppers/Chests near socket)
+    container-integration:
+      enabled: true
+      # Horizontal search radius from socket (0 = only socket block and block directly below)
+      search-radius: 0
+      blacklist:
+        - "TRAPPED_CHEST"
+    # TRUE: Enable player as a target destination
+    players-enabled: true
+    blocked-worlds: []
+    particle-types:
+      - "ELECTRIC_SPARK"
+      # Example RGB dust particle (red, size 1.0):
+      # - "DUST:255,0,0:1.0"
+    particle-count: 4
+    particle-trail-length: 10
+    particle-y-offset: 1.0
+    flight-sound: "entity.elytra.flying"
+    inventory-size: 54
+    hologram:
+      enabled: true
+      offset-y: 1.0
+      format: "<gradient:#ffcc33:#ffaa00><bold>ᴘᴀᴄᴋᴀɢᴇ ғᴏʀ</bold></gradient> <white><receiver> <dark_gray>» <gray>ᴅᴇsᴘᴀᴡɴ: <#ffcc33><minutes>ᴍ <#ffcc33><seconds>s"
+    bossbar:
+      enabled: true
+      format: "<gold>Distance to drone: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>"
+      format-socket: "<gold>Drone to Socket <white><socket></white></gold> <gray>| ETA: <white><eta>s</white></gray>"
+      # Available colors: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
+      color: "RED"
+    collection-animation:
+      enabled: true
+    launch-animation:
+      enabled: true
+      seconds: 3
+      sound: "entity.firework_rocket.launch"
+      sound-volume: 1.0
+
+discord:
+  enabled: true
+  webhook-url: ""
+  username: "Delivery Drone"
+  avatar-url: ""
+  embed:
+    enabled: true
+    color: "#00ff00"
+    thumbnail:
+      enabled: true
+      url: ""
+    image:
+      enabled: false
+      url: ""
+    footer:
+      text: "Advanced Delivery Drones"
+      icon-url: ""
+  include-items: true
+  include-animals: true
+  max-items-display: 10
+  max-animals-display: 5
