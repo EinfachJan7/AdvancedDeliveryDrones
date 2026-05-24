@@ -1,6 +1,6 @@
 # 📦 Advanced Delivery Drones
 
-**Version 1.0.1**
+**Version 1.0.3**
 
 Licensed under the [MIT License](LICENSE).
 
@@ -12,6 +12,8 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 > - ✅ **Translation files** — `languages/*.yml` (de_DE, en_EN, es_ES, fr_FR, ru_RU, zh_CN)
 > - ✅ **Cross-dimension delivery** — drones between Overworld, Nether, and End
 > - ✅ **Landing improvements (1.0.1)** — elytra/airborne follow, pre-landing safety check, distance-based landing notification
+> - ✅ **Performance (1.0.2)** — cached landing spots, optimized ground scan (no per-tick `computeLandingFrom`)
+> - ✅ **Performance (1.0.3)** — velocity-based flight movement (launch/collection animations unchanged)
 > - 📋 **Future:** Advanced logistics, multi-target routing, further performance tuning
 
 ---
@@ -114,6 +116,9 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 - `PerformanceOptimizer`: throttling when many drones are active
 - Distance-culled particles and rate-limited boss bar / hologram updates
 - Chunk preload and flight path math cached per drone
+- **Landing spot cache (1.0.2)**: `computeLandingFrom()` runs once per target, not every tick during smooth landing
+- Faster ground scan: highest-block shortcut, center fast-path, coarse-to-fine radius search, skip unloaded chunks
+- **Velocity movement (1.0.3)**: cruise flight uses `setVelocity()` (armor stand ticks only while moving); teleport only for snap/dimension/land
 
 ### 🌐 Languages
 - Messages in `plugins/AdvancedDeliveryDrones/languages/` (not in `config.yml`)

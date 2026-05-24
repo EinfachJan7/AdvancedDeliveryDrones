@@ -21,7 +21,7 @@ public class PerformanceOptimizer {
     private BukkitTask cleanupTask;
     private final long CHUNK_COOLDOWN = 100L; // 5 seconds in ticks
     private final Map<String, Long> lastParticleSpawn = new ConcurrentHashMap<>();
-    private final long PARTICLE_COOLDOWN = 5L; // 0.25 seconds in ticks
+    private final long PARTICLE_COOLDOWN = 10L; // 0.5 seconds in ticks
     private final Set<UUID> activeDrones = ConcurrentHashMap.newKeySet();
 
     public PerformanceOptimizer(AdvancedDeliveryDronesPlugin plugin) {
@@ -83,16 +83,18 @@ public class PerformanceOptimizer {
 
         // Process up to 5 chunks per tick to prevent lag
         int processed = 0;
-        Set<Location> toProcess = new HashSet<>(chunkLoadQueue);
+        Location[] toProcess = chunkLoadQueue.toArray(new Location[0]);
         chunkLoadQueue.clear();
 
-        for (Location location : toProcess) {
+        for (int i = 0; i < toProcess.length; i++) {
             if (processed >= 5) {
-                // Add remaining back to queue
-                chunkLoadQueue.addAll(toProcess.stream().skip(processed).toList());
+                for (int j = i; j < toProcess.length; j++) {
+                    chunkLoadQueue.add(toProcess[j]);
+                }
                 break;
             }
 
+            Location location = toProcess[i];
             if (!isChunkLoaded(location)) {
                 World world = location.getWorld();
                 int chunkX = location.getBlockX() >> 4;
@@ -171,14 +173,26 @@ public class PerformanceOptimizer {
         location.getWorld().spawnParticle(particle, location, count, offsetX, offsetY, offsetZ, extra, data);
     }
 
+    public boolean hasPlayersNearby(Location location, double radius) {
+        return hasNearbyPlayers(location, radius);
+    }
+
     private boolean hasNearbyPlayers(Location location, double radius) {
-        // Optimized: Use getPlayers() instead of getNearbyEntities() to avoid creating entity lists
         World world = location.getWorld();
-        if (world == null) return false;
-        
+        if (world == null) {
+            return false;
+        }
+
         double radiusSq = radius * radius;
+        double locX = location.getX();
+        double locY = location.getY();
+        double locZ = location.getZ();
         for (org.bukkit.entity.Player player : world.getPlayers()) {
-            if (player.getLocation().distanceSquared(location) <= radiusSq) {
+            Location playerLoc = player.getLocation();
+            double dx = playerLoc.getX() - locX;
+            double dy = playerLoc.getY() - locY;
+            double dz = playerLoc.getZ() - locZ;
+            if (dx * dx + dy * dy + dz * dz <= radiusSq) {
                 return true;
             }
         }
@@ -186,27 +200,27 @@ public class PerformanceOptimizer {
     }
 
     private double getNearestPlayerDistance(Location location) {
-        // Optimized: Avoid creating intermediate location objects
         World world = location.getWorld();
-        if (world == null) return Double.MAX_VALUE;
-        
-        double minDistance = Double.MAX_VALUE;
+        if (world == null) {
+            return Double.MAX_VALUE;
+        }
+
+        double minDistanceSq = Double.MAX_VALUE;
         double locX = location.getX();
         double locY = location.getY();
         double locZ = location.getZ();
-        
+
         for (org.bukkit.entity.Player player : world.getPlayers()) {
             Location playerLoc = player.getLocation();
-            double distance = Math.sqrt(
-                Math.pow(playerLoc.getX() - locX, 2) +
-                Math.pow(playerLoc.getY() - locY, 2) +
-                Math.pow(playerLoc.getZ() - locZ, 2)
-            );
-            if (distance < minDistance) {
-                minDistance = distance;
+            double dx = playerLoc.getX() - locX;
+            double dy = playerLoc.getY() - locY;
+            double dz = playerLoc.getZ() - locZ;
+            double distSq = dx * dx + dy * dy + dz * dz;
+            if (distSq < minDistanceSq) {
+                minDistanceSq = distSq;
             }
         }
-        return minDistance;
+        return minDistanceSq == Double.MAX_VALUE ? Double.MAX_VALUE : Math.sqrt(minDistanceSq);
     }
 
     private boolean isChunkLoaded(Location location) {

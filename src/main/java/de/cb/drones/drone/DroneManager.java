@@ -663,9 +663,18 @@ public final class DroneManager {
 
     private void cleanupExpired() {
         long tick = currentTick();
-        List<DeliveryDrone> toRemove = activeDrones.values().stream()
-                .filter(drone -> drone.isExpired(tick))
-                .toList();
+        List<DeliveryDrone> toRemove = null;
+        for (DeliveryDrone drone : activeDrones.values()) {
+            if (drone.isExpired(tick)) {
+                if (toRemove == null) {
+                    toRemove = new java.util.ArrayList<>();
+                }
+                toRemove.add(drone);
+            }
+        }
+        if (toRemove == null) {
+            return;
+        }
         for (DeliveryDrone drone : toRemove) {
             // Send Discord notification for expired drone
             Player sender = Bukkit.getPlayer(drone.senderId());

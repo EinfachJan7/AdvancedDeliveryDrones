@@ -54,6 +54,9 @@ public final class DeliveryDrone {
     private boolean targetChunkPreloaded;
     private boolean standParked;
     private Location pendingLanding;
+    private Location cachedLandingSpot;
+    private String cachedLandingSpotKey;
+    private Location smoothLandingEnd;
     private Location landedLocation;
     private boolean openedByReceiver;
     private long lastInteractionTick;
@@ -83,13 +86,16 @@ public final class DeliveryDrone {
     private long lastTraveledDistanceTick = -1L;
     private double cachedTraveledDistance = 0.0;
     private long lastParticleUpdateTick = -1L;
-    private static final long PARTICLE_UPDATE_INTERVAL = 4L;
+    private static final long PARTICLE_UPDATE_INTERVAL = 8L;
     private long lastHologramUpdateTick = -1L;
     private static final long HOLOGRAM_UPDATE_INTERVAL = 60L; // Hologram every 3 seconds (60 ticks)
     private long lastExpectedLocationTick = -1L;
     private Location cachedExpectedLocation = null;
-    private long lastTeleportTick = -1L;
-    private static final long TELEPORT_INTERVAL = 1L;
+    private long lastMovementTick = -1L;
+    private static final long MOVEMENT_INTERVAL = 1L;
+    private static final double MOVEMENT_SNAP_DISTANCE_SQ = 64.0D;
+    private static final double MOVEMENT_EPSILON_SQ = 0.0004D;
+    private final Location movementScratch = new Location(null, 0, 0, 0);
     private long lastChunkPreloadCheckTick = -1L;
     private static final long CHUNK_PRELOAD_CHECK_INTERVAL = 20L;
     private double deliveryRadiusSq;
@@ -353,8 +359,7 @@ public final class DeliveryDrone {
     }
 
     private void startLaunchAnimation(DroneManager manager) {
-        int duration = settings.launchAnimationSeconds();
-        int totalTicks = duration * 20;
+        int totalTicks = settings.launchAnimationSeconds() * 20;
         Location startAnimLocation = stand.getLocation().clone();
         float startYaw = stand.getYaw();
 
@@ -369,34 +374,28 @@ public final class DeliveryDrone {
                 }
 
                 double progress = (double) ticks / totalTicks;
-                
-                // Smooth ease-in-out for natural acceleration
-                double easedProgress = progress < 0.5 
-                    ? 4 * progress * progress * progress 
-                    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-                
-                // Calculate rise height (1.5 blocks total - more subtle)
+
+                double easedProgress = progress < 0.5
+                        ? 4 * progress * progress * progress
+                        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
                 double riseHeight = easedProgress * 1.5;
-                
-                // Update drone position - slowly rise up
+
                 Location newPos = startAnimLocation.clone();
                 newPos.setY(startAnimLocation.getY() + riseHeight);
-                
-                // Gentle hover effect (slower sine wave)
+
                 double hoverOffset = Math.sin(progress * Math.PI * 1.5) * 0.05;
                 newPos.setY(newPos.getY() + hoverOffset);
-                
-                // Slow steady rotation (1.5 rotations total)
+
                 float spinAngle = (float) (startYaw + (easedProgress * 360 * 1.5));
                 newPos.setYaw(spinAngle);
-                
+
                 stand.teleport(newPos);
-                
+
                 Location center = newPos.clone();
 
-                // Refined spiral particle effect
                 double angle = ticks * 0.3;
-                double radius = 2.0 * (1 - progress * 0.5); // Larger radius, slower shrink
+                double radius = 2.0 * (1 - progress * 0.5);
 
                 if (ticks % 2 == 0) {
                     for (int i = 0; i < 4; i++) {
@@ -412,48 +411,42 @@ public final class DeliveryDrone {
                     }
                 }
 
-                // Gentle rising clouds below
                 if (ticks % 6 == 0) {
-                    for (int i = 0; i < 1; i++) {
-                        double cloudAngle = Math.random() * Math.PI * 2;
-                        double dist = Math.random() * 0.3;
-                        Location below = center.clone().add(
-                            Math.cos(cloudAngle) * dist, 
-                            -0.3 - (Math.random() * 0.2), 
+                    double cloudAngle = Math.random() * Math.PI * 2;
+                    double dist = Math.random() * 0.3;
+                    Location below = center.clone().add(
+                            Math.cos(cloudAngle) * dist,
+                            -0.3 - (Math.random() * 0.2),
                             Math.sin(cloudAngle) * dist
-                        );
-                        center.getWorld().spawnParticle(org.bukkit.Particle.CLOUD, below, 1, 0.03, 0.05, 0.03, 0.01);
-                    }
+                    );
+                    center.getWorld().spawnParticle(org.bukkit.Particle.CLOUD, below, 1, 0.03, 0.05, 0.03, 0.01);
                 }
 
-                // Subtle glow particles
                 if (ticks % 12 == 0) {
                     center.getWorld().spawnParticle(org.bukkit.Particle.END_ROD, center.clone().add(0, 0.3, 0), 3, 0.3, 0.3, 0.3, 0.01);
                 }
 
-                // Play launch sound at start
                 if (ticks == 0) {
                     center.getWorld().playSound(center, settings.launchSound(), settings.launchSoundVolume() * 0.8f, 0.9f);
                 }
 
-                // Subtle rising sound
                 if (ticks % 15 == 0) {
                     center.getWorld().playSound(center, settings.flightSound(), 0.05f, 0.9f + (float) progress * 0.2f);
                 }
 
                 ticks++;
 
-                // Animation complete - start the actual flight
                 if (ticks >= totalTicks) {
                     cancel();
 
-                    // Subtle launch effect
                     center.getWorld().spawnParticle(org.bukkit.Particle.EXPLOSION, center, 5, 0.4, 0.4, 0.4, 0.08);
                     center.getWorld().spawnParticle(org.bukkit.Particle.FIREWORK, center, 25, 0.4, 0.4, 0.4, 0.25);
                     center.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, center, 12, 0.5, 0.5, 0.5, 0.03);
                     center.getWorld().playSound(center, org.bukkit.Sound.ENTITY_FIREWORK_ROCKET_BLAST, 1.0f, 1.0f);
 
-                    startLocation.set(center.getX(), center.getY(), center.getZ());
+                    startLocation.setX(center.getX());
+                    startLocation.setY(center.getY());
+                    startLocation.setZ(center.getZ());
                     startLocation.setYaw(center.getYaw());
                     startLocation.setPitch(center.getPitch());
 
@@ -465,6 +458,71 @@ public final class DeliveryDrone {
         new LaunchAnimationTask().runTaskTimer(manager.plugin(), 0L, 1L);
     }
 
+    private boolean isStandAlive() {
+        return stand != null && !stand.isDead();
+    }
+
+    private void enableStandPhysics() {
+        if (isStandAlive()) {
+            stand.setCanTick(true);
+        }
+    }
+
+    private void stopStandMotion() {
+        if (isStandAlive()) {
+            stand.setVelocity(new Vector(0, 0, 0));
+        }
+    }
+
+    private void disableStandPhysics() {
+        stopStandMotion();
+        if (isStandAlive()) {
+            stand.setCanTick(false);
+        }
+    }
+
+    /**
+     * Moves the armor stand via velocity (blocks/tick delta). Teleports only for dimension changes or large corrections.
+     */
+    private void moveStandToward(Location target, Float yaw) {
+        if (!isStandAlive() || target.getWorld() == null) {
+            return;
+        }
+
+        Location current = stand.getLocation();
+        World currentWorld = current.getWorld();
+        if (currentWorld == null || !currentWorld.equals(target.getWorld())) {
+            if (yaw != null) {
+                target.setYaw(yaw);
+            }
+            stand.teleport(target);
+            return;
+        }
+
+        double dx = target.getX() - current.getX();
+        double dy = target.getY() - current.getY();
+        double dz = target.getZ() - current.getZ();
+        double distSq = dx * dx + dy * dy + dz * dz;
+
+        if (distSq > MOVEMENT_SNAP_DISTANCE_SQ) {
+            if (yaw != null) {
+                target.setYaw(yaw);
+            }
+            stand.teleport(target);
+            return;
+        }
+
+        if (distSq > MOVEMENT_EPSILON_SQ) {
+            stand.setVelocity(new Vector(dx, dy, dz));
+        } else {
+            stand.setVelocity(new Vector(0, 0, 0));
+        }
+
+        if (yaw != null && Math.abs(current.getYaw() - yaw) > 3.0f) {
+            stand.setRotation(yaw, current.getPitch());
+        }
+    }
+
     private void startFlightInternal(DroneManager manager) {
         long nowTick = Bukkit.getCurrentTick();
         this.flightStartTick = nowTick;
@@ -474,6 +532,7 @@ public final class DeliveryDrone {
 
         applySettings(settings, manager);
         initBossbar(manager);
+        enableStandPhysics();
 
         // Register with performance optimizer
         if (droneManager != null && droneManager.getPerformanceOptimizer() != null) {
@@ -545,8 +604,10 @@ public final class DeliveryDrone {
                         pathComputed = false;
                         flightStartTick = nowTick;
                         approachPhaseStartTick = -1L;
+                        invalidateLandingCache();
                         pendingLanding = null;
                         smoothLanding = false;
+                        smoothLandingEnd = null;
                         wasGlidingFollowed = true;
                         
                         expected = newLoc;
@@ -610,8 +671,10 @@ public final class DeliveryDrone {
                     pathComputed = false;
                     flightStartTick = nowTick;
                     approachPhaseStartTick = -1L;
+                    invalidateLandingCache();
                     pendingLanding = null;
                     smoothLanding = false;
+                    smoothLandingEnd = null;
                     wasAirborneFollowed = true;
 
                     expected = newLoc;
@@ -626,15 +689,14 @@ public final class DeliveryDrone {
         lastKnownLocation = expected;
         preloadTargetChunkIfNeeded(expected);
         Location standAnchor = landed
-                ? computeLandingFrom(landedLocation != null ? landedLocation : fixedTarget)
+                ? (landedLocation != null ? landedLocation : fixedTarget)
                 : expected;
         ensureStandPresent(manager, standAnchor);
-        boolean standAvailable = stand != null && !stand.isDead();
+        boolean standAvailable = isStandAlive();
         if (standAvailable && !expected.getWorld().equals(stand.getWorld())) {
             return;
         }
         
-        // Cache stand location to avoid multiple getLocation() calls
         Location standLocation = standAvailable ? stand.getLocation() : null;
         Location bossbarRef = landed
                 ? (landedLocation != null ? landedLocation : (standLocation != null ? standLocation : lastKnownLocation))
@@ -643,32 +705,38 @@ public final class DeliveryDrone {
         if (!isGlidingTarget && !isAirFollowTarget && !landed && distanceSquaredToTarget(expected) <= deliveryRadiusSq) {
             if (pendingLanding == null) {
                 pendingLanding = fixedTarget.clone();
+                invalidateLandingCache();
             }
             if (isChunkLoaded(pendingLanding)) {
-                Location landingSpot = exactSocketTarget ? pendingLanding.clone() : computeLandingFrom(pendingLanding);
-                
                 // Always use smooth landing - no instant teleportation
                 if (!smoothLanding) {
-                    // Start smooth landing animation
                     smoothLanding = true;
                     smoothLandingStart = expected.clone();
                     smoothLandingStartTick = nowTick;
+                    smoothLandingEnd = exactSocketTarget
+                            ? pendingLanding.clone()
+                            : resolveLandingSpot(pendingLanding);
                 }
-                
+
+                Location landingSpot = smoothLandingEnd != null ? smoothLandingEnd : pendingLanding;
+
                 // Continue smooth landing animation
                 if (smoothLanding) {
                     long elapsedTicks = nowTick - smoothLandingStartTick;
                     if (elapsedTicks >= smoothLandingDuration) {
-                        // Landing animation complete — recompute safe spot once before touchdown
-                        Location finalSpot = exactSocketTarget ? pendingLanding.clone() : computeLandingFrom(pendingLanding);
-                        if (!isLandingLocationSafe(finalSpot)) {
-                            Location retryBase = pendingLanding != null ? pendingLanding : fixedTarget;
-                            finalSpot = exactSocketTarget ? retryBase.clone() : computeLandingFrom(retryBase);
+                        Location finalSpot = landingSpot.clone();
+                        if (!isLandingLocationSafe(finalSpot) && pendingLanding != null) {
+                            invalidateLandingCache();
+                            finalSpot = exactSocketTarget
+                                    ? pendingLanding.clone()
+                                    : resolveLandingSpot(pendingLanding);
                         }
 
                         landAt(manager, finalSpot);
+                        invalidateLandingCache();
                         pendingLanding = null;
                         smoothLanding = false;
+                        smoothLandingEnd = null;
                         if (!landingNotified) {
                             landingNotified = true;
                             Player receiver = Bukkit.getPlayer(receiverId);
@@ -706,23 +774,27 @@ public final class DeliveryDrone {
 
                         Vector startVec = smoothLandingStart.toVector();
                         Vector endVec = landingSpot.toVector();
-                        Vector current = startVec.clone().add(endVec.clone().subtract(startVec).multiply(easedProgress));
+                        Vector delta = endVec.clone().subtract(startVec);
+                        Vector current = startVec.clone().add(delta.multiply(easedProgress));
 
                         // Apply hover effect only to Y coordinate
                         current.setY(current.getY() + hoverEffect);
 
-                        Location animatedPos = new Location(landingSpot.getWorld(), current.getX(), current.getY(), current.getZ());
-                        ensureStandPresent(manager, animatedPos);
-                        if (stand != null && !stand.isDead()) {
-                            stand.teleport(animatedPos);
+                        movementScratch.setWorld(landingSpot.getWorld());
+                        movementScratch.setX(current.getX());
+                        movementScratch.setY(current.getY());
+                        movementScratch.setZ(current.getZ());
+                        if (standAvailable && nowTick - lastMovementTick >= MOVEMENT_INTERVAL) {
+                            moveStandToward(movementScratch, null);
+                            lastMovementTick = nowTick;
                         }
 
-                        tickAttachedAnimalFollow(animatedPos);
-                        updateParticleTrail();
+                        tickAttachedAnimalFollow(movementScratch);
+                        if (nowTick - lastParticleUpdateTick >= PARTICLE_UPDATE_INTERVAL) {
+                            updateParticleTrailAt(movementScratch);
+                        }
                         if (nowTick - lastSoundTick >= SOUND_INTERVAL) {
-                            // Cache stand location for sound playing
-                            Location soundLoc = stand != null && !stand.isDead() ? stand.getLocation() : animatedPos;
-                            soundLoc.getWorld().playSound(soundLoc, settings.flightSound(), 0.05f, 1.3f);
+                            movementScratch.getWorld().playSound(movementScratch, settings.flightSound(), 0.05f, 1.3f);
                             lastSoundTick = nowTick;
                         }
                     }
@@ -738,14 +810,15 @@ public final class DeliveryDrone {
                     standAvailable = false;
                 }
             } else if (standAvailable) {
-                if (nowTick - lastTeleportTick >= TELEPORT_INTERVAL) {
-                    stand.teleport(expected);
-                    lastTeleportTick = nowTick;
+                if (nowTick - lastMovementTick >= MOVEMENT_INTERVAL) {
+                    moveStandToward(expected, expected.getYaw());
+                    lastMovementTick = nowTick;
                 }
                 tickAttachedAnimalFollow(expected);
-                updateParticleTrail();
+                if (nowTick - lastParticleUpdateTick >= PARTICLE_UPDATE_INTERVAL) {
+                    updateParticleTrailAt(expected);
+                }
                 if (nowTick - lastSoundTick >= SOUND_INTERVAL) {
-                    // Cache stand properties to avoid multiple calls
                     if (standLocation == null) {
                         standLocation = stand.getLocation();
                     }
@@ -755,11 +828,11 @@ public final class DeliveryDrone {
             }
         }
         if (landed && standAvailable) {
-            Location landedRef = landedLocation != null ? landedLocation : (stand != null && !stand.isDead() ? stand.getLocation() : lastKnownLocation);
+            Location landedRef = landedLocation != null ? landedLocation : (standLocation != null ? standLocation : lastKnownLocation);
             tickAttachedAnimalFollow(landedRef);
         }
         if (landed && standAvailable && nowTick - lastHologramUpdateTick >= HOLOGRAM_UPDATE_INTERVAL) {
-            if (isChunkLoaded(stand.getLocation())) {
+            if (standLocation != null && isChunkLoaded(standLocation)) {
                 updateHologram(nowTick, manager);
             }
         }
@@ -781,38 +854,35 @@ public final class DeliveryDrone {
     }
 
     private void animateCollection(long elapsedTicks) {
-        if (stand == null || stand.isDead()) return;
+        if (stand == null || stand.isDead()) {
+            return;
+        }
 
         double progress = (double) elapsedTicks / collectionAnimationDuration;
-        // Use ease-out cubic for smooth collection
         double easedProgress = 1 - Math.pow(1 - progress, 3);
 
-        // Animate upward spiral and shrink
         Location current = stand.getLocation().clone();
-        double height = easedProgress * 3.0; // Rise 3 blocks
-        double rotation = elapsedTicks * 0.3; // Rotation speed
+        double height = easedProgress * 3.0;
+        double rotation = elapsedTicks * 0.3;
 
-        Location newPos = current.add(0, height * 0.1, 0); // Gradual rise
+        Location newPos = current.clone().add(0, height * 0.1, 0);
         newPos.setYaw((float) (current.getYaw() + rotation * 10));
-        
-        // Apply scale effect through visual means
+
         stand.teleport(newPos);
-        
-        // Create collection particles
+
         for (int i = 0; i < 3; i++) {
             double angle = (elapsedTicks * 0.5 + i * 120) * Math.PI / 180;
             double radius = easedProgress * 2.0;
             double x = current.getX() + Math.cos(angle) * radius;
             double z = current.getZ() + Math.sin(angle) * radius;
             double y = current.getY() + height * 0.2;
-            
+
             Location particleLoc = new Location(current.getWorld(), x, y, z);
             current.getWorld().spawnParticle(org.bukkit.Particle.END_ROD, particleLoc, 5, 0.1, 0.1, 0.1, 0.01);
             current.getWorld().spawnParticle(org.bukkit.Particle.CLOUD, particleLoc, 2, 0.2, 0.2, 0.2, 0.05);
         }
 
-        // Play collection sound
-        if (elapsedTicks % 10 == 0) { // Every 0.5 seconds
+        if (elapsedTicks % 10 == 0) {
             current.getWorld().playSound(current, org.bukkit.Sound.ENTITY_ITEM_PICKUP, 0.3f, 1.5f + (float) progress);
         }
     }
@@ -826,11 +896,13 @@ public final class DeliveryDrone {
         if (stand == null || stand.isDead()) {
             return;
         }
+        stopStandMotion();
         stand.teleport(landing);
         this.landedLocation = landing.clone();
         this.lastKnownLocation = landing.clone();
         stand.setGlowing(true);
         this.landed = true;
+        disableStandPhysics();
         this.approachPhaseStartTick = -1L;
         // Start despawn timer on landing
         this.lastInteractionTick = Bukkit.getCurrentTick();
@@ -853,7 +925,40 @@ public final class DeliveryDrone {
                !head.isLiquid();
     }
 
+    private void invalidateLandingCache() {
+        cachedLandingSpot = null;
+        cachedLandingSpotKey = null;
+    }
+
+    private String landingSpotCacheKey(Location at) {
+        World world = at.getWorld();
+        if (world == null) {
+            return "";
+        }
+        return world.getUID() + ":" + at.getBlockX() + ":" + at.getBlockY() + ":" + at.getBlockZ();
+    }
+
+    private Location resolveLandingSpot(Location at) {
+        if (exactSocketTarget) {
+            return at.clone();
+        }
+        String key = landingSpotCacheKey(at);
+        if (cachedLandingSpot != null && key.equals(cachedLandingSpotKey)) {
+            return cachedLandingSpot;
+        }
+        cachedLandingSpotKey = key;
+        cachedLandingSpot = computeLandingFrom(at);
+        return cachedLandingSpot;
+    }
+
     private int findSafeLandingY(World world, int x, int startY, int z) {
+        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+            return Math.max(world.getMinHeight() + 1, startY);
+        }
+        int highest = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
+        if (highest >= world.getMinHeight() && highest < world.getMaxHeight() - 2 && isSafeGround(world, x, highest, z)) {
+            return highest + 1;
+        }
         for (int dy = 0; dy <= 16; dy++) {
             // Check downwards
             int yDown = startY - dy;
@@ -873,8 +978,6 @@ public final class DeliveryDrone {
             }
         }
         
-        // Fallback to highest block if no safe block found close to player/socket height
-        int highest = world.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
         if (world.getName().toLowerCase().contains("nether") && highest >= 120) {
             for (int y = 115; y > world.getMinHeight(); y--) {
                 if (isSafeGround(world, x, y, z)) {
@@ -907,25 +1010,37 @@ public final class DeliveryDrone {
         int centerY = at.getBlockY();
         int centerZ = at.getBlockZ();
         double scanRadiusSq = scanRadius * scanRadius;
-        
-        int bestY = -999;
+
+        int centerLandY = findSafeLandingY(world, centerX, centerY, centerZ);
+        Location centerSpot = new Location(world, centerX + 0.5, centerLandY + 0.1, centerZ + 0.5);
+        if (isLandingLocationSafe(centerSpot)) {
+            return centerSpot;
+        }
+
+        int bestY = Integer.MIN_VALUE;
         double bestDistanceSq = Double.MAX_VALUE;
         int bestX = centerX;
         int bestZ = centerZ;
-        
+
         int scanRange = (int) Math.ceil(scanRadius);
-        for (int dx = -scanRange; dx <= scanRange; dx++) {
-            for (int dz = -scanRange; dz <= scanRange; dz++) {
+        int coarseStep = scanRange > 6 ? 2 : 1;
+        for (int dx = -scanRange; dx <= scanRange; dx += coarseStep) {
+            for (int dz = -scanRange; dz <= scanRange; dz += coarseStep) {
                 int distSq = dx * dx + dz * dz;
-                if (distSq > scanRadiusSq) continue;
-                
+                if (distSq > scanRadiusSq) {
+                    continue;
+                }
+
                 int x = centerX + dx;
                 int z = centerZ + dz;
-                
+                if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+                    continue;
+                }
+
                 int y = findSafeLandingY(world, x, centerY, z);
                 double dy = y - centerY;
                 double totalDistSq = distSq + dy * dy;
-                
+
                 if (totalDistSq < bestDistanceSq) {
                     bestDistanceSq = totalDistSq;
                     bestY = y;
@@ -934,8 +1049,32 @@ public final class DeliveryDrone {
                 }
             }
         }
-        
-        if (bestY != -999) {
+
+        if (bestY != Integer.MIN_VALUE) {
+            if (coarseStep > 1) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        int x = bestX + dx;
+                        int z = bestZ + dz;
+                        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+                            continue;
+                        }
+                        int distSq = (x - centerX) * (x - centerX) + (z - centerZ) * (z - centerZ);
+                        if (distSq > scanRadiusSq) {
+                            continue;
+                        }
+                        int y = findSafeLandingY(world, x, centerY, z);
+                        double dy = y - centerY;
+                        double totalDistSq = distSq + dy * dy;
+                        if (totalDistSq < bestDistanceSq) {
+                            bestDistanceSq = totalDistSq;
+                            bestY = y;
+                            bestX = x;
+                            bestZ = z;
+                        }
+                    }
+                }
+            }
             return new Location(world, bestX + 0.5, bestY + 0.1, bestZ + 0.5);
         }
         
@@ -957,8 +1096,10 @@ public final class DeliveryDrone {
         pathComputed = false;
         flightStartTick = nowTick;
         approachPhaseStartTick = -1L;
+        invalidateLandingCache();
         pendingLanding = null;
         smoothLanding = false;
+        smoothLandingEnd = null;
         if (airborneCycle) {
             wasAirborneFollowed = false;
             allowAirborneFollow = false;
@@ -1389,35 +1530,28 @@ public final class DeliveryDrone {
         }
     }
 
-    private void updateParticleTrail() {
-        if (stand == null || stand.isDead()) {
+    private void updateParticleTrailAt(Location ref) {
+        if (ref.getWorld() == null) {
             return;
         }
-        
-        // Check particle update interval to reduce processing
+
         long currentTick = Bukkit.getCurrentTick();
-        if (currentTick - lastParticleUpdateTick < PARTICLE_UPDATE_INTERVAL) {
-            return;
-        }
         lastParticleUpdateTick = currentTick;
-        
-        // Check performance optimization
+
         if (droneManager != null && droneManager.getPerformanceOptimizer() != null) {
-            // Skip particles if performance should be throttled
             if (droneManager.getPerformanceOptimizer().shouldThrottlePerformance()) {
                 return;
             }
-            
-            // Check particle cooldown
             if (!droneManager.getPerformanceOptimizer().shouldSpawnParticles(droneId)) {
                 return;
             }
         }
-        
-        Location standLoc = stand.getLocation();
-        Location now = new Location(standLoc.getWorld(), standLoc.getX(), 
-            standLoc.getY() + settings.particleYOffset(), standLoc.getZ());
-        particleTrail.addFirst(now);
+
+        movementScratch.setWorld(ref.getWorld());
+        movementScratch.setX(ref.getX());
+        movementScratch.setY(ref.getY() + settings.particleYOffset());
+        movementScratch.setZ(ref.getZ());
+        particleTrail.addFirst(movementScratch.clone());
         
         // Limit trail length to reduce memory and iteration cost
         int maxTrailLength = Math.min(settings.particleTrailLength(), 20);
@@ -1425,37 +1559,23 @@ public final class DeliveryDrone {
             particleTrail.removeLast();
         }
 
-        int index = 0;
+        int spawned = 0;
+        int maxSpawnPoints = 2;
         for (Location point : particleTrail) {
-            // Skip every other particle point for better performance
-            if (index % 2 == 0) {
-                int count = Math.max(1, settings.particleCount() - (index / 4));
-                double spread = 0.02 + (index * 0.01);
-                // Use performance optimizer for particles
-                if (droneManager != null) {
-                    for (DroneSettings.ParticleEffect effect : settings.particles()) {
-                        if (effect.data() != null) {
-                            droneManager.getPerformanceOptimizer().spawnParticlesOptimized(
-                                point, effect.particle(), count, spread, spread, spread, 0.0, effect.data()
-                            );
-                        } else {
-                            droneManager.getPerformanceOptimizer().spawnParticlesOptimized(
-                                point, effect.particle(), count, spread, spread, spread, 0.0
-                            );
-                        }
-                    }
+            if (spawned >= maxSpawnPoints) {
+                break;
+            }
+            int count = Math.max(1, settings.particleCount() - spawned);
+            if (droneManager != null && droneManager.getPerformanceOptimizer() != null) {
+                var optimizer = droneManager.getPerformanceOptimizer();
+                DroneSettings.ParticleEffect effect = settings.particles().get(spawned % settings.particles().size());
+                if (effect.data() != null) {
+                    optimizer.spawnParticlesOptimized(point, effect.particle(), count, 0.05, 0.05, 0.05, 0.0, effect.data());
                 } else {
-                    // Fallback if droneManager is not set
-                    for (DroneSettings.ParticleEffect effect : settings.particles()) {
-                        if (effect.data() != null) {
-                            point.getWorld().spawnParticle(effect.particle(), point, count, spread, spread, spread, 0.0, effect.data());
-                        } else {
-                            point.getWorld().spawnParticle(effect.particle(), point, count, spread, spread, spread, 0.0);
-                        }
-                    }
+                    optimizer.spawnParticlesOptimized(point, effect.particle(), count, 0.05, 0.05, 0.05, 0.0);
                 }
             }
-            index++;
+            spawned++;
         }
     }
 
@@ -1556,7 +1676,8 @@ public final class DeliveryDrone {
         if (hologramStand != null && !hologramStand.isDead()) {
             hologramStand.remove();
         }
-        if (stand != null && !stand.isDead()) {
+        if (isStandAlive()) {
+            disableStandPhysics();
             stand.remove();
         }
         stand = null;
@@ -1785,15 +1906,16 @@ public final class DeliveryDrone {
     }
 
     private void ensureStandPresent(DroneManager manager, Location preferredLocation) {
-        if (stand != null && !stand.isDead()) {
-            if (!stand.getWorld().equals(preferredLocation.getWorld())) {
+        if (isStandAlive()) {
+            World standWorld = stand.getWorld();
+            if (standWorld != null && !standWorld.equals(preferredLocation.getWorld())) {
                 if (isChunkLoaded(preferredLocation)) {
                     stand.teleport(preferredLocation);
                 } else {
                     parkStandUntilChunkLoads(manager);
                 }
             }
-            if (stand != null && !stand.isDead()) {
+            if (isStandAlive()) {
                 standId = stand.getUniqueId();
                 return;
             }
@@ -1810,6 +1932,9 @@ public final class DeliveryDrone {
         this.standId = respawned.getUniqueId();
         this.lastKnownLocation = preferredLocation.clone();
         this.standParked = false;
+        if (!landed) {
+            enableStandPhysics();
+        }
         if (landed) {
             stand.setGlowing(true);
             spawnTransportedAnimalsAtLanding();
