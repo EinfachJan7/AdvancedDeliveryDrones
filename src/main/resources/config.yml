@@ -8,6 +8,8 @@ plugin:
   check-updates: true
 
 database:
+  # Storage type for active Drones: "YAML" or "MYSQL"
+  # Note: Sockets, Blacklists, and Player Settings are ALWAYS saved in YAML (Fallback is always YAML).
   type: "YAML"
   mysql:
     host: "localhost"
