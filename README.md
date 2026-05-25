@@ -1,8 +1,8 @@
 # 📦 Advanced Delivery Drones
 
-**Version 1.0.4**
+**Version 1.0.5**
 
-Licensed under the [MIT License](LICENSE).
+Licensed under the [Apache-2.0 License](LICENSE).
 
 Physical drone deliveries for Minecraft Paper servers: visible flight, package inventories, sockets, animal transport, blacklists, Discord webhooks, and fully configurable GUIs.
 
