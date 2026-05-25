@@ -143,3 +143,7 @@ container-unload-success: "<green>无人机已将物品卸载到插槽 <white><s
 
 mysql-connected: "<green>成功连接到 MySQL！</green>"
 mysql-connection-failed: "<red>连接 MySQL 失败！</red>"
+
+usage-convert: "<red>用法: /drone convert <yaml-to-mysql|mysql-to-yaml></red>"
+convert-success: "<green>数据已成功转换并重新加载！</green>"
+convert-error: "<red>转换错误: <error></red>"

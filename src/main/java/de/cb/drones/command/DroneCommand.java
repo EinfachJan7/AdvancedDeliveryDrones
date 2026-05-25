@@ -92,6 +92,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "preview" -> executePreview(player, args);
             case "toggle" -> executeToggle(player);
             case "reload" -> executeReload(player);
+            case "convert" -> executeConvert(player, args);
             case "list" -> executeList(player);
             case "decline" -> executeDecline(player);
             case "cancel" -> executeCancel(player);
@@ -238,6 +239,29 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         menuHandler.updateSettings(droneManager.settings());
         droneManager.sendMessage(player, "reload");
         return true;
+    }
+
+    private boolean executeConvert(Player player, String[] args) {
+        if (!player.hasPermission("drone.admin.convert")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
+        if (args.length < 2) {
+            player.sendMessage(plugin.component("usage-convert"));
+            return true;
+        }
+        
+        String action = args[1].toLowerCase(Locale.ROOT);
+        if (action.equals("yaml-to-mysql")) {
+            DataConverter.convertYamlToMysql(plugin, player);
+            return true;
+        } else if (action.equals("mysql-to-yaml")) {
+            DataConverter.convertMysqlToYaml(plugin, player);
+            return true;
+        } else {
+            player.sendMessage(plugin.component("usage-convert"));
+            return true;
+        }
     }
 
     

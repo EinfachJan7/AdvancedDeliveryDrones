@@ -4,33 +4,49 @@ import java.io.File;
 import java.io.IOException;
 import java.util.UUID;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.configuration.file.YamlConfiguration;
+import de.cb.drones.AdvancedDeliveryDronesPlugin;
 
 public final class PlayerSettingsRepository {
     private static final String PATH_PREFIX = "delivery-settings.";
     private static final String RECEIVE_SUFFIX = ".can-receive";
     private static final String LAST_SEND_SUFFIX = ".last-send-time";
 
-    private final JavaPlugin plugin;
+    private final AdvancedDeliveryDronesPlugin plugin;
     private final File file;
     private YamlConfiguration config;
 
-    public PlayerSettingsRepository(JavaPlugin plugin) {
+    public PlayerSettingsRepository(AdvancedDeliveryDronesPlugin plugin) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "players.yml");
         reload();
     }
 
     public void reload() {
-        if (!file.exists()) {
-            try {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new IllegalStateException("Could not create players.yml", e);
+        if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
+            String data = plugin.getDatabaseManager().loadConfig("player_settings");
+            this.config = new YamlConfiguration();
+            if (data != null) {
+                try {
+                    this.config.loadFromString(data);
+                } catch (Exception e) {
+                    plugin.getLogger().severe("Could not parse player_settings from MySQL!");
+                }
             }
+            if (file.exists()) {
+                file.delete();
+            }
+        } else {
+            if (!file.exists()) {
+                try {
+                    file.getParentFile().mkdirs();
+                    file.createNewFile();
+                } catch (IOException e) {
+                    throw new IllegalStateException("Could not create players.yml", e);
+                }
+            }
+            this.config = YamlConfiguration.loadConfiguration(file);
         }
-        this.config = YamlConfiguration.loadConfiguration(file);
     }
 
     public boolean canReceive(UUID playerId) {
@@ -69,10 +85,14 @@ public final class PlayerSettingsRepository {
     }
 
     private void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not save players.yml: " + e.getMessage());
+        if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
+            plugin.getDatabaseManager().saveConfig("player_settings", config.saveToString());
+        } else {
+            try {
+                config.save(file);
+            } catch (IOException e) {
+                plugin.getLogger().warning("Could not save players.yml: " + e.getMessage());
+            }
         }
     }
 }

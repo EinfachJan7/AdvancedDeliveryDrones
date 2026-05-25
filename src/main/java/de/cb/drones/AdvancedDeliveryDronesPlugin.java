@@ -180,6 +180,10 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         return languageManager;
     }
 
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
+    }
+
     public DiscordWebhookManager getDiscordWebhookManager() {
         return discordWebhookManager;
     }

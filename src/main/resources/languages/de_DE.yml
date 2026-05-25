@@ -141,3 +141,7 @@ container-unload-success: "<green>Die Drohne hat ihre Items in einen Container b
 
 mysql-connected: "<green>Erfolgreich mit MySQL verbunden!</green>"
 mysql-connection-failed: "<red>MySQL Verbindung fehlgeschlagen!</red>"
+
+usage-convert: "<red>Nutzung: /drone convert <yaml-to-mysql|mysql-to-yaml></red>"
+convert-success: "<green>Daten erfolgreich konvertiert und neu geladen!</green>"
+convert-error: "<red>Fehler bei der Konvertierung: <error></red>"

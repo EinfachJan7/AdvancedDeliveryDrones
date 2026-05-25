@@ -8,31 +8,47 @@ import java.util.List;
 import java.util.UUID;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.inventory.ItemStack;
+import de.cb.drones.AdvancedDeliveryDronesPlugin;
 
 public final class SocketPendingReturnsRepository {
     private static final String PATH_PREFIX = "returns.";
 
-    private final JavaPlugin plugin;
+    private final AdvancedDeliveryDronesPlugin plugin;
     private final File file;
     private YamlConfiguration config;
 
-    public SocketPendingReturnsRepository(JavaPlugin plugin) {
+    public SocketPendingReturnsRepository(AdvancedDeliveryDronesPlugin plugin) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "socket-pending-returns.yml");
         reload();
     }
 
     public void reload() {
-        if (!file.exists()) {
-            try {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new IllegalStateException("Could not create socket-pending-returns.yml", e);
+        if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
+            String data = plugin.getDatabaseManager().loadConfig("socket_pending_returns");
+            this.config = new YamlConfiguration();
+            if (data != null) {
+                try {
+                    this.config.loadFromString(data);
+                } catch (Exception e) {
+                    plugin.getLogger().severe("Could not parse socket_pending_returns from MySQL!");
+                }
             }
+            if (file.exists()) {
+                file.delete();
+            }
+        } else {
+            if (!file.exists()) {
+                try {
+                    file.getParentFile().mkdirs();
+                    file.createNewFile();
+                } catch (IOException e) {
+                    throw new IllegalStateException("Could not create socket_pending_returns.yml", e);
+                }
+            }
+            this.config = YamlConfiguration.loadConfiguration(file);
         }
-        this.config = YamlConfiguration.loadConfiguration(file);
     }
 
     public void addReturns(UUID ownerId, List<ItemStack> items) {
@@ -78,10 +94,14 @@ public final class SocketPendingReturnsRepository {
     }
 
     private void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not save socket-pending-returns.yml: " + e.getMessage());
+        if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
+            plugin.getDatabaseManager().saveConfig("socket_pending_returns", config.saveToString());
+        } else {
+            try {
+                config.save(file);
+            } catch (IOException e) {
+                plugin.getLogger().warning("Could not save socket_pending_returns.yml: " + e.getMessage());
+            }
         }
     }
 }

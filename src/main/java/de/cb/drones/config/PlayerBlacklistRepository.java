@@ -7,32 +7,48 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.configuration.file.YamlConfiguration;
+import de.cb.drones.AdvancedDeliveryDronesPlugin;
 
 public final class PlayerBlacklistRepository {
     private static final String PATH_PREFIX = "blacklists.";
     private static final String PLAYERS_SUFFIX = ".players";
 
-    private final JavaPlugin plugin;
+    private final AdvancedDeliveryDronesPlugin plugin;
     private final File file;
     private YamlConfiguration config;
 
-    public PlayerBlacklistRepository(JavaPlugin plugin) {
+    public PlayerBlacklistRepository(AdvancedDeliveryDronesPlugin plugin) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "blacklists.yml");
         reload();
     }
 
     public void reload() {
-        if (!file.exists()) {
-            try {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new IllegalStateException("Could not create blacklists.yml", e);
+        if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
+            String data = plugin.getDatabaseManager().loadConfig("blacklists");
+            this.config = new YamlConfiguration();
+            if (data != null) {
+                try {
+                    this.config.loadFromString(data);
+                } catch (Exception e) {
+                    plugin.getLogger().severe("Could not parse blacklists from MySQL!");
+                }
             }
+            if (file.exists()) {
+                file.delete();
+            }
+        } else {
+            if (!file.exists()) {
+                try {
+                    file.getParentFile().mkdirs();
+                    file.createNewFile();
+                } catch (IOException e) {
+                    throw new IllegalStateException("Could not create blacklists.yml", e);
+                }
+            }
+            this.config = YamlConfiguration.loadConfiguration(file);
         }
-        this.config = YamlConfiguration.loadConfiguration(file);
         migrateLegacyKeys();
     }
 
@@ -114,10 +130,14 @@ public final class PlayerBlacklistRepository {
     }
 
     private void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not save blacklists.yml: " + e.getMessage());
+        if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
+            plugin.getDatabaseManager().saveConfig("blacklists", config.saveToString());
+        } else {
+            try {
+                config.save(file);
+            } catch (IOException e) {
+                plugin.getLogger().warning("Could not save blacklists.yml: " + e.getMessage());
+            }
         }
     }
 }

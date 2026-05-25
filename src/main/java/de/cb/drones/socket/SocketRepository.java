@@ -5,7 +5,8 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.configuration.file.YamlConfiguration;
+import de.cb.drones.AdvancedDeliveryDronesPlugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,12 +17,12 @@ import java.util.UUID;
 public final class SocketRepository {
     private static final String SOCKETS_PATH = "sockets";
 
-    private final JavaPlugin plugin;
+    private final AdvancedDeliveryDronesPlugin plugin;
     private final File file;
     private YamlConfiguration config;
     private int maxSocketsPerPlayer;
 
-    public SocketRepository(JavaPlugin plugin, int maxSocketsPerPlayer) {
+    public SocketRepository(AdvancedDeliveryDronesPlugin plugin, int maxSocketsPerPlayer) {
         this.plugin = plugin;
         this.file = new File(plugin.getDataFolder(), "sockets.yml");
         this.maxSocketsPerPlayer = maxSocketsPerPlayer;
@@ -37,15 +38,30 @@ public final class SocketRepository {
     }
 
     public void reload() {
-        if (!file.exists()) {
-            try {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new IllegalStateException("Could not create sockets.yml", e);
+        if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
+            String data = plugin.getDatabaseManager().loadConfig("sockets");
+            this.config = new YamlConfiguration();
+            if (data != null) {
+                try {
+                    this.config.loadFromString(data);
+                } catch (Exception e) {
+                    plugin.getLogger().severe("Could not parse sockets from MySQL!");
+                }
             }
+            if (file.exists()) {
+                file.delete();
+            }
+        } else {
+            if (!file.exists()) {
+                try {
+                    file.getParentFile().mkdirs();
+                    file.createNewFile();
+                } catch (IOException e) {
+                    throw new IllegalStateException("Could not create sockets.yml", e);
+                }
+            }
+            this.config = YamlConfiguration.loadConfiguration(file);
         }
-        this.config = YamlConfiguration.loadConfiguration(file);
     }
 
     public DeliverySocket addSocket(UUID ownerId, String ownerName, String name, Location location) {
@@ -420,10 +436,14 @@ public final class SocketRepository {
     }
 
     private void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().warning("Could not save sockets.yml: " + e.getMessage());
+        if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
+            plugin.getDatabaseManager().saveConfig("sockets", config.saveToString());
+        } else {
+            try {
+                config.save(file);
+            } catch (IOException e) {
+                plugin.getLogger().warning("Could not save sockets.yml: " + e.getMessage());
+            }
         }
     }
 }

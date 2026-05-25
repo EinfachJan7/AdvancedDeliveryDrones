@@ -6,7 +6,10 @@ import de.cb.drones.AdvancedDeliveryDronesPlugin;
 import org.bukkit.configuration.ConfigurationSection;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public class DatabaseManager {
 
@@ -46,6 +49,7 @@ public class DatabaseManager {
 
         try {
             this.dataSource = new HikariDataSource(config);
+            createStorageTable();
             plugin.getLogger().info("Successfully connected to MySQL database.");
             return true;
         } catch (Exception e) {
@@ -75,5 +79,65 @@ public class DatabaseManager {
 
     public boolean isConnected() {
         return dataSource != null && !dataSource.isClosed();
+    }
+
+    private void createStorageTable() {
+        if (!isConnected()) return;
+        String query = "CREATE TABLE IF NOT EXISTS " + tablePrefix + "storage (" +
+                "data_key VARCHAR(64) PRIMARY KEY, " +
+                "data_value LONGTEXT NOT NULL" +
+                ");";
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(query);
+        } catch (Exception e) {
+            plugin.getLogger().severe("Failed to create MySQL storage table!");
+            e.printStackTrace();
+        }
+    }
+
+    public void saveConfig(String key, String data) {
+        if (!isConnected()) return;
+        String query = "REPLACE INTO " + tablePrefix + "storage (data_key, data_value) VALUES (?, ?)";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, key);
+            pstmt.setString(2, data);
+            pstmt.executeUpdate();
+        } catch (Exception e) {
+            plugin.getLogger().severe("Failed to save config " + key + " to MySQL!");
+            e.printStackTrace();
+        }
+    }
+
+    public String loadConfig(String key) {
+        if (!isConnected()) return null;
+        String query = "SELECT data_value FROM " + tablePrefix + "storage WHERE data_key = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, key);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("data_value");
+                }
+            }
+        } catch (Exception e) {
+            plugin.getLogger().severe("Failed to load config " + key + " from MySQL!");
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void deleteConfig(String key) {
+        if (!isConnected()) return;
+        String query = "DELETE FROM " + tablePrefix + "storage WHERE data_key = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, key);
+            pstmt.executeUpdate();
+        } catch (Exception e) {
+            plugin.getLogger().severe("Failed to delete config " + key + " from MySQL!");
+            e.printStackTrace();
+        }
     }
 }
