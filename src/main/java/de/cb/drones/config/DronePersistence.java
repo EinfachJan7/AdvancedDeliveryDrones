@@ -28,10 +28,6 @@ public class DronePersistence {
     }
 
     public void saveDrones(Collection<DeliveryDrone> drones) {
-        if (drones.isEmpty() && !dataFile.exists()) {
-            return;
-        }
-        
         YamlConfiguration config = new YamlConfiguration();
         long currentTick = Bukkit.getCurrentTick();
         
@@ -46,6 +42,11 @@ public class DronePersistence {
             
             long elapsedFlightTicks = currentTick - drone.getFlightStartTick();
             config.set(path + ".elapsedFlightTicks", elapsedFlightTicks);
+            
+            long elapsedDeliveryFlightTicks = drone.getDeliveryFlightStartTick() >= 0 
+                ? currentTick - drone.getDeliveryFlightStartTick() 
+                : -1L;
+            config.set(path + ".elapsedDeliveryFlightTicks", elapsedDeliveryFlightTicks);
             
             config.set(path + ".inventory", drone.inventory().getContents());
             
@@ -103,6 +104,11 @@ public class DronePersistence {
                 long elapsedFlightTicks = config.getLong(path + ".elapsedFlightTicks");
                 long flightStartTick = currentTick - elapsedFlightTicks;
                 
+                long elapsedDeliveryFlightTicks = config.getLong(path + ".elapsedDeliveryFlightTicks");
+                long deliveryFlightStartTick = elapsedDeliveryFlightTicks >= 0 
+                    ? currentTick - elapsedDeliveryFlightTicks 
+                    : -1L;
+                
                 List<?> itemsList = config.getList(path + ".inventory");
                 ItemStack[] items = new ItemStack[27];
                 if (itemsList != null) {
@@ -127,7 +133,7 @@ public class DronePersistence {
                 
                 DeliveryDrone drone = DeliveryDrone.fromPersistentData(
                     droneId, senderId, receiverId, receiverName, fixedTarget, startLocation,
-                    lastKnownLocation, flightStartTick, items, attachedAnimalTypes,
+                    lastKnownLocation, flightStartTick, deliveryFlightStartTick, items, attachedAnimalTypes,
                     animalsOnlyDelivery, forceTargetChunkLoad, exactSocketTarget, socketName,
                     landed, openedByReceiver, lastInteractionTick, standParked, droneManager
                 );

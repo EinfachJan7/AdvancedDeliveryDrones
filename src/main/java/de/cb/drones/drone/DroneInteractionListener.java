@@ -144,7 +144,12 @@ public final class DroneInteractionListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        droneManager.receiverWentOffline(event.getPlayer().getUniqueId());
+        java.util.UUID playerId = event.getPlayer().getUniqueId();
+        Bukkit.getScheduler().runTaskLater(droneManager.plugin(), () -> {
+            if (droneManager.plugin().isEnabled() && Bukkit.getPlayer(playerId) == null) {
+                droneManager.receiverWentOffline(playerId);
+            }
+        }, 20L);
     }
 
     @EventHandler

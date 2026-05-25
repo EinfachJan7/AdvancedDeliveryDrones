@@ -2125,6 +2125,7 @@ public final class DeliveryDrone {
 
     public Location getFixedTarget() { return fixedTarget; }
     public long getFlightStartTick() { return flightStartTick; }
+    public long getDeliveryFlightStartTick() { return deliveryFlightStartTick; }
     public boolean isForceTargetChunkLoad() { return forceTargetChunkLoad; }
     public boolean isExactSocketTarget() { return exactSocketTarget; }
     public boolean isStandParked() { return standParked; }
@@ -2132,7 +2133,7 @@ public final class DeliveryDrone {
     public static DeliveryDrone fromPersistentData(
             UUID droneId, UUID senderId, UUID receiverId, String receiverName,
             Location fixedTarget, Location startLocation, Location lastKnownLocation,
-            long flightStartTick, ItemStack[] inventoryContents, List<EntityType> attachedAnimalTypes,
+            long flightStartTick, long deliveryFlightStartTick, ItemStack[] inventoryContents, List<EntityType> attachedAnimalTypes,
             boolean animalsOnlyDelivery, boolean forceTargetChunkLoad, boolean exactSocketTarget,
             String socketName, boolean landed, boolean openedByReceiver,
             long lastInteractionTick, boolean standParked, DroneManager manager
@@ -2158,7 +2159,7 @@ public final class DeliveryDrone {
         
         drone.lastKnownLocation = lastKnownLocation;
         drone.flightStartTick = flightStartTick;
-        drone.deliveryFlightStartTick = flightStartTick;
+        drone.deliveryFlightStartTick = deliveryFlightStartTick;
         drone.landed = landed;
         drone.openedByReceiver = openedByReceiver;
         drone.lastInteractionTick = lastInteractionTick;
