@@ -7,6 +7,16 @@ plugin:
   # Check for updates on Modrinth on startup
   check-updates: true
 
+database:
+  type: "YAML"
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "deliverydrones"
+    username: "root"
+    password: ""
+    table-prefix: "add_"
+
 settings:
   drone:
     speed: 5.0

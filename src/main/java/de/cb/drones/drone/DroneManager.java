@@ -5,6 +5,9 @@ import de.cb.drones.config.SocketPendingReturnsRepository;
 import de.cb.drones.discord.DiscordWebhookManager;
 import de.cb.drones.performance.PerformanceOptimizer;
 import de.cb.drones.config.DronePersistence;
+import de.cb.drones.config.YamlDronePersistence;
+import de.cb.drones.config.MysqlDronePersistence;
+import de.cb.drones.config.DatabaseManager;
 import de.cb.drones.socket.DeliverySocket;
 import de.cb.drones.socket.SocketRepository;
 import java.util.logging.Level;
@@ -45,14 +48,15 @@ public final class DroneManager {
     private final Map<UUID, List<ItemStack>> pendingReturns = new HashMap<>();
     private DroneSettings settings;
     private BukkitTask cleanupTask;
-    private final DronePersistence persistence;
+    private DronePersistence persistence;
 
     public DroneManager(
             AdvancedDeliveryDronesPlugin plugin,
             DroneSettings settings,
             DiscordWebhookManager discordWebhookManager,
             SocketRepository socketRepository,
-            SocketPendingReturnsRepository socketPendingReturns
+            SocketPendingReturnsRepository socketPendingReturns,
+            DatabaseManager databaseManager
     ) {
         this.plugin = plugin;
         this.settings = settings;
@@ -60,7 +64,12 @@ public final class DroneManager {
         this.socketRepository = socketRepository;
         this.socketPendingReturns = socketPendingReturns;
         this.performanceOptimizer = new PerformanceOptimizer(plugin);
-        this.persistence = new DronePersistence(plugin);
+        
+        if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML"))) {
+            this.persistence = new MysqlDronePersistence(plugin, databaseManager);
+        } else {
+            this.persistence = new YamlDronePersistence(plugin);
+        }
     }
 
     public AdvancedDeliveryDronesPlugin plugin() {
@@ -71,6 +80,14 @@ public final class DroneManager {
         this.settings = settings;
         for (DeliveryDrone drone : activeDrones.values()) {
             drone.applySettings(settings, this);
+        }
+    }
+
+    public void updateDatabaseManager(DatabaseManager databaseManager) {
+        if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML"))) {
+            this.persistence = new MysqlDronePersistence(plugin, databaseManager);
+        } else {
+            this.persistence = new YamlDronePersistence(plugin);
         }
     }
 

@@ -140,3 +140,6 @@ update-download: "<gold>下载: <click:open_url:'<link>'><aqua><link></aqua></cl
 
 
 container-unload-success: "<green>无人机已将物品卸载到插槽 <white><socket></white> 的容器中！</green>"
+
+mysql-connected: "<green>成功连接到 MySQL！</green>"
+mysql-connection-failed: "<red>连接 MySQL 失败！</red>"

@@ -1,6 +1,7 @@
 package de.cb.drones;
 
 import de.cb.drones.command.DroneCommand;
+import de.cb.drones.config.DatabaseManager;
 import de.cb.drones.config.LanguageManager;
 import de.cb.drones.config.PlayerBlacklistRepository;
 import de.cb.drones.config.PlayerSettingsRepository;
@@ -31,13 +32,20 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private FileConfiguration guiConfig;
     private DroneCommand droneCommand;
     private LanguageManager languageManager;
-    
+    private DatabaseManager databaseManager;
+
     @Override
     public void onEnable() {
         saveDefaultConfig();
         saveGuiConfig();
         this.languageManager = new LanguageManager(this);
         this.languageManager.reload();
+        
+        this.databaseManager = new de.cb.drones.config.DatabaseManager(this);
+        if ("MYSQL".equalsIgnoreCase(getConfig().getString("database.type", "YAML"))) {
+            this.databaseManager.connect();
+        }
+        
         this.playerSettings = new PlayerSettingsRepository(this);
         this.blacklistRepository = new PlayerBlacklistRepository(this);
         this.socketPendingReturns = new SocketPendingReturnsRepository(this);
@@ -50,7 +58,8 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
                 DroneSettings.fromConfig(getConfig(), guiConfig),
                 discordWebhookManager,
                 socketRepository,
-                socketPendingReturns
+                socketPendingReturns,
+                databaseManager
         );
         this.droneManager.start();
 
@@ -81,6 +90,9 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         if (droneManager != null) {
             droneManager.shutdown();
         }
+        if (databaseManager != null) {
+            databaseManager.close();
+        }
     }
 
     public void reloadPlugin() {
@@ -91,6 +103,19 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
             this.languageManager = new LanguageManager(this);
         }
         this.languageManager.reload();
+        
+        if (this.databaseManager != null) {
+            this.databaseManager.close();
+        }
+        this.databaseManager = new de.cb.drones.config.DatabaseManager(this);
+        if ("MYSQL".equalsIgnoreCase(getConfig().getString("database.type", "YAML"))) {
+            if (this.databaseManager.connect()) {
+                getLogger().info(languageManager.getString("mysql-connected", "MySQL connected!"));
+            } else {
+                getLogger().severe(languageManager.getString("mysql-connection-failed", "MySQL connection failed!"));
+            }
+        }
+        
         playerSettings.reload();
         blacklistRepository.reload();
         socketPendingReturns.reload();
@@ -100,6 +125,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         discordWebhookManager.loadSettings();
         this.guiConfig = loadGuiConfig();
         droneManager.updateSettings(DroneSettings.fromConfig(getConfig(), guiConfig));
+        droneManager.updateDatabaseManager(databaseManager);
         if (droneCommand != null) {
             droneCommand.updateMenuHandlerSettings(droneManager.settings());
         }

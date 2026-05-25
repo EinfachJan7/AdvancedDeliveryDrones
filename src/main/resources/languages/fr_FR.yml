@@ -140,3 +140,6 @@ update-download: "<gold>Télécharger : <click:open_url:'<link>'><aqua><link></a
 
 
 container-unload-success: "<green>Le drone a déchargé ses objets dans un conteneur au socket <white><socket></white> !</green>"
+
+mysql-connected: "<green>Connecte a MySQL avec succes!</green>"
+mysql-connection-failed: "<red>Echec de la connexion a MySQL!</red>"

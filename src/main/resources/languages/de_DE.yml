@@ -138,3 +138,6 @@ update-current-version: "<gray>Deine Version: <white><current></white></gray>"
 update-latest-version: "<gray>Neue Version: <white><latest></white></gray>"
 update-download: "<gold>Download: <click:open_url:'<link>'><aqua><link></aqua></click></gold>"
 container-unload-success: "<green>Die Drohne hat ihre Items in einen Container bei Socket <white><socket></white> entladen!</green>"
+
+mysql-connected: "<green>Erfolgreich mit MySQL verbunden!</green>"
+mysql-connection-failed: "<red>MySQL Verbindung fehlgeschlagen!</red>"
