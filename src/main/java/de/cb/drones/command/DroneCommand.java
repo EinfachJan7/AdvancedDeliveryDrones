@@ -662,6 +662,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             droneManager.sendMessage(player, "no-permission");
             return true;
         }
+        menuHandler.getMenuGUI().openSocketManagementMenu(player);
         return true;
     }
 
