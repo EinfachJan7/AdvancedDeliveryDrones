@@ -255,10 +255,12 @@ public class DroneMenuHandler implements Listener {
         }
 
         if (isAdd) {
-            Player target = player.getServer().getPlayer(targetUUID);
-            if (target == null || !target.isOnline() || target.equals(player)) {
+            OfflinePlayer target = player.getServer().getOfflinePlayer(targetUUID);
+            if (target.getUniqueId().equals(player.getUniqueId())) {
                 return false;
             }
+
+            String targetName = target.getName() != null ? target.getName() : targetUUID.toString();
 
             boolean added = playerScope
                     ? blacklistRepository.addToPlayerBlacklist(player.getUniqueId(), targetUUID)
@@ -266,14 +268,14 @@ public class DroneMenuHandler implements Listener {
 
             if (added) {
                 if (playerScope) {
-                    droneManager.sendMessage(player, "blacklist-player-added", "<player>", target.getName());
+                    droneManager.sendMessage(player, "blacklist-player-added", "<player>", targetName);
                 } else {
-                    droneManager.sendMessage(player, "blacklist-socket-added", "<player>", target.getName(), "<socket>", socketName);
+                    droneManager.sendMessage(player, "blacklist-socket-added", "<player>", targetName, "<socket>", socketName);
                 }
             } else if (playerScope) {
-                droneManager.sendMessage(player, "blacklist-player-already", "<player>", target.getName());
+                droneManager.sendMessage(player, "blacklist-player-already", "<player>", targetName);
             } else {
-                droneManager.sendMessage(player, "blacklist-socket-already", "<player>", target.getName(), "<socket>", socketName);
+                droneManager.sendMessage(player, "blacklist-socket-already", "<player>", targetName, "<socket>", socketName);
             }
             return true;
         }
