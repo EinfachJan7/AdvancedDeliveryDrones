@@ -8,4 +8,5 @@ import java.util.Collection;
 public interface DronePersistence {
     void saveDrones(Collection<DeliveryDrone> drones);
     void loadDrones(DroneManager droneManager);
+    void deleteDrone(java.util.UUID droneId);
 }

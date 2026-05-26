@@ -153,4 +153,16 @@ public class YamlDronePersistence implements DronePersistence {
             plugin.getLogger().info("Successfully loaded " + loaded + " drones. Cleared drones.yml file.");
         }
     }
+
+    @Override
+    public void deleteDrone(UUID droneId) {
+        if (!dataFile.exists()) return;
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(dataFile);
+        if (config.contains("drones." + droneId.toString())) {
+            config.set("drones." + droneId.toString(), null);
+            try {
+                config.save(dataFile);
+            } catch (IOException ignored) {}
+        }
+    }
 }

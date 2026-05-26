@@ -199,4 +199,15 @@ public class MysqlDronePersistence implements DronePersistence {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public void deleteDrone(UUID droneId) {
+        if (!dbManager.isConnected()) return;
+        String query = "DELETE FROM " + tableName + " WHERE drone_id = ?";
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setString(1, droneId.toString());
+            pstmt.executeUpdate();
+        } catch (Exception ignored) {}
+    }
 }

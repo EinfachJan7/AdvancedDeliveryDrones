@@ -385,6 +385,7 @@ public final class DroneManager {
         }
         
         drone.destroy();
+        persistence.deleteDrone(drone.droneId());
     }
 
     public void onDroneStandChanged(DeliveryDrone drone, UUID previousStandId, UUID newStandId) {
