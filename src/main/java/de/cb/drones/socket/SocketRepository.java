@@ -39,7 +39,7 @@ public final class SocketRepository {
 
     public void reload() {
         if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
-            String data = plugin.getDatabaseManager().loadConfig("drone_sockets");
+            String data = plugin.getDatabaseManager().loadConfig("sockets");
             this.config = new YamlConfiguration();
             if (data != null) {
                 try {
@@ -437,7 +437,7 @@ public final class SocketRepository {
 
     private void save() {
         if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
-            plugin.getDatabaseManager().saveConfig("drone_sockets", config.saveToString());
+            plugin.getDatabaseManager().saveConfig("sockets", config.saveToString());
         } else {
             try {
                 config.save(file);

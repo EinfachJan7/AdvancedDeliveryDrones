@@ -24,7 +24,7 @@ public final class PlayerSettingsRepository {
 
     public void reload() {
         if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
-            String data = plugin.getDatabaseManager().loadConfig("drone_player_settings");
+            String data = plugin.getDatabaseManager().loadConfig("player_settings");
             this.config = new YamlConfiguration();
             if (data != null) {
                 try {
@@ -86,7 +86,7 @@ public final class PlayerSettingsRepository {
 
     private void save() {
         if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
-            plugin.getDatabaseManager().saveConfig("drone_player_settings", config.saveToString());
+            plugin.getDatabaseManager().saveConfig("player_settings", config.saveToString());
         } else {
             try {
                 config.save(file);

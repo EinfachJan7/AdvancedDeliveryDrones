@@ -26,7 +26,7 @@ public final class PlayerBlacklistRepository {
 
     public void reload() {
         if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
-            String data = plugin.getDatabaseManager().loadConfig("drone_blacklists");
+            String data = plugin.getDatabaseManager().loadConfig("blacklists");
             this.config = new YamlConfiguration();
             if (data != null) {
                 try {
@@ -131,7 +131,7 @@ public final class PlayerBlacklistRepository {
 
     private void save() {
         if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
-            plugin.getDatabaseManager().saveConfig("drone_blacklists", config.saveToString());
+            plugin.getDatabaseManager().saveConfig("blacklists", config.saveToString());
         } else {
             try {
                 config.save(file);
