@@ -335,20 +335,23 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
 
-        Player target = Bukkit.getPlayerExact(args[3]);
-        if (target == null || !target.isOnline()) {
-            droneManager.sendMessage(player, "player-offline");
+        UUID targetId = resolvePlayerUuid(args[3]);
+        if (targetId == null) {
+            droneManager.sendMessage(player, "player-never-played");
             return true;
         }
-        if (target.equals(player)) {
+        if (targetId.equals(player.getUniqueId())) {
             droneManager.sendMessage(player, "blacklist-self");
             return true;
         }
 
-        if (blacklistRepository.addToPlayerBlacklist(player.getUniqueId(), target.getUniqueId())) {
-            droneManager.sendMessage(player, "blacklist-player-added", "<player>", target.getName());
+        OfflinePlayer target = Bukkit.getOfflinePlayer(targetId);
+        String targetName = target.getName() != null ? target.getName() : args[3];
+
+        if (blacklistRepository.addToPlayerBlacklist(player.getUniqueId(), targetId)) {
+            droneManager.sendMessage(player, "blacklist-player-added", "<player>", targetName);
         } else {
-            droneManager.sendMessage(player, "blacklist-player-already", "<player>", target.getName());
+            droneManager.sendMessage(player, "blacklist-player-already", "<player>", targetName);
         }
         return true;
     }
@@ -365,7 +368,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         UUID targetId = resolvePlayerUuid(args[3]);
         if (targetId == null) {
-            droneManager.sendMessage(player, "player-offline");
+            droneManager.sendMessage(player, "player-never-played");
             return true;
         }
 
@@ -722,7 +725,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         UUID targetId = resolvePlayerUuid(targetPlayerName);
         if (targetId == null) {
-            droneManager.sendMessage(player, "player-offline");
+            droneManager.sendMessage(player, "player-never-played");
             return true;
         }
 
@@ -754,7 +757,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         UUID targetId = resolvePlayerUuid(targetPlayerName);
         if (targetId == null) {
-            droneManager.sendMessage(player, "player-offline");
+            droneManager.sendMessage(player, "player-never-played");
             return true;
         }
 
@@ -800,20 +803,23 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
 
-        Player target = Bukkit.getPlayerExact(args[4]);
-        if (target == null || !target.isOnline()) {
-            droneManager.sendMessage(player, "player-offline");
+        UUID targetId = resolvePlayerUuid(args[4]);
+        if (targetId == null) {
+            droneManager.sendMessage(player, "player-never-played");
             return true;
         }
-        if (target.equals(player)) {
+        if (targetId.equals(player.getUniqueId())) {
             droneManager.sendMessage(player, "blacklist-self");
             return true;
         }
 
-        if (socketRepository.addBlacklistedPlayer(player.getUniqueId(), socketName, target.getUniqueId())) {
-            droneManager.sendMessage(player, "blacklist-socket-added", "<player>", target.getName(), "<socket>", socketName);
+        OfflinePlayer target = Bukkit.getOfflinePlayer(targetId);
+        String targetName = target.getName() != null ? target.getName() : args[4];
+
+        if (socketRepository.addBlacklistedPlayer(player.getUniqueId(), socketName, targetId)) {
+            droneManager.sendMessage(player, "blacklist-socket-added", "<player>", targetName, "<socket>", socketName);
         } else {
-            droneManager.sendMessage(player, "blacklist-socket-already", "<player>", target.getName(), "<socket>", socketName);
+            droneManager.sendMessage(player, "blacklist-socket-already", "<player>", targetName, "<socket>", socketName);
         }
         return true;
     }
@@ -826,7 +832,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         UUID targetId = resolvePlayerUuid(args[4]);
         if (targetId == null) {
-            droneManager.sendMessage(player, "player-offline");
+            droneManager.sendMessage(player, "player-never-played");
             return true;
         }
 
@@ -1126,13 +1132,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (args.length == 4 && "blacklist".equalsIgnoreCase(args[0]) && "player".equalsIgnoreCase(args[1]) && sender instanceof Player player) {
             if (!droneSettings.playersEnabled()) return List.of();
             if ("add".equalsIgnoreCase(args[2])) {
-                List<String> results = new ArrayList<>();
-                for (Player online : Bukkit.getOnlinePlayers()) {
-                    if (!online.equals(player)) {
-                        results.add(online.getName());
-                    }
-                }
-                return results;
+                return getAllPlayedBeforePlayerNames(player);
             }
             if ("remove".equalsIgnoreCase(args[2])) {
                 List<String> results = new ArrayList<>();
@@ -1155,12 +1155,14 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             }
             return worlds;
         }
-        if (args.length == 2 && "send".equalsIgnoreCase(args[0])) {
+        if (args.length == 2 && "send".equalsIgnoreCase(args[0]) && sender instanceof Player player) {
             if (!droneSettings.playersEnabled()) return List.of();
             List<String> results = new ArrayList<>();
-            for (Player online : Bukkit.getOnlinePlayers()) {
-                if (settingsRepository.canReceive(online.getUniqueId())) {
-                    results.add(online.getName());
+            for (OfflinePlayer offline : Bukkit.getOfflinePlayers()) {
+                if ((offline.hasPlayedBefore() || offline.isOnline()) && !offline.getUniqueId().equals(player.getUniqueId())) {
+                    if (settingsRepository.canReceive(offline.getUniqueId()) && offline.getName() != null) {
+                        results.add(offline.getName());
+                    }
                 }
             }
             return results;
@@ -1194,13 +1196,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         if (args.length == 5 && "socket".equalsIgnoreCase(args[0]) && "blacklist".equalsIgnoreCase(args[1]) && sender instanceof Player player) {
             if ("add".equalsIgnoreCase(args[3])) {
-                List<String> results = new ArrayList<>();
-                for (Player online : Bukkit.getOnlinePlayers()) {
-                    if (!online.equals(player)) {
-                        results.add(online.getName());
-                    }
-                }
-                return results;
+                return getAllPlayedBeforePlayerNames(player);
             }
             if ("remove".equalsIgnoreCase(args[3])) {
                 List<String> results = new ArrayList<>();
@@ -1213,18 +1209,38 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 return results;
             }
         }
-        if (args.length == 4 && "socket".equalsIgnoreCase(args[0])) {
-            if ("trust".equalsIgnoreCase(args[1]) || "untrust".equalsIgnoreCase(args[1])) {
-                // Return online player names
+        if (args.length == 4 && "socket".equalsIgnoreCase(args[0]) && sender instanceof Player player) {
+            if ("trust".equalsIgnoreCase(args[1])) {
+                return getAllPlayedBeforePlayerNames(player);
+            }
+            if ("untrust".equalsIgnoreCase(args[1])) {
+                de.cb.drones.socket.DeliverySocket socket = socketRepository.getSocket(player.getUniqueId(), args[2]);
+                if (socket == null) return Collections.emptyList();
                 List<String> results = new ArrayList<>();
-                for (Player online : Bukkit.getOnlinePlayers()) {
-                    results.add(online.getName());
+                for (UUID trusted : socket.trustedPlayers()) {
+                    OfflinePlayer offline = Bukkit.getOfflinePlayer(trusted);
+                    if (offline.getName() != null) {
+                        results.add(offline.getName());
+                    }
                 }
                 return results;
             }
         }
         return Collections.emptyList();
     }
+
+    private List<String> getAllPlayedBeforePlayerNames(Player sender) {
+        List<String> results = new ArrayList<>();
+        for (OfflinePlayer offline : Bukkit.getOfflinePlayers()) {
+            if (offline.hasPlayedBefore() || offline.isOnline()) {
+                if (offline.getName() != null && !offline.getUniqueId().equals(sender.getUniqueId())) {
+                    results.add(offline.getName());
+                }
+            }
+        }
+        return results;
+    }
+
 
     @EventHandler
     public void onPreviewClick(InventoryClickEvent event) {
