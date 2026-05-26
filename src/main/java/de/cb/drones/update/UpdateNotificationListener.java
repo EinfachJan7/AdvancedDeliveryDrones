@@ -36,7 +36,7 @@ public final class UpdateNotificationListener implements Listener {
             try {
                 VersionChecker checker = new VersionChecker(plugin, currentVersion, languageManager);
                 String latest = checker.fetchLatestVersionPublic();
-                if (latest != null && !latest.equals(currentVersion)) {
+                if (latest != null && isNewerVersion(currentVersion, latest)) {
                     this.latestVersion = latest;
                     this.updateAvailable = true;
                     plugin.getLogger().info("Update available: " + latest + " (current: " + currentVersion + ")");
@@ -47,6 +47,20 @@ public final class UpdateNotificationListener implements Listener {
                 plugin.getLogger().warning("Could not check for updates: " + e.getMessage());
             }
         });
+    }
+
+    private boolean isNewerVersion(String current, String latest) {
+        if (current == null || latest == null) return false;
+        String[] cParts = current.replaceAll("[^0-9.]", "").split("\\.");
+        String[] lParts = latest.replaceAll("[^0-9.]", "").split("\\.");
+        int length = Math.max(cParts.length, lParts.length);
+        for (int i = 0; i < length; i++) {
+            int c = i < cParts.length && !cParts[i].isEmpty() ? Integer.parseInt(cParts[i]) : 0;
+            int l = i < lParts.length && !lParts[i].isEmpty() ? Integer.parseInt(lParts[i]) : 0;
+            if (l > c) return true;
+            if (l < c) return false;
+        }
+        return false;
     }
 
     @EventHandler
