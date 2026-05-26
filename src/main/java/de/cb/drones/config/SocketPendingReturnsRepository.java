@@ -26,7 +26,7 @@ public final class SocketPendingReturnsRepository {
 
     public void reload() {
         if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
-            String data = plugin.getDatabaseManager().loadConfig("socket_pending_returns");
+            String data = plugin.getDatabaseManager().loadConfig("drone_socket_pending_returns");
             this.config = new YamlConfiguration();
             if (data != null) {
                 try {
@@ -95,7 +95,7 @@ public final class SocketPendingReturnsRepository {
 
     private void save() {
         if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML")) && plugin.getDatabaseManager() != null && plugin.getDatabaseManager().isConnected()) {
-            plugin.getDatabaseManager().saveConfig("socket_pending_returns", config.saveToString());
+            plugin.getDatabaseManager().saveConfig("drone_socket_pending_returns", config.saveToString());
         } else {
             try {
                 config.save(file);

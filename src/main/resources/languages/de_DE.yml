@@ -97,6 +97,7 @@ blacklist-socket-added: "<green><player></green> wurde für Socket <white><socke
 blacklist-socket-already: "<yellow><player></yellow> ist bereits für Socket <white><socket></white> gesperrt."
 blacklist-socket-removed: "<green><player></green> wurde von Socket <white><socket></white> entsperrt."
 blacklist-socket-not-found: "<red><player></red> ist für Socket <white><socket></white> nicht gesperrt."
+player-never-played: "<red>Der Spieler <white><player></white> hat noch nie auf diesem Server gespielt.</red>"
 blacklist-socket-blocked: "<red>Du darfst nicht mehr an den Socket <white><socket></white> liefern.</red>"
 blacklist-self: "<red>Du kannst dich nicht selbst sperren.</red>"
 blacklist-player-list-header: "<gold>Spieler-Blacklist (<white><count></white>):</gold>"

@@ -97,6 +97,7 @@ blacklist-socket-added: "<green><player></green> has been blocked from socket <w
 blacklist-socket-already: "<yellow><player></yellow> is already blocked from socket <white><socket></white>."
 blacklist-socket-removed: "<green><player></green> has been unblocked from socket <white><socket></white>."
 blacklist-socket-not-found: "<red><player></red> is not blocked from socket <white><socket></white>."
+player-never-played: "<red>The player <white><player></white> has never played on this server.</red>"
 blacklist-socket-blocked: "<red>You are not allowed to deliver to socket <white><socket></white>.</red>"
 blacklist-self: "<red>You cannot block yourself.</red>"
 blacklist-player-list-header: "<gold>Player Blacklist (<white><count></white>):</gold>"

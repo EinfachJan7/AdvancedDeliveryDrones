@@ -97,6 +97,7 @@ blacklist-socket-added: "<green><player></green> 已被阻止访问接口 <white
 blacklist-socket-already: "<yellow><player></yellow> 已被阻止访问接口 <white><socket></white>。"
 blacklist-socket-removed: "<green><player></green> 已被允许访问接口 <white><socket></white>。"
 blacklist-socket-not-found: "<red><player></red> 未被阻止访问接口 <white><socket></white>。"
+player-never-played: "<red>玩家 <white><player></white> 从未在该服务器上玩过。</red>"
 blacklist-socket-blocked: "<red>你被禁止向接口 <white><socket></white> 派送。</red>"
 blacklist-self: "<red>你不能拉黑自己。</red>"
 blacklist-player-list-header: "<gold>玩家黑名单（共 <white><count></white> 个）：</gold>"

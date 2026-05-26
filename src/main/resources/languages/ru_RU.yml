@@ -97,6 +97,7 @@ blacklist-socket-added: "<green><player></green> заблокирован для
 blacklist-socket-already: "<yellow><player></yellow> уже заблокирован для точки <white><socket></white>."
 blacklist-socket-removed: "<green><player></green> разблокирован для точки <white><socket></white>."
 blacklist-socket-not-found: "<red><player></red> не заблокирован для точки <white><socket></white>."
+player-never-played: "<red>Игрок <white><player></white> никогда не играл на этом сервере.</red>"
 blacklist-socket-blocked: "<red>Вам запрещено отправлять посылки на точку <white><socket></white>.</red>"
 blacklist-self: "<red>Вы не можете заблокировать самого себя.</red>"
 blacklist-player-list-header: "<gold>Черный список игроков (<white><count></white>):</gold>"
