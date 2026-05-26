@@ -720,13 +720,13 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
 
-        Player targetPlayer = Bukkit.getPlayerExact(targetPlayerName);
-        if (targetPlayer == null || !targetPlayer.isOnline()) {
+        UUID targetId = resolvePlayerUuid(targetPlayerName);
+        if (targetId == null) {
             droneManager.sendMessage(player, "player-offline");
             return true;
         }
 
-        if (socketRepository.addTrustedPlayer(player.getUniqueId(), socketName, targetPlayer.getUniqueId())) {
+        if (socketRepository.addTrustedPlayer(player.getUniqueId(), socketName, targetId)) {
             droneManager.sendMessage(player, "socket-trust-added", "<socket>", socketName, "<player>", targetPlayerName);
         } else {
             droneManager.sendMessage(player, "socket-trust-already", "<socket>", socketName, "<player>", targetPlayerName);
@@ -752,13 +752,13 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
 
-        Player targetPlayer = Bukkit.getPlayerExact(targetPlayerName);
-        if (targetPlayer == null || !targetPlayer.isOnline()) {
+        UUID targetId = resolvePlayerUuid(targetPlayerName);
+        if (targetId == null) {
             droneManager.sendMessage(player, "player-offline");
             return true;
         }
 
-        if (socketRepository.removeTrustedPlayer(player.getUniqueId(), socketName, targetPlayer.getUniqueId())) {
+        if (socketRepository.removeTrustedPlayer(player.getUniqueId(), socketName, targetId)) {
             droneManager.sendMessage(player, "socket-trust-removed", "<socket>", socketName, "<player>", targetPlayerName);
         } else {
             droneManager.sendMessage(player, "socket-trust-not-found", "<socket>", socketName, "<player>", targetPlayerName);

@@ -314,7 +314,15 @@ public class DroneMenuHandler implements Listener {
         }
         String targetName = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
         Player target = Bukkit.getPlayer(targetName);
-        return target != null ? target.getUniqueId() : null;
+        if (target != null) {
+            return target.getUniqueId();
+        }
+        @SuppressWarnings("deprecation")
+        org.bukkit.OfflinePlayer offline = Bukkit.getOfflinePlayer(targetName);
+        if (offline.hasPlayedBefore() || offline.isOnline()) {
+            return offline.getUniqueId();
+        }
+        return null;
     }
 
     private void handlePlayerSelectionClick(Player player, ItemStack clicked, int slot) {
@@ -493,51 +501,29 @@ public class DroneMenuHandler implements Listener {
         if (meta == null) return;
 
         if (isTrust) {
-            // Trust mode: extract player name from display name
             String targetName = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
-            org.bukkit.entity.Player target = player.getServer().getPlayer(targetName);
+            UUID targetUUID = resolveTargetUuid(meta);
 
-            if (target != null && target.isOnline()) {
-                if (socketRepository.addTrustedPlayer(player.getUniqueId(), socketName, target.getUniqueId())) {
+            if (targetUUID != null) {
+                if (socketRepository.addTrustedPlayer(player.getUniqueId(), socketName, targetUUID)) {
                     droneManager.sendMessage(player, "socket-trust-added", "<socket>", socketName, "<player>", targetName);
                 } else {
                     droneManager.sendMessage(player, "socket-trust-already", "<socket>", socketName, "<player>", targetName);
                 }
             }
         } else {
-            // Untrust mode: get player UUID from persistent data or display name
-            UUID targetUUID = null;
-
-            // Try to get UUID from persistent data first
-            if (meta.getPersistentDataContainer() != null) {
-                NamespacedKey playerUuidKey = new NamespacedKey("advanced-delivery-drones", "player_uuid");
-                String uuidString = meta.getPersistentDataContainer().get(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING);
-                if (uuidString != null) {
-                    try {
-                        targetUUID = UUID.fromString(uuidString);
-                    } catch (IllegalArgumentException e) {
-                        // Invalid UUID format, fall back to name lookup
-                    }
-                }
-            }
-
-            // Fallback to name lookup
-            if (targetUUID == null) {
-                String targetName = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
-                org.bukkit.entity.Player target = player.getServer().getPlayer(targetName);
-                if (target != null) {
-                    targetUUID = target.getUniqueId();
-                }
-            }
+            UUID targetUUID = resolveTargetUuid(meta);
 
             if (targetUUID != null) {
                 if (socketRepository.removeTrustedPlayer(player.getUniqueId(), socketName, targetUUID)) {
                     // Try to get player name for message
-                    org.bukkit.entity.Player targetPlayer = org.bukkit.Bukkit.getPlayer(targetUUID);
-                    String targetName = targetPlayer != null ? targetPlayer.getName() : "Unknown";
+                    org.bukkit.OfflinePlayer targetPlayer = org.bukkit.Bukkit.getOfflinePlayer(targetUUID);
+                    String targetName = targetPlayer.getName() != null ? targetPlayer.getName() : "Unknown";
                     droneManager.sendMessage(player, "socket-trust-removed", "<socket>", socketName, "<player>", targetName);
                 } else {
-                    droneManager.sendMessage(player, "socket-trust-not-found", "<socket>", socketName, "<player>", "Unknown");
+                    org.bukkit.OfflinePlayer targetPlayer = org.bukkit.Bukkit.getOfflinePlayer(targetUUID);
+                    String targetName = targetPlayer.getName() != null ? targetPlayer.getName() : "Unknown";
+                    droneManager.sendMessage(player, "socket-trust-not-found", "<socket>", socketName, "<player>", targetName);
                 }
             }
         }
