@@ -337,7 +337,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         UUID targetId = resolvePlayerUuid(args[3]);
         if (targetId == null) {
-            droneManager.sendMessage(player, "player-never-played");
+            droneManager.sendMessage(player, "player-never-played", "<player>", args[3]);
             return true;
         }
         if (targetId.equals(player.getUniqueId())) {
@@ -368,7 +368,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         UUID targetId = resolvePlayerUuid(args[3]);
         if (targetId == null) {
-            droneManager.sendMessage(player, "player-never-played");
+            droneManager.sendMessage(player, "player-never-played", "<player>", args[3]);
             return true;
         }
 
@@ -725,7 +725,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         UUID targetId = resolvePlayerUuid(targetPlayerName);
         if (targetId == null) {
-            droneManager.sendMessage(player, "player-never-played");
+            droneManager.sendMessage(player, "player-never-played", "<player>", targetPlayerName);
             return true;
         }
 
@@ -757,7 +757,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         UUID targetId = resolvePlayerUuid(targetPlayerName);
         if (targetId == null) {
-            droneManager.sendMessage(player, "player-never-played");
+            droneManager.sendMessage(player, "player-never-played", "<player>", targetPlayerName);
             return true;
         }
 
@@ -805,7 +805,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         UUID targetId = resolvePlayerUuid(args[4]);
         if (targetId == null) {
-            droneManager.sendMessage(player, "player-never-played");
+            droneManager.sendMessage(player, "player-never-played", "<player>", args[4]);
             return true;
         }
         if (targetId.equals(player.getUniqueId())) {
@@ -832,7 +832,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         UUID targetId = resolvePlayerUuid(args[4]);
         if (targetId == null) {
-            droneManager.sendMessage(player, "player-never-played");
+            droneManager.sendMessage(player, "player-never-played", "<player>", args[4]);
             return true;
         }
 

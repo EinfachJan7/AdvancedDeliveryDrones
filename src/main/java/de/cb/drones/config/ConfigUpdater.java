@@ -25,38 +25,20 @@ public class ConfigUpdater {
         }
 
         YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(defConfigStream, StandardCharsets.UTF_8));
-        boolean updated = false;
-
-        for (String key : defConfig.getKeys(true)) {
-            if (!config.contains(key)) {
-                config.set(key, defConfig.get(key));
-                try {
-                    if (defConfig.getComments(key) != null && !defConfig.getComments(key).isEmpty()) {
-                        config.setComments(key, defConfig.getComments(key));
-                    }
-                    if (defConfig.getInlineComments(key) != null && !defConfig.getInlineComments(key).isEmpty()) {
-                        config.setInlineComments(key, defConfig.getInlineComments(key));
-                    }
-                } catch (NoSuchMethodError ignored) {
-                    // Ignored for older versions
-                }
-                updated = true;
-            }
-        }
+        
+        config.setDefaults(defConfig);
+        config.options().copyDefaults(true);
 
         // Special check for config-version in config.yml
-        if (fileName.equals("config.yml") && !config.contains("config-version")) {
+        if (fileName.equals("config.yml") && !config.isSet("config-version")) {
             config.set("config-version", 1);
-            updated = true;
         }
 
-        if (updated) {
-            try {
-                config.save(file);
-                plugin.getLogger().info("Updated " + fileName + " with new missing values.");
-            } catch (IOException e) {
-                plugin.getLogger().severe("Could not save updated " + fileName + ": " + e.getMessage());
-            }
+        try {
+            config.save(file);
+            plugin.getLogger().info("Verified and updated " + fileName);
+        } catch (IOException e) {
+            plugin.getLogger().severe("Could not save updated " + fileName + ": " + e.getMessage());
         }
     }
 }
