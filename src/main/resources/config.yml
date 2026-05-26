@@ -82,8 +82,8 @@ settings:
       format: "<gradient:#ffcc33:#ffaa00><bold>ᴘᴀᴄᴋᴀɢᴇ ғᴏʀ</bold></gradient> <white><receiver> <dark_gray>» <gray>ᴅᴇsᴘᴀᴡɴ: <#ffcc33><minutes>ᴍ <#ffcc33><seconds>s"
     bossbar:
       enabled: true
-      format: "<gold>Distance to drone: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>"
-      format-socket: "<gold>Drone to Socket <white><socket></white></gold> <gray>| ETA: <white><eta>s</white></gray>"
+      format: "Distance to drone: <distance>m | ETA: <eta>s"
+      format-socket: "Drone to Socket <socket> | ETA: <eta>s"
       # Available colors: PINK, BLUE, RED, GREEN, YELLOW, PURPLE, WHITE
       color: "RED"
     collection-animation:

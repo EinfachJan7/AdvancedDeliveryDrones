@@ -662,21 +662,17 @@ public final class DroneManager {
 
     public String renderBossbar(double distance, long etaSeconds) {
         String rounded = String.valueOf((int) Math.round(distance));
-        Component component = miniMessage.deserialize(
-                settings.bossbarFormat(),
-                Placeholder.unparsed("distance", rounded),
-                Placeholder.unparsed("eta", String.valueOf(Math.max(0L, etaSeconds)))
-        );
-        return PlainTextComponentSerializer.plainText().serialize(component);
+        String format = settings.bossbarFormat();
+        format = format.replace("<distance>", rounded);
+        format = format.replace("<eta>", String.valueOf(Math.max(0L, etaSeconds)));
+        return format;
     }
 
     public String renderBossbarSocket(String socketName, long etaSeconds) {
-        Component component = miniMessage.deserialize(
-                settings.bossbarFormatSocket(),
-                Placeholder.unparsed("socket", socketName),
-                Placeholder.unparsed("eta", String.valueOf(Math.max(0L, etaSeconds)))
-        );
-        return PlainTextComponentSerializer.plainText().serialize(component);
+        String format = settings.bossbarFormatSocket();
+        format = format.replace("<socket>", socketName);
+        format = format.replace("<eta>", String.valueOf(Math.max(0L, etaSeconds)));
+        return format;
     }
 
     private void cleanupExpired() {
