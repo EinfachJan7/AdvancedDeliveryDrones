@@ -1099,7 +1099,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> commands = new ArrayList<>(List.of("admin", "preview", "toggle", "reload", "list", "decline", "cancel"));
+            List<String> commands = new ArrayList<>(List.of("admin", "preview", "toggle", "reload", "list", "decline", "cancel", "convert"));
             if (droneSettings.playersEnabled()) {
                 commands.add("send");
                 commands.add("blacklist");
@@ -1111,6 +1111,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 commands.add("locate");
             }
             return commands;
+        }
+        if (args.length == 2 && "convert".equalsIgnoreCase(args[0])) {
+            return List.of("yaml-to-mysql", "mysql-to-yaml");
         }
         if (args.length == 2 && "blacklist".equalsIgnoreCase(args[0])) {
             if (!droneSettings.playersEnabled()) return List.of();
