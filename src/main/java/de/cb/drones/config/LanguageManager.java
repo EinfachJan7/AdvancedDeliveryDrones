@@ -53,13 +53,16 @@ public class LanguageManager {
     private void saveDefaultLangFiles(File folder) {
         String[] languages = {"de_DE", "en_EN", "es_ES", "fr_FR", "ru_RU", "zh_CN"};
         for (String lang : languages) {
+            String path = "languages/" + lang + ".yml";
             File file = new File(folder, lang + ".yml");
             if (!file.exists()) {
                 try {
-                    plugin.saveResource("languages/" + lang + ".yml", false);
+                    plugin.saveResource(path, false);
                 } catch (Exception e) {
-                    plugin.getLogger().warning("Could not save languages/" + lang + ".yml from JAR: " + e.getMessage());
+                    plugin.getLogger().warning("Could not save " + path + " from JAR: " + e.getMessage());
                 }
+            } else {
+                ConfigUpdater.update(plugin, path);
             }
         }
     }

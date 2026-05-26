@@ -38,6 +38,8 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         saveGuiConfig();
+        de.cb.drones.config.ConfigUpdater.update(this, "config.yml");
+        de.cb.drones.config.ConfigUpdater.update(this, "gui.yml");
         this.languageManager = new LanguageManager(this);
         this.languageManager.reload();
         
@@ -98,6 +100,8 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     public void reloadPlugin() {
         saveDefaultConfig();
         saveGuiConfig();
+        de.cb.drones.config.ConfigUpdater.update(this, "config.yml");
+        de.cb.drones.config.ConfigUpdater.update(this, "gui.yml");
         reloadConfig();
         if (this.languageManager == null) {
             this.languageManager = new LanguageManager(this);
