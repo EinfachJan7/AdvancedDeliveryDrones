@@ -196,7 +196,6 @@ public class DroneMenuGUI {
 
             // Store UUID in persistent data for offline player handling
             if (meta.getPersistentDataContainer() != null) {
-                NamespacedKey playerUuidKey = new NamespacedKey("advanced-delivery-drones", "player_uuid");
                 meta.getPersistentDataContainer().set(playerUuidKey, PersistentDataType.STRING, uuid.toString());
             }
 
@@ -254,7 +253,7 @@ public class DroneMenuGUI {
             meta.lore(loreComponents);
 
             meta.getPersistentDataContainer().set(
-                    new NamespacedKey("advanced-delivery-drones", "player_uuid"),
+                    playerUuidKey,
                     PersistentDataType.STRING,
                     uuid.toString());
 
@@ -337,7 +336,7 @@ public class DroneMenuGUI {
         if (meta != null) {
             // Store the actual socket name in persistent data for identification
             if (meta.getPersistentDataContainer() != null) {
-                NamespacedKey socketNameKey = new NamespacedKey("advanced-delivery-drones", "socket_name");
+                NamespacedKey socketNameKey = new NamespacedKey(plugin, "socket_name");
                 meta.getPersistentDataContainer().set(socketNameKey, PersistentDataType.STRING, socket.name());
             }
             
@@ -428,7 +427,7 @@ public class DroneMenuGUI {
         if (meta != null) {
             // Store the actual socket name in persistent data for identification
             if (meta.getPersistentDataContainer() != null) {
-                NamespacedKey socketNameKey = new NamespacedKey("advanced-delivery-drones", "socket_name");
+                NamespacedKey socketNameKey = new NamespacedKey(plugin, "socket_name");
                 meta.getPersistentDataContainer().set(socketNameKey, PersistentDataType.STRING, socket.name());
             }
 

@@ -255,7 +255,7 @@ public class DroneMenuHandler implements Listener {
         }
 
         if (isAdd) {
-            OfflinePlayer target = player.getServer().getOfflinePlayer(targetUUID);
+            org.bukkit.OfflinePlayer target = player.getServer().getOfflinePlayer(targetUUID);
             if (target.getUniqueId().equals(player.getUniqueId())) {
                 return false;
             }
@@ -304,7 +304,7 @@ public class DroneMenuHandler implements Listener {
     }
 
     private UUID resolveTargetUuid(ItemMeta meta) {
-        NamespacedKey playerUuidKey = new NamespacedKey("advanced-delivery-drones", "player_uuid");
+        NamespacedKey playerUuidKey = new NamespacedKey(plugin, "player_uuid");
         if (meta.getPersistentDataContainer().has(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING)) {
             String uuidString = meta.getPersistentDataContainer().get(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING);
             if (uuidString != null) {
@@ -346,7 +346,7 @@ public class DroneMenuHandler implements Listener {
         if (meta == null) return;
 
         UUID targetUUID = null;
-        NamespacedKey playerUuidKey = new NamespacedKey("advanced-delivery-drones", "player_uuid");
+        NamespacedKey playerUuidKey = new NamespacedKey(plugin, "player_uuid");
         if (meta.getPersistentDataContainer().has(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING)) {
             String uuidString = meta.getPersistentDataContainer().get(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING);
             if (uuidString != null) {
@@ -426,7 +426,7 @@ public class DroneMenuHandler implements Listener {
         // Try to get socket name from persistent data first
         String socketName = null;
         if (meta.getPersistentDataContainer() != null) {
-            NamespacedKey socketNameKey = new NamespacedKey("advanced-delivery-drones", "socket_name");
+            NamespacedKey socketNameKey = new NamespacedKey(plugin, "socket_name");
             socketName = meta.getPersistentDataContainer().get(socketNameKey, org.bukkit.persistence.PersistentDataType.STRING);
         }
         
@@ -461,7 +461,7 @@ public class DroneMenuHandler implements Listener {
         // Get socket name from persistent data
         String socketName = null;
         if (meta.getPersistentDataContainer() != null) {
-            NamespacedKey socketNameKey = new NamespacedKey("advanced-delivery-drones", "socket_name");
+            NamespacedKey socketNameKey = new NamespacedKey(plugin, "socket_name");
             socketName = meta.getPersistentDataContainer().get(socketNameKey, org.bukkit.persistence.PersistentDataType.STRING);
         }
 
