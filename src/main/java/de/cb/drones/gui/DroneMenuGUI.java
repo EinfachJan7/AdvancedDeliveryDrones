@@ -210,24 +210,25 @@ public class DroneMenuGUI {
         return head;
     }
 
-    private ItemStack createTrustPlayerHead(org.bukkit.entity.Player player) {
+    private ItemStack createTrustPlayerHead(org.bukkit.OfflinePlayer player) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = head.getItemMeta();
         if (meta != null) {
-            // Use trust-specific name format with placeholder replacement
             String nameFormat = droneSettings.guiConfig().trustPlayerHeadNameFormat()
-                .replace("<player>", player.getName());
+                .replace("<player>", player.getName() != null ? player.getName() : "Unknown");
             meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
 
-            // Use trust-specific lore with placeholder replacement
             List<Component> loreComponents = new ArrayList<>();
             for (String line : droneSettings.guiConfig().trustPlayerHeadLore()) {
-                String formattedLine = line.replace("<player>", player.getName());
+                String formattedLine = line.replace("<player>", player.getName() != null ? player.getName() : "Unknown");
                 loreComponents.add(MINI_MESSAGE.deserialize(formattedLine));
             }
             meta.lore(loreComponents);
+            
+            if (playerUuidKey != null) {
+                meta.getPersistentDataContainer().set(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING, player.getUniqueId().toString());
+            }
 
-            // Set player head texture
             if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
                 skullMeta.setOwningPlayer(player);
             }
@@ -553,15 +554,14 @@ public class DroneMenuGUI {
         int size;
         Inventory menu;
         if (isTrust) {
-            // Trust mode: show all online players
-            List<org.bukkit.entity.Player> onlinePlayers = new ArrayList<>();
-            for (org.bukkit.entity.Player target : player.getServer().getOnlinePlayers()) {
-                if (!target.equals(player)) {
-                    onlinePlayers.add(target);
+            List<org.bukkit.OfflinePlayer> candidates = new ArrayList<>();
+            for (org.bukkit.OfflinePlayer target : player.getServer().getOfflinePlayers()) {
+                if ((target.hasPlayedBefore() || target.isOnline()) && !target.getUniqueId().equals(player.getUniqueId()) && target.getName() != null) {
+                    candidates.add(target);
                 }
             }
 
-            size = Math.max(menuSettings.size(), Math.min(54, ((onlinePlayers.size() + 8) / 9) * 9));
+            size = Math.max(menuSettings.size(), Math.min(54, ((candidates.size() + 8) / 9) * 9));
             DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("trust_selection:" + socketName + ":" + isTrust);
             menu = player.getServer().createInventory(holder, size,
                 MINI_MESSAGE.deserialize(menuSettings.title()));
@@ -577,8 +577,8 @@ public class DroneMenuGUI {
             }
 
             // Add player heads
-            for (int i = 0; i < onlinePlayers.size() && i < size; i++) {
-                org.bukkit.entity.Player target = onlinePlayers.get(i);
+            for (int i = 0; i < candidates.size() && i < size; i++) {
+                org.bukkit.OfflinePlayer target = candidates.get(i);
                 ItemStack headItem = createTrustPlayerHead(target);
                 menu.setItem(i, headItem);
             }
@@ -696,9 +696,9 @@ public class DroneMenuGUI {
         Inventory menu;
 
         if (isAdd) {
-            List<Player> candidates = new ArrayList<>();
-            for (Player target : player.getServer().getOnlinePlayers()) {
-                if (!target.equals(player) && !blockedOrExisting.contains(target.getUniqueId())) {
+            List<OfflinePlayer> candidates = new ArrayList<>();
+            for (OfflinePlayer target : player.getServer().getOfflinePlayers()) {
+                if ((target.hasPlayedBefore() || target.isOnline()) && !target.getUniqueId().equals(player.getUniqueId()) && !blockedOrExisting.contains(target.getUniqueId()) && target.getName() != null) {
                     candidates.add(target);
                 }
             }
@@ -710,7 +710,7 @@ public class DroneMenuGUI {
             fillMenu(menu, menuSettings, size);
 
             int slot = 0;
-            for (Player target : candidates) {
+            for (OfflinePlayer target : candidates) {
                 if (slot >= size) {
                     break;
                 }
@@ -752,14 +752,14 @@ public class DroneMenuGUI {
         }
     }
 
-    private ItemStack createBlacklistAddPlayerHead(Player target, String socketName) {
+    private ItemStack createBlacklistAddPlayerHead(OfflinePlayer target, String socketName) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = head.getItemMeta();
         if (meta == null) {
             return head;
         }
 
-        String playerName = target.getName();
+        String playerName = target.getName() != null ? target.getName() : "Unknown";
         String socketLabel = socketName != null ? socketName : "";
         String nameFormat = droneSettings.guiConfig().blacklistAddPlayerHeadNameFormat()
                 .replace("<player>", playerName)
@@ -773,9 +773,11 @@ public class DroneMenuGUI {
                     .replace("<socket>", socketLabel)));
         }
         meta.lore(loreComponents);
-        meta.getPersistentDataContainer().set(playerUuidKey, PersistentDataType.STRING, target.getUniqueId().toString());
+        if (playerUuidKey != null) {
+            meta.getPersistentDataContainer().set(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING, target.getUniqueId().toString());
+        }
 
-        if (meta instanceof SkullMeta skullMeta) {
+        if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
             skullMeta.setOwningPlayer(target);
         }
         head.setItemMeta(meta);
