@@ -564,7 +564,11 @@ public final class DeliveryDrone {
         if (!isStandAlive() || expected.getWorld() == null) {
             return;
         }
-        teleportStand(expected);
+        if (forceTeleport || isInStartupPhase(nowTick)) {
+            teleportStand(expected);
+            return;
+        }
+        moveStandToward(expected, expected.getYaw());
     }
 
     private void startFlightInternal(DroneManager manager) {
@@ -951,7 +955,7 @@ public final class DeliveryDrone {
         teleportStand(landing);
         this.landedLocation = landing.clone();
         this.lastKnownLocation = landing.clone();
-        stand.setGlowing(true);
+        stand.setGlowing(settings.glowingEnabled());
         this.landed = true;
         disableStandPhysics();
         this.approachPhaseStartTick = -1L;
@@ -1791,9 +1795,6 @@ public final class DeliveryDrone {
         }
         if (isStandAlive()) {
             disableStandPhysics();
-            for (org.bukkit.entity.Entity pass : stand.getPassengers()) {
-                pass.remove();
-            }
             stand.remove();
         }
         stand = null;
@@ -1820,36 +1821,10 @@ public final class DeliveryDrone {
 
     private static void applyDroneHelmet(ArmorStand stand, DroneSettings settings) {
         ItemStack customModel = CustomItemHook.getCustomItem(settings);
-        if (customModel == null) {
-            customModel = createSkullStatic(settings.skullTexture());
-        }
-        
-        if (settings.customModelYOffset() != 0.0) {
-            stand.getEquipment().setHelmet(null);
-            
-            org.bukkit.entity.ItemDisplay display = null;
-            for (org.bukkit.entity.Entity pass : stand.getPassengers()) {
-                if (pass instanceof org.bukkit.entity.ItemDisplay) {
-                    display = (org.bukkit.entity.ItemDisplay) pass;
-                    break;
-                }
-            }
-            if (display == null) {
-                display = (org.bukkit.entity.ItemDisplay) stand.getWorld().spawnEntity(stand.getLocation(), EntityType.ITEM_DISPLAY);
-                stand.addPassenger(display);
-            }
-            display.setItemStack(customModel);
-            display.setItemDisplayTransform(org.bukkit.entity.ItemDisplay.ItemDisplayTransform.HEAD);
-            org.bukkit.util.Transformation transform = display.getTransformation();
-            transform.getTranslation().set(0, (float) settings.customModelYOffset(), 0);
-            display.setTransformation(transform);
-        } else {
+        if (customModel != null) {
             stand.getEquipment().setHelmet(customModel);
-            for (org.bukkit.entity.Entity pass : stand.getPassengers()) {
-                if (pass instanceof org.bukkit.entity.ItemDisplay) {
-                    pass.remove();
-                }
-            }
+        } else {
+            stand.getEquipment().setHelmet(createSkullStatic(settings.skullTexture()));
         }
     }
 
@@ -2090,7 +2065,7 @@ public final class DeliveryDrone {
             enableStandPhysics();
         }
         if (landed) {
-            stand.setGlowing(true);
+            stand.setGlowing(settings.glowingEnabled());
             spawnTransportedAnimalsAtLanding();
         }
         manager.onDroneStandChanged(this, previous, this.standId);
