@@ -82,6 +82,7 @@ public final class DeliveryDrone {
     private int lastBossBarDistanceM = -1;
     private long lastBossBarEta = -1L;
     private long approachPhaseStartTick = -1L; // -1 means not in approach phase yet
+    private double distanceAtApproachStart = -1.0;
     private boolean wasGlidingFollowed = false;
     private boolean wasAirborneFollowed = false;
     private boolean allowGlideFollow = false;
@@ -341,7 +342,7 @@ public final class DeliveryDrone {
         this.settings = settings;
         refreshDerivedSettings();
         if (stand != null && !stand.isDead()) {
-            stand.getEquipment().setHelmet(createSkullStatic(settings.skullTexture()));
+            applyDroneHelmet(stand, settings);
         }
         if (landed) {
             if (stand != null && !stand.isDead()) {
@@ -396,7 +397,7 @@ public final class DeliveryDrone {
                 float spinAngle = (float) (startYaw + (easedProgress * 360 * 1.5));
                 newPos.setYaw(spinAngle);
 
-                stand.teleport(newPos);
+                teleportStand(newPos);
 
                 Location center = newPos.clone();
 
@@ -501,7 +502,7 @@ public final class DeliveryDrone {
             if (yaw != null) {
                 target.setYaw(yaw);
             }
-            stand.teleport(target);
+            teleportStand(target);
             return;
         }
 
@@ -514,7 +515,7 @@ public final class DeliveryDrone {
             if (yaw != null) {
                 target.setYaw(yaw);
             }
-            stand.teleport(target);
+            teleportStand(target);
             return;
         }
 
@@ -564,7 +565,7 @@ public final class DeliveryDrone {
             return;
         }
         if (forceTeleport || isInStartupPhase(nowTick)) {
-            stand.teleport(expected);
+            teleportStand(expected);
             return;
         }
         moveStandToward(expected, expected.getYaw());
@@ -922,7 +923,7 @@ public final class DeliveryDrone {
         Location newPos = current.clone().add(0, height * 0.1, 0);
         newPos.setYaw((float) (current.getYaw() + rotation * 10));
 
-        stand.teleport(newPos);
+        teleportStand(newPos);
 
         for (int i = 0; i < 3; i++) {
             double angle = (elapsedTicks * 0.5 + i * 120) * Math.PI / 180;
@@ -951,13 +952,14 @@ public final class DeliveryDrone {
             return;
         }
         stopStandMotion();
-        stand.teleport(landing);
+        teleportStand(landing);
         this.landedLocation = landing.clone();
         this.lastKnownLocation = landing.clone();
         stand.setGlowing(true);
         this.landed = true;
         disableStandPhysics();
         this.approachPhaseStartTick = -1L;
+        this.distanceAtApproachStart = -1.0;
         // Start despawn timer on landing
         this.lastInteractionTick = Bukkit.getCurrentTick();
         spawnTransportedAnimalsAtLanding();
@@ -1437,15 +1439,16 @@ public final class DeliveryDrone {
             // In approach phase
             if (approachPhaseStartTick < 0) {
                 approachPhaseStartTick = nowTick;
+                distanceAtApproachStart = totalDistanceCovered;
             }
             
             long approachPhaseTicks = nowTick - approachPhaseStartTick;
             double approachDistanceCovered = approachPhaseTicks * settings.approachSpeed();
-            double distanceBeforeApproach = Math.max(0.0, totalDistance - settings.approachDistance());
-            result = distanceBeforeApproach + approachDistanceCovered;
+            result = distanceAtApproachStart + approachDistanceCovered;
         } else {
             // Not in approach phase yet
             approachPhaseStartTick = -1L;
+            distanceAtApproachStart = -1.0;
             result = startupDistance + cruiseDistanceCovered;
         }
         
@@ -1799,12 +1802,9 @@ public final class DeliveryDrone {
         collectionAnimation = false;
     }
 
-    public static ArmorStand spawnDroneEntity(Location at, String skullTexture) {
-        World world = at.getWorld();
-        if (world == null) {
-            return null;
-        }
-        ArmorStand stand = (ArmorStand) world.spawnEntity(at, EntityType.ARMOR_STAND);
+    public static ArmorStand spawnDroneEntity(Location at, DroneSettings settings) {
+        Location spawnLoc = at.clone().add(0, settings.customModelYOffset(), 0);
+        ArmorStand stand = (ArmorStand) spawnLoc.getWorld().spawnEntity(spawnLoc, EntityType.ARMOR_STAND);
         stand.setVisible(false);
         stand.setInvulnerable(true);
         stand.setGravity(false);
@@ -1815,8 +1815,24 @@ public final class DeliveryDrone {
         stand.setPersistent(true);
         stand.setCollidable(false);
         stand.setCustomNameVisible(false);
-        stand.getEquipment().setHelmet(createSkullStatic(skullTexture));
+        applyDroneHelmet(stand, settings);
         return stand;
+    }
+
+    private static void applyDroneHelmet(ArmorStand stand, DroneSettings settings) {
+        ItemStack customModel = CustomItemHook.getCustomItem(settings);
+        if (customModel != null) {
+            stand.getEquipment().setHelmet(customModel);
+        } else {
+            stand.getEquipment().setHelmet(createSkullStatic(settings.skullTexture()));
+        }
+    }
+
+    private void teleportStand(Location loc) {
+        if (stand != null && !stand.isDead() && loc != null) {
+            Location target = loc.clone().add(0, settings.customModelYOffset(), 0);
+            stand.teleport(target);
+        }
     }
 
     private static ItemStack createSkullStatic(String texture) {
@@ -2024,7 +2040,7 @@ public final class DeliveryDrone {
             World standWorld = stand.getWorld();
             if (standWorld != null && !standWorld.equals(preferredLocation.getWorld())) {
                 if (isChunkLoaded(preferredLocation)) {
-                    stand.teleport(preferredLocation);
+                    teleportStand(preferredLocation);
                 } else {
                     parkStandUntilChunkLoads(manager);
                 }
@@ -2037,7 +2053,7 @@ public final class DeliveryDrone {
         if (!isChunkLoaded(preferredLocation)) {
             return;
         }
-        ArmorStand respawned = spawnDroneEntity(preferredLocation, settings.skullTexture());
+        ArmorStand respawned = spawnDroneEntity(preferredLocation, settings);
         if (respawned == null) {
             return;
         }

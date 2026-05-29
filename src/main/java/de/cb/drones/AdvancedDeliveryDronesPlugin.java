@@ -63,6 +63,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
                 socketPendingReturns,
                 databaseManager
         );
+        
         this.droneManager.start();
 
         this.droneCommand = new DroneCommand(

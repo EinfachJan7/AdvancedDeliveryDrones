@@ -175,7 +175,7 @@ public final class DroneManager {
         Location start = sender.getLocation().clone().add(0, 2.2, 0);
         loadChunkNow(start);
         loadChunkNow(fixedTarget);
-        ArmorStand stand = DeliveryDrone.spawnDroneEntity(start, settings.skullTexture());
+        ArmorStand stand = DeliveryDrone.spawnDroneEntity(start, settings);
         if (stand == null) {
             return null;
         }

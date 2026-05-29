@@ -55,7 +55,12 @@ public record DroneSettings(
         double airborneFollowMinHeight,
         int airborneFollowMaxSecondsAfterStart,
         boolean locateParticlesEnabled,
-        ParticleEffect locateParticle
+        ParticleEffect locateParticle,
+        String customModelProvider,
+        Material nativeMaterial,
+        int nativeData,
+        String customModelItemId,
+        double customModelYOffset
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg, FileConfiguration guiConfig) {
         String section = "settings.drone.";
@@ -106,6 +111,12 @@ public record DroneSettings(
         int airborneFollowMaxSecondsAfterStart = Math.max(0, cfg.getInt(section + "airborne-follow-max-seconds-after-start", 15));
         boolean locateParticlesEnabled = cfg.getBoolean(section + "locate-particles.enabled", true);
         ParticleEffect locateParticle = parseParticleEffect(cfg.getString(section + "locate-particles.particle", "HAPPY_VILLAGER"));
+        
+        String customModelProvider = cfg.getString(section + "custom-model.provider", "NONE").toUpperCase();
+        Material nativeMaterial = parseMaterial(cfg.getString(section + "custom-model.native-material", "CARVED_PUMPKIN"), Material.CARVED_PUMPKIN);
+        int nativeData = cfg.getInt(section + "custom-model.native-data", 1);
+        String customModelItemId = cfg.getString(section + "custom-model.item-id", "drone_item");
+        double customModelYOffset = cfg.getDouble(section + "custom-model.y-offset", 0.0);
 
         // Create GUI configuration from separate file
         GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
@@ -154,7 +165,12 @@ public record DroneSettings(
                 airborneFollowMinHeight,
                 airborneFollowMaxSecondsAfterStart,
                 locateParticlesEnabled,
-                locateParticle
+                locateParticle,
+                customModelProvider,
+                nativeMaterial,
+                nativeData,
+                customModelItemId,
+                customModelYOffset
         );
     }
 
