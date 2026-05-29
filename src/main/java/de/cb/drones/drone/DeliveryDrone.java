@@ -107,26 +107,8 @@ public final class DeliveryDrone {
     private long lastSoundTick = -1L;
     private static final long SOUND_INTERVAL = 10L; // Sound every 10 ticks to reduce audio overhead
     
-    // Precomputed flight path (rebuilt when cruise flight starts or startLocation changes)
-    private double pathDeltaX;
-    private double pathDeltaY;
-    private double pathDeltaZ;
-    private double pathTotalDistance;
-    private boolean pathComputed;
-    
-    // Cross-dimension pathing fields
-    private boolean isCrossDimension;
-    private double crossDimensionH1;
-    private double crossDimensionH2;
-    private double crossDimensionAscentHeight;
-    private double crossDimensionHorizontalDistance;
-    private double crossDimensionDescentHeight;
-    private double crossDimensionMidpointX;
-    private double crossDimensionMidpointZ;
-    private double crossDimensionTargetMidpointX;
-    private double crossDimensionTargetMidpointZ;
-    private double crossDimensionHorizontalDistance1;
-    private double crossDimensionHorizontalDistance2;
+    /** Full route geometry; rebuilt on flight start and when start/target change (not during elytra/air follow). */
+    private FlightPath flightPath;
 
     // Socket pickup tracking
     private UUID socketPickupPlayerId;
@@ -516,7 +498,6 @@ public final class DeliveryDrone {
         if (isStandAlive()) {
             this.lastKnownLocation = stand.getLocation().clone();
         }
-        invalidateMovementCache();
         recomputeFlightPath();
 
         applySettings(settings, manager);
@@ -542,9 +523,9 @@ public final class DeliveryDrone {
         }
 
         long nowTick = Bukkit.getCurrentTick();
-        Location expected = expectedLocation(nowTick);
+        Location expected = null;
 
-        // Elytra follow check
+        // Elytra follow — dynamic step each tick; full route is rebuilt after follow ends
         boolean isGlidingTarget = false;
         boolean isAirFollowTarget = false;
         if (!exactSocketTarget && settings.followGlidingPlayer() && allowGlideFollow) {
@@ -553,51 +534,28 @@ public final class DeliveryDrone {
                 if (receiver.getWorld().equals(fixedTarget.getWorld())) {
                     if (receiver.isGliding()) {
                         isGlidingTarget = true;
-                        
+
                         Location current = currentLocation();
-                        Location target = receiver.getLocation().clone().add(0.0, 5.0, 0.0);
-                        
-                        Vector dir = target.toVector().subtract(current.toVector());
-                        double dist = dir.length();
-                        
-                        double step;
-                        if (dist <= settings.approachDistance()) {
-                            step = settings.approachSpeed();
-                        } else {
-                            step = settings.speed() * 0.6;
-                        }
-                        
-                        Location newLoc;
-                        if (dist <= step) {
-                            newLoc = target;
-                        } else {
-                            newLoc = current.add(dir.normalize().multiply(step));
-                        }
-                        
-                        if (dist > 0.01) {
-                            float yaw = (float) Math.toDegrees(Math.atan2(-dir.getX(), dir.getZ()));
-                            newLoc.setYaw(yaw);
-                        }
-                        
-                        // Overwrite startLocation and fixedTarget
+                        Location followTarget = receiver.getLocation().clone().add(0.0, 5.0, 0.0);
+                        Location newLoc = computeReceiverFollowStep(current, followTarget);
+
                         fixedTarget.setX(receiver.getLocation().getX());
                         fixedTarget.setY(receiver.getLocation().getY() + 5.0);
                         fixedTarget.setZ(receiver.getLocation().getZ());
-                        
+
                         startLocation.setX(newLoc.getX());
                         startLocation.setY(newLoc.getY());
                         startLocation.setZ(newLoc.getZ());
                         startLocation.setWorld(newLoc.getWorld());
-                        
-                        pathComputed = false;
+
+                        invalidateFlightPath();
                         flightStartTick = nowTick;
-                        approachPhaseStartTick = -1L;
                         invalidateLandingCache();
                         pendingLanding = null;
                         smoothLanding = false;
                         smoothLandingEnd = null;
                         wasGlidingFollowed = true;
-                        
+
                         expected = newLoc;
                     } else if (wasGlidingFollowed && receiver.isOnGround()) {
                         relocateToReceiverOnGround(receiver, manager, nowTick, false);
@@ -621,34 +579,14 @@ public final class DeliveryDrone {
                 if (wasAirborneFollowed && receiver.isOnGround()) {
                     relocateToReceiverOnGround(receiver, manager, nowTick, true);
                 } else if (canStartAirborneFollow(nowTick)
-                        && distanceSquaredToTarget(expected) <= deliveryRadiusSq
                         && isSignificantlyAirborne(receiver)) {
+                    Location cruiseExpected = expected != null ? expected : expectedLocation(nowTick);
+                    if (distanceSquaredToTarget(cruiseExpected) <= deliveryRadiusSq) {
                     isAirFollowTarget = true;
 
                     Location current = currentLocation();
-                    Location target = receiver.getLocation().clone().add(0.0, 5.0, 0.0);
-
-                    Vector dir = target.toVector().subtract(current.toVector());
-                    double dist = dir.length();
-
-                    double step;
-                    if (dist <= settings.approachDistance()) {
-                        step = settings.approachSpeed();
-                    } else {
-                        step = settings.speed() * 0.6;
-                    }
-
-                    Location newLoc;
-                    if (dist <= step) {
-                        newLoc = target;
-                    } else {
-                        newLoc = current.add(dir.normalize().multiply(step));
-                    }
-
-                    if (dist > 0.01) {
-                        float yaw = (float) Math.toDegrees(Math.atan2(-dir.getX(), dir.getZ()));
-                        newLoc.setYaw(yaw);
-                    }
+                    Location followTarget = receiver.getLocation().clone().add(0.0, 5.0, 0.0);
+                    Location newLoc = computeReceiverFollowStep(current, followTarget);
 
                     fixedTarget.setX(receiver.getLocation().getX());
                     fixedTarget.setY(receiver.getLocation().getY() + 5.0);
@@ -659,9 +597,8 @@ public final class DeliveryDrone {
                     startLocation.setZ(newLoc.getZ());
                     startLocation.setWorld(newLoc.getWorld());
 
-                    pathComputed = false;
+                    invalidateFlightPath();
                     flightStartTick = nowTick;
-                    approachPhaseStartTick = -1L;
                     invalidateLandingCache();
                     pendingLanding = null;
                     smoothLanding = false;
@@ -669,11 +606,16 @@ public final class DeliveryDrone {
                     wasAirborneFollowed = true;
 
                     expected = newLoc;
+                    }
                 }
             } else if (wasAirborneFollowed) {
                 wasAirborneFollowed = false;
             }
             }
+        }
+
+        if (expected == null) {
+            expected = expectedLocation(nowTick);
         }
 
         // Keep virtual position progressing even when chunks are unloaded.
@@ -1085,9 +1027,7 @@ public final class DeliveryDrone {
         startLocation.setZ(current.getZ());
         startLocation.setWorld(current.getWorld());
 
-        pathComputed = false;
         flightStartTick = nowTick;
-        approachPhaseStartTick = -1L;
         invalidateLandingCache();
         pendingLanding = null;
         smoothLanding = false;
@@ -1097,7 +1037,36 @@ public final class DeliveryDrone {
             allowAirborneFollow = false;
         }
 
+        recomputeFlightPath();
         manager.sendMessage(receiver, "glide-follow-landed");
+    }
+
+    private Location computeReceiverFollowStep(Location current, Location followTarget) {
+        Vector dir = followTarget.toVector().subtract(current.toVector());
+        double dist = dir.length();
+
+        double step;
+        if (dist <= settings.approachDistance()) {
+            step = settings.approachSpeed();
+        } else {
+            step = settings.speed() * 0.6;
+        }
+
+        Location newLoc;
+        if (dist <= step) {
+            newLoc = followTarget.clone();
+        } else {
+            newLoc = current.clone().add(dir.normalize().multiply(step));
+        }
+
+        if (dist > 0.01) {
+            float yaw = (float) Math.toDegrees(Math.atan2(-dir.getX(), dir.getZ()));
+            newLoc.setYaw(yaw);
+        } else {
+            newLoc.setYaw(current.getYaw());
+        }
+        newLoc.setPitch(current.getPitch());
+        return newLoc;
     }
 
     private boolean isLandingLocationSafe(Location landing) {
@@ -1143,75 +1112,30 @@ public final class DeliveryDrone {
         return settings.airborneFollowMinHeight();
     }
 
-    private double getCoordinateScale(World world) {
-        if (world == null) {
-            return 1.0;
+    private void invalidateFlightPath() {
+        flightPath = null;
+        approachPhaseStartTick = -1L;
+        distanceAtApproachStart = -1.0;
+        invalidateMovementCache();
+    }
+
+    private void ensureFlightPath() {
+        if (flightPath == null) {
+            recomputeFlightPath();
         }
-        String name = world.getName().toLowerCase();
-        if (name.contains("nether")) {
-            return 8.0;
-        }
-        return 1.0;
+    }
+
+    private double pathTotalDistance() {
+        return flightPath != null ? flightPath.totalDistance() : 0.0D;
     }
 
     private void recomputeFlightPath() {
         if (startLocation.getWorld() == null || fixedTarget.getWorld() == null) {
-            pathComputed = false;
+            flightPath = null;
+            invalidateMovementCache();
             return;
         }
-
-        isCrossDimension = !startLocation.getWorld().equals(fixedTarget.getWorld());
-
-        if (isCrossDimension) {
-            String sourceName = startLocation.getWorld().getName().toLowerCase();
-            String targetName = fixedTarget.getWorld().getName().toLowerCase();
-
-            crossDimensionH1 = sourceName.contains("nether") ? 120.0 : 280.0;
-            crossDimensionH2 = targetName.contains("nether") ? 120.0 : 280.0;
-
-            crossDimensionAscentHeight = Math.abs(crossDimensionH1 - startLocation.getY());
-            
-            double startScale = getCoordinateScale(startLocation.getWorld());
-            double targetScale = getCoordinateScale(fixedTarget.getWorld());
-
-            double startXProj = startLocation.getX() * startScale;
-            double startZProj = startLocation.getZ() * startScale;
-
-            double targetXProj = fixedTarget.getX() * targetScale;
-            double targetZProj = fixedTarget.getZ() * targetScale;
-
-            double projMidpointX = (startXProj + targetXProj) / 2.0;
-            double projMidpointZ = (startZProj + targetZProj) / 2.0;
-
-            crossDimensionMidpointX = projMidpointX / startScale;
-            crossDimensionMidpointZ = projMidpointZ / startScale;
-
-            crossDimensionTargetMidpointX = projMidpointX / targetScale;
-            crossDimensionTargetMidpointZ = projMidpointZ / targetScale;
-
-            double dx1 = crossDimensionMidpointX - startLocation.getX();
-            double dz1 = crossDimensionMidpointZ - startLocation.getZ();
-            crossDimensionHorizontalDistance1 = Math.sqrt(dx1 * dx1 + dz1 * dz1);
-
-            double dx2 = fixedTarget.getX() - crossDimensionTargetMidpointX;
-            double dz2 = fixedTarget.getZ() - crossDimensionTargetMidpointZ;
-            crossDimensionHorizontalDistance2 = Math.sqrt(dx2 * dx2 + dz2 * dz2);
-
-            crossDimensionHorizontalDistance = crossDimensionHorizontalDistance1 + crossDimensionHorizontalDistance2;
-            
-            crossDimensionDescentHeight = Math.abs(crossDimensionH2 - (fixedTarget.getY() + 0.1));
-            
-            pathTotalDistance = crossDimensionAscentHeight + crossDimensionHorizontalDistance + crossDimensionDescentHeight;
-        } else {
-            double targetX = fixedTarget.getX();
-            double targetY = fixedTarget.getY() + 0.1;
-            double targetZ = fixedTarget.getZ();
-            pathDeltaX = targetX - startLocation.getX();
-            pathDeltaY = targetY - startLocation.getY();
-            pathDeltaZ = targetZ - startLocation.getZ();
-            pathTotalDistance = Math.sqrt(pathDeltaX * pathDeltaX + pathDeltaY * pathDeltaY + pathDeltaZ * pathDeltaZ);
-        }
-        pathComputed = true;
+        flightPath = FlightPathBuilder.build(startLocation, fixedTarget);
         invalidateMovementCache();
     }
 
@@ -1242,102 +1166,20 @@ public final class DeliveryDrone {
             return cachedExpectedLocation;
         }
 
-        if (!pathComputed) {
-            recomputeFlightPath();
+        ensureFlightPath();
+        if (flightPath == null) {
+            return startLocation.clone();
         }
 
-        if (isCrossDimension) {
-            double traveled = calculateTraveledDistance(nowTick);
-            double d = Math.max(0.0D, Math.min(pathTotalDistance, traveled));
-
-            double d1 = crossDimensionAscentHeight;
-            double d2 = d1 + crossDimensionHorizontalDistance1;
-            double d3 = d2 + crossDimensionHorizontalDistance2;
-
-            Location result;
-            if (d < d1) {
-                double fraction = d1 > 0.001 ? d / d1 : 1.0;
-                double y = startLocation.getY() + fraction * (crossDimensionH1 - startLocation.getY());
-                result = new Location(
-                        startLocation.getWorld(),
-                        startLocation.getX(),
-                        y,
-                        startLocation.getZ(),
-                        fixedTarget.getYaw(),
-                        fixedTarget.getPitch()
-                );
-            } else if (d < d2) {
-                double fraction = crossDimensionHorizontalDistance1 > 0.001 ? (d - d1) / crossDimensionHorizontalDistance1 : 1.0;
-                double x = startLocation.getX() + fraction * (crossDimensionMidpointX - startLocation.getX());
-                double z = startLocation.getZ() + fraction * (crossDimensionMidpointZ - startLocation.getZ());
-                result = new Location(
-                        startLocation.getWorld(),
-                        x,
-                        crossDimensionH1,
-                        z,
-                        fixedTarget.getYaw(),
-                        fixedTarget.getPitch()
-                );
-            } else if (d < d3) {
-                double fraction = crossDimensionHorizontalDistance2 > 0.001 ? (d - d2) / crossDimensionHorizontalDistance2 : 1.0;
-                double x = crossDimensionTargetMidpointX + fraction * (fixedTarget.getX() - crossDimensionTargetMidpointX);
-                double z = crossDimensionTargetMidpointZ + fraction * (fixedTarget.getZ() - crossDimensionTargetMidpointZ);
-                result = new Location(
-                        fixedTarget.getWorld(),
-                        x,
-                        crossDimensionH2,
-                        z,
-                        fixedTarget.getYaw(),
-                        fixedTarget.getPitch()
-                );
-            } else {
-                double fraction = crossDimensionDescentHeight > 0.001 ? (d - d3) / crossDimensionDescentHeight : 1.0;
-                double targetY = fixedTarget.getY() + 0.1;
-                double y = crossDimensionH2 - fraction * (crossDimensionH2 - targetY);
-                result = new Location(
-                        fixedTarget.getWorld(),
-                        fixedTarget.getX(),
-                        y,
-                        fixedTarget.getZ(),
-                        fixedTarget.getYaw(),
-                        fixedTarget.getPitch()
-                );
-            }
-
-            lastExpectedLocationTick = nowTick;
-            cachedExpectedLocation = result;
-            return result;
-        } else {
-            double targetX = fixedTarget.getX();
-            double targetY = fixedTarget.getY() + 0.1;
-            double targetZ = fixedTarget.getZ();
-
-            if (pathTotalDistance <= 0.001D) {
-                lastExpectedLocationTick = nowTick;
-                if (cachedExpectedLocation == null) {
-                    cachedExpectedLocation = new Location(
-                            startLocation.getWorld(), targetX, targetY, targetZ,
-                            fixedTarget.getYaw(), fixedTarget.getPitch());
-                }
-                return cachedExpectedLocation;
-            }
-
-            double traveled = calculateTraveledDistance(nowTick);
-            double factor = Math.min(1.0D, traveled / pathTotalDistance);
-
-            Location result = new Location(
-                    startLocation.getWorld(),
-                    startLocation.getX() + pathDeltaX * factor,
-                    startLocation.getY() + pathDeltaY * factor,
-                    startLocation.getZ() + pathDeltaZ * factor,
-                    fixedTarget.getYaw(),
-                    fixedTarget.getPitch()
-            );
-
-            lastExpectedLocationTick = nowTick;
-            cachedExpectedLocation = result;
-            return result;
+        double traveled = calculateTraveledDistance(nowTick);
+        Location result = flightPath.positionAt(traveled);
+        if (result == null) {
+            return startLocation.clone();
         }
+
+        lastExpectedLocationTick = nowTick;
+        cachedExpectedLocation = result;
+        return result;
     }
 
     private double calculateTraveledDistance(long nowTick) {
@@ -1351,10 +1193,8 @@ public final class DeliveryDrone {
         long startupPart = Math.min(elapsedTicks, startupTicks);
         long cruisePart = Math.max(0L, elapsedTicks - startupPart);
 
-        if (!pathComputed) {
-            recomputeFlightPath();
-        }
-        double totalDistance = pathTotalDistance;
+        ensureFlightPath();
+        double totalDistance = pathTotalDistance();
 
         // Calculate distance traveled during startup phase
         double startupDistance = startupPart * settings.startupSpeed();
@@ -1878,7 +1718,7 @@ public final class DeliveryDrone {
             distanceM = (int) Math.sqrt(dx * dx + dy * dy + dz * dz);
         } else {
             double traveled = calculateTraveledDistance(currentTick);
-            distanceM = (int) Math.max(0.0, pathTotalDistance - traveled);
+            distanceM = (int) Math.max(0.0, pathTotalDistance() - traveled);
         }
         long eta = etaSeconds(currentTick);
         if (distanceM == lastBossBarDistanceM && eta == lastBossBarEta) {
@@ -1899,12 +1739,10 @@ public final class DeliveryDrone {
             return 0L;
         }
 
-        if (!pathComputed) {
-            recomputeFlightPath();
-        }
+        ensureFlightPath();
 
         double traveled = calculateTraveledDistance(nowTick);
-        double remainingDistance = Math.max(0.0D, pathTotalDistance - traveled);
+        double remainingDistance = Math.max(0.0D, pathTotalDistance() - traveled);
 
         if (remainingDistance * remainingDistance <= deliveryRadiusSq) {
             return 3L;
