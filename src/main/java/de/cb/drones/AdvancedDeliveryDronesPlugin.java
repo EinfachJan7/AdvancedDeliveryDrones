@@ -17,6 +17,7 @@ import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.socket.SocketRepository;
 import de.cb.drones.placeholder.PlaceholderHook;
 import de.cb.drones.update.UpdateNotificationListener;
+import org.bstats.bukkit.Metrics;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.command.PluginCommand;
@@ -48,6 +49,11 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         saveGuiConfig();
         de.cb.drones.config.ConfigUpdater.update(this, "config.yml");
         de.cb.drones.config.ConfigUpdater.update(this, "gui.yml");
+        
+        // Initialize bStats metrics
+        int pluginId = 23353; // TODO: Replace with your plugin ID from https://bstats.org/what-is-my-plugin-id
+        new Metrics(this, pluginId);
+        
         this.languageManager = new LanguageManager(this);
         this.languageManager.reload();
         
