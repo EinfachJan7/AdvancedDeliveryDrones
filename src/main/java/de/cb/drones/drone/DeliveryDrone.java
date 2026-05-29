@@ -397,7 +397,7 @@ public final class DeliveryDrone {
                 float spinAngle = (float) (startYaw + (easedProgress * 360 * 1.5));
                 newPos.setYaw(spinAngle);
 
-                teleportStand(newPos);
+                stand.teleport(newPos);
 
                 Location center = newPos.clone();
 
@@ -502,7 +502,7 @@ public final class DeliveryDrone {
             if (yaw != null) {
                 target.setYaw(yaw);
             }
-            teleportStand(target);
+            stand.teleport(target);
             return;
         }
 
@@ -515,7 +515,7 @@ public final class DeliveryDrone {
             if (yaw != null) {
                 target.setYaw(yaw);
             }
-            teleportStand(target);
+            stand.teleport(target);
             return;
         }
 
@@ -565,7 +565,7 @@ public final class DeliveryDrone {
             return;
         }
         if (forceTeleport || isInStartupPhase(nowTick)) {
-            teleportStand(expected);
+            stand.teleport(expected);
             return;
         }
         moveStandToward(expected, expected.getYaw());
@@ -923,7 +923,7 @@ public final class DeliveryDrone {
         Location newPos = current.clone().add(0, height * 0.1, 0);
         newPos.setYaw((float) (current.getYaw() + rotation * 10));
 
-        teleportStand(newPos);
+        stand.teleport(newPos);
 
         for (int i = 0; i < 3; i++) {
             double angle = (elapsedTicks * 0.5 + i * 120) * Math.PI / 180;
@@ -952,7 +952,7 @@ public final class DeliveryDrone {
             return;
         }
         stopStandMotion();
-        teleportStand(landing);
+        stand.teleport(landing);
         this.landedLocation = landing.clone();
         this.lastKnownLocation = landing.clone();
         stand.setGlowing(settings.glowingEnabled());
@@ -1828,11 +1828,6 @@ public final class DeliveryDrone {
         }
     }
 
-    private void teleportStand(Location loc) {
-        if (stand != null && !stand.isDead() && loc != null) {
-            stand.teleport(loc);
-        }
-    }
 
     private static ItemStack createSkullStatic(String texture) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
@@ -2039,7 +2034,7 @@ public final class DeliveryDrone {
             World standWorld = stand.getWorld();
             if (standWorld != null && !standWorld.equals(preferredLocation.getWorld())) {
                 if (isChunkLoaded(preferredLocation)) {
-                    teleportStand(preferredLocation);
+                    stand.teleport(preferredLocation);
                 } else {
                     parkStandUntilChunkLoads(manager);
                 }
