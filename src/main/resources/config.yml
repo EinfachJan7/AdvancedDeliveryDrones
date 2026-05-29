@@ -39,6 +39,7 @@ settings:
       item-id: "drone_item"
       # Custom Y-Offset for the model. Use this if your custom item sits too low or high.
       y-offset: 0.0
+    glowing-enabled: true
     delivery-radius: 10.0
     despawn-time-minutes: 10
     despawn-mode: "DELETE"

@@ -346,7 +346,7 @@ public final class DeliveryDrone {
         }
         if (landed) {
             if (stand != null && !stand.isDead()) {
-                stand.setGlowing(true);
+                stand.setGlowing(settings.glowingEnabled());
                 stand.setCustomNameVisible(settings.hologramEnabled());
             }
             if (settings.hologramEnabled()) {
@@ -564,11 +564,7 @@ public final class DeliveryDrone {
         if (!isStandAlive() || expected.getWorld() == null) {
             return;
         }
-        if (forceTeleport || isInStartupPhase(nowTick)) {
-            teleportStand(expected);
-            return;
-        }
-        moveStandToward(expected, expected.getYaw());
+        teleportStand(expected);
     }
 
     private void startFlightInternal(DroneManager manager) {
@@ -1795,6 +1791,9 @@ public final class DeliveryDrone {
         }
         if (isStandAlive()) {
             disableStandPhysics();
+            for (org.bukkit.entity.Entity pass : stand.getPassengers()) {
+                pass.remove();
+            }
             stand.remove();
         }
         stand = null;
@@ -1803,7 +1802,7 @@ public final class DeliveryDrone {
     }
 
     public static ArmorStand spawnDroneEntity(Location at, DroneSettings settings) {
-        Location spawnLoc = at.clone().add(0, settings.customModelYOffset(), 0);
+        Location spawnLoc = at.clone();
         ArmorStand stand = (ArmorStand) spawnLoc.getWorld().spawnEntity(spawnLoc, EntityType.ARMOR_STAND);
         stand.setVisible(false);
         stand.setInvulnerable(true);
@@ -1821,17 +1820,42 @@ public final class DeliveryDrone {
 
     private static void applyDroneHelmet(ArmorStand stand, DroneSettings settings) {
         ItemStack customModel = CustomItemHook.getCustomItem(settings);
-        if (customModel != null) {
-            stand.getEquipment().setHelmet(customModel);
+        if (customModel == null) {
+            customModel = createSkullStatic(settings.skullTexture());
+        }
+        
+        if (settings.customModelYOffset() != 0.0) {
+            stand.getEquipment().setHelmet(null);
+            
+            org.bukkit.entity.ItemDisplay display = null;
+            for (org.bukkit.entity.Entity pass : stand.getPassengers()) {
+                if (pass instanceof org.bukkit.entity.ItemDisplay) {
+                    display = (org.bukkit.entity.ItemDisplay) pass;
+                    break;
+                }
+            }
+            if (display == null) {
+                display = (org.bukkit.entity.ItemDisplay) stand.getWorld().spawnEntity(stand.getLocation(), EntityType.ITEM_DISPLAY);
+                stand.addPassenger(display);
+            }
+            display.setItemStack(customModel);
+            display.setItemDisplayTransform(org.bukkit.entity.ItemDisplay.ItemDisplayTransform.HEAD);
+            org.bukkit.util.Transformation transform = display.getTransformation();
+            transform.getTranslation().set(0, (float) settings.customModelYOffset(), 0);
+            display.setTransformation(transform);
         } else {
-            stand.getEquipment().setHelmet(createSkullStatic(settings.skullTexture()));
+            stand.getEquipment().setHelmet(customModel);
+            for (org.bukkit.entity.Entity pass : stand.getPassengers()) {
+                if (pass instanceof org.bukkit.entity.ItemDisplay) {
+                    pass.remove();
+                }
+            }
         }
     }
 
     private void teleportStand(Location loc) {
         if (stand != null && !stand.isDead() && loc != null) {
-            Location target = loc.clone().add(0, settings.customModelYOffset(), 0);
-            stand.teleport(target);
+            stand.teleport(loc);
         }
     }
 

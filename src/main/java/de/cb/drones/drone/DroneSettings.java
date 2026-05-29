@@ -60,7 +60,8 @@ public record DroneSettings(
         Material nativeMaterial,
         int nativeData,
         String customModelItemId,
-        double customModelYOffset
+        double customModelYOffset,
+        boolean glowingEnabled
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg, FileConfiguration guiConfig) {
         String section = "settings.drone.";
@@ -117,6 +118,7 @@ public record DroneSettings(
         int nativeData = cfg.getInt(section + "custom-model.native-data", 1);
         String customModelItemId = cfg.getString(section + "custom-model.item-id", "drone_item");
         double customModelYOffset = cfg.getDouble(section + "custom-model.y-offset", 0.0);
+        boolean glowingEnabled = cfg.getBoolean(section + "glowing-enabled", true);
 
         // Create GUI configuration from separate file
         GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
@@ -170,7 +172,8 @@ public record DroneSettings(
                 nativeMaterial,
                 nativeData,
                 customModelItemId,
-                customModelYOffset
+                customModelYOffset,
+                glowingEnabled
         );
     }
 
