@@ -100,8 +100,6 @@ public final class DeliveryDrone {
     private Location cachedExpectedLocation = null;
     private long lastMovementTick = -1L;
     private static final long MOVEMENT_INTERVAL = 1L;
-    private static final double MOVEMENT_SNAP_DISTANCE_SQ = 64.0D;
-    private static final double MOVEMENT_EPSILON_SQ = 0.0004D;
     private final Location movementScratch = new Location(null, 0, 0, 0);
     private long lastChunkPreloadCheckTick = -1L;
     private static final long CHUNK_PRELOAD_CHECK_INTERVAL = 20L;
@@ -469,12 +467,6 @@ public final class DeliveryDrone {
         return stand != null && !stand.isDead();
     }
 
-    private void enableStandPhysics() {
-        if (isStandAlive()) {
-            stand.setCanTick(true);
-        }
-    }
-
     private void stopStandMotion() {
         if (isStandAlive()) {
             stand.setVelocity(new Vector(0, 0, 0));
@@ -485,48 +477,6 @@ public final class DeliveryDrone {
         stopStandMotion();
         if (isStandAlive()) {
             stand.setCanTick(false);
-        }
-    }
-
-    /**
-     * Moves the armor stand via velocity (blocks/tick delta). Teleports only for dimension changes or large corrections.
-     */
-    private void moveStandToward(Location target, Float yaw) {
-        if (!isStandAlive() || target.getWorld() == null) {
-            return;
-        }
-
-        Location current = stand.getLocation();
-        World currentWorld = current.getWorld();
-        if (currentWorld == null || !currentWorld.equals(target.getWorld())) {
-            if (yaw != null) {
-                target.setYaw(yaw);
-            }
-            stand.teleport(target);
-            return;
-        }
-
-        double dx = target.getX() - current.getX();
-        double dy = target.getY() - current.getY();
-        double dz = target.getZ() - current.getZ();
-        double distSq = dx * dx + dy * dy + dz * dz;
-
-        if (distSq > MOVEMENT_SNAP_DISTANCE_SQ) {
-            if (yaw != null) {
-                target.setYaw(yaw);
-            }
-            stand.teleport(target);
-            return;
-        }
-
-        if (distSq > MOVEMENT_EPSILON_SQ) {
-            stand.setVelocity(new Vector(dx, dy, dz));
-        } else {
-            stand.setVelocity(new Vector(0, 0, 0));
-        }
-
-        if (yaw != null && Math.abs(current.getYaw() - yaw) > 3.0f) {
-            stand.setRotation(yaw, current.getPitch());
         }
     }
 
@@ -549,26 +499,13 @@ public final class DeliveryDrone {
         }
     }
 
-    private boolean isInStartupPhase(long nowTick) {
-        long startupTicks = settings.startupSeconds() * 20L;
-        if (startupTicks <= 0L) {
-            return false;
-        }
-        return nowTick - flightStartTick < startupTicks;
-    }
-
-    /**
-     * Teleport during startup/landing (slow, precise); velocity during cruise for performance.
-     */
+    /** Snap the stand to the precomputed path position each tick for smooth client motion. */
     private void syncStandToExpected(Location expected, long nowTick, boolean forceTeleport) {
         if (!isStandAlive() || expected.getWorld() == null) {
             return;
         }
-        if (forceTeleport || isInStartupPhase(nowTick)) {
-            stand.teleport(expected);
-            return;
-        }
-        moveStandToward(expected, expected.getYaw());
+        stopStandMotion();
+        stand.teleport(expected);
     }
 
     private void startFlightInternal(DroneManager manager) {
@@ -584,7 +521,6 @@ public final class DeliveryDrone {
 
         applySettings(settings, manager);
         initBossbar(manager);
-        enableStandPhysics();
 
         // Register with performance optimizer
         if (droneManager != null && droneManager.getPerformanceOptimizer() != null) {
@@ -2056,9 +1992,6 @@ public final class DeliveryDrone {
         this.standId = respawned.getUniqueId();
         this.lastKnownLocation = preferredLocation.clone();
         this.standParked = false;
-        if (!landed) {
-            enableStandPhysics();
-        }
         if (landed) {
             stand.setGlowing(settings.glowingEnabled());
             spawnTransportedAnimalsAtLanding();
