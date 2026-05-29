@@ -1,6 +1,6 @@
 # 📦 Advanced Delivery Drones
 
-**Version 1.0.5**
+**Version 1.0.7**
 
 Licensed under the [Apache-2.0 License](LICENSE).
 
@@ -15,14 +15,24 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 > - ✅ **Performance (1.0.2)** — cached landing spots, optimized ground scan, velocity-based cruise flight
 > - ✅ **Cooldown system (1.0.3)** — configurable send cooldowns for players and sockets
 > - ✅ **Self-send blocking (1.0.4)** — prevent sending to yourself and own sockets
-> - 📋 **Future:** Advanced logistics, multi-target routing, further performance tuning
+> - ✅ **Custom drone models (1.0.6)** — skull fallback or custom items via NATIVE, Nexo, Oraxen, ItemsAdder
+> - ✅ **Flight polish (1.0.7)** — precomputed routes, smooth per-tick path sync, configurable glow
+> - 📋 **Future:** Built-in ADD pack workflow, advanced logistics, multi-target routing
 
 ---
 
 ## ✨ Features
 
+### 🎨 Custom drone appearance
+- Default: player-head skull texture (`skull-texture`)
+- Optional custom item on the armor stand helmet via `custom-model.provider`:
+  - `NONE` — skull texture only
+  - `NATIVE` — vanilla item + `CustomModelData` (`native-material`, `native-data`)
+  - `NEXO`, `ORAXEN`, `ITEMSADDER` — item from the respective plugin (`item-id`)
+- `glowing-enabled` — toggle outline glow on the drone entity (default `true`)
+
 ### 🚁 Physical drone flight
-- Armor-stand drone with custom skull texture flies from sender to target in real time
+- Armor-stand drone flies from sender to target in real time (skull or custom helmet model)
 - **Launch animation** (optional): rise, spin, particles, and sound (`launch-animation.*`)
 - **Startup phase**: slow acceleration for `startup-seconds` at `startup-speed`
 - **Cruise**: main speed via `speed` (blocks per tick)
@@ -121,7 +131,8 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 - Chunk preload and flight path math cached per drone
 - **Landing spot cache (1.0.2)**: `computeLandingFrom()` runs once per target, not every tick during smooth landing
 - Faster ground scan: highest-block shortcut, center fast-path, coarse-to-fine radius search, skip unloaded chunks
-- **Velocity movement (1.0.2)**: cruise flight uses `setVelocity()` (armor stand ticks only while moving); teleport only for snap/dimension/land
+- **Precomputed flight path (1.0.7)**: route geometry is built once per delivery (and rebuilt when the target moves); position per tick is sampled from the path instead of recalculating every tick
+- **Smooth cruise sync (1.0.7)**: the stand is teleported to the expected path position each tick (velocity cleared, stand ticking disabled) for steady client-side motion
 
 ### 🌐 Languages
 - Messages in `plugins/AdvancedDeliveryDrones/languages/` (not in `config.yml`)
@@ -219,6 +230,6 @@ Parent permissions (`drone.send`, `drone.use`, `drone.socket`, `drone.admin`, `d
 | `socket-pending-returns.yml` | Pending socket returns (auto-generated) |
 | `drones.yml` | Active drones (auto-generated) |
 
-Key `settings.drone` options: `speed`, `startup-speed`, `startup-seconds`, `approach-speed`, `approach-distance`, `delivery-radius`, `despawn-time-minutes`, `despawn-mode`, `max-active-per-sender`, `carry-leashed-animals`, `max-leashed-animals-per-drone`, `max-sockets-per-player`, `players-enabled`, `sockets-enabled`, `follow-gliding-player`, `follow-airborne-player-before-landing`, `airborne-follow-min-height`, `blocked-worlds`, particles, `flight-sound`, `inventory-size`, `hologram.*`, `bossbar.*`, `locate-particles.*`, `container-integration.*`, `collection-animation.enabled`, `launch-animation.*`.
+Key `settings.drone` options: `speed`, `startup-speed`, `startup-seconds`, `approach-speed`, `approach-distance`, `skull-texture`, `custom-model.*` (`provider`, `native-material`, `native-data`, `item-id`), `glowing-enabled`, `delivery-radius`, `despawn-time-minutes`, `despawn-mode`, `max-active-per-sender`, `carry-leashed-animals`, `max-leashed-animals-per-drone`, `max-sockets-per-player`, `players-enabled`, `sockets-enabled`, `follow-gliding-player`, `follow-airborne-player-before-landing`, `airborne-follow-min-height`, `airborne-follow-max-seconds-after-start`, `blocked-worlds`, particles, `flight-sound`, `inventory-size`, `hologram.*`, `bossbar.*`, `locate-particles.*`, `container-integration.*`, `collection-animation.enabled`, `launch-animation.*`.
 
 ---
