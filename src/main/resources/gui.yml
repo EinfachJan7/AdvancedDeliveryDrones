@@ -529,3 +529,105 @@ socket-edit:
 sign-rename:
   border-line: "⚡────────────⚡"
   title-line: "New Name:"
+
+# =============================================================================
+# CONFIG EDITOR - In-game config editor (/drone config)
+# =============================================================================
+config-editor:
+  categories:
+    title: "<!italic><#222222>⚙ <gradient:#a855f7:#22d3ee>ᴄᴏɴꜰɪɢ ᴇᴅɪᴛᴏʀ</gradient>"
+    size: 54
+    fill-item:
+      material: "GRAY_STAINED_GLASS_PANE"
+      name: " "
+    content-slots:
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 19
+      - 20
+      - 21
+      - 22
+      - 23
+      - 24
+      - 25
+  options:
+    title: "<!italic><#222222>⚙ <gradient:#22d3ee:#3b82f6><category></gradient>"
+    size: 54
+    fill-item:
+      material: "GRAY_STAINED_GLASS_PANE"
+      name: " "
+    content-slots:
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 19
+      - 20
+      - 21
+      - 22
+      - 23
+      - 24
+      - 25
+      - 28
+      - 29
+      - 30
+      - 31
+      - 32
+      - 33
+      - 34
+      - 37
+      - 38
+      - 39
+      - 40
+      - 41
+      - 42
+      - 43
+  category-item:
+    name-format: "<!italic><gradient:#a855f7:#ec4899><bold><name></bold></gradient>"
+    lore:
+      - "<!italic><#4b5563>┌────────────────────┐"
+      - "<!italic><#9ca3af>  <count> ᴇɪɴsᴛᴇʟʟᴜɴɢ(en)"
+      - "<!italic><#4b5563>└────────────────────┘"
+      - "<!italic><#a855f7>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴏᴘᴇɴ</italic>"
+  option-item:
+    name-format: "<!italic><gradient:#22d3ee:#3b82f6><bold><name></bold></gradient>"
+    lore:
+      - "<!italic><#9ca3af>  <description>"
+      - "<!italic><#4b5563>┌────────────────────┐"
+      - "<!italic><#9ca3af>  ᴡᴇʀᴛ: <#f3f4f6><value>"
+      - "<!italic><#9ca3af>  ᴛʏᴘ: <#f3f4f6><type>"
+      - "<!italic><#4b5563>└────────────────────┘"
+      - "<!italic><#22d3ee>⬥ <italic><action></italic>"
+  pagination:
+    back:
+      position: 45
+      material: "ARROW"
+      name: "<!italic><gradient:#a855f7:#ec4899>⟵ ʙᴀᴄᴋ</gradient>"
+      lore:
+        - "<!italic><#9ca3af>  ᴢᴜʀüᴄᴋ</#9ca3af>"
+    previous:
+      position: 48
+      material: "ARROW"
+      name: "<!italic><gradient:#a855f7:#ec4899>◀ ᴘʀᴇᴠ</gradient>"
+      lore:
+        - "<!italic><#9ca3af>  ᴠᴏʀʜᴇʀɪɢᴇ sᴇɪᴛᴇ</#9ca3af>"
+    next:
+      position: 50
+      material: "ARROW"
+      name: "<!italic><gradient:#a855f7:#ec4899>ɴᴇxᴛ ▶</gradient>"
+      lore:
+        - "<!italic><#9ca3af>  ɴäᴄʜsᴛᴇ sᴇɪᴛᴇ</#9ca3af>"
+    page-info:
+      position: 49
+      material: "PAPER"
+      name: "<!italic><#f3f4f6>sᴇɪᴛᴇ <page>/<pages>"
+      lore:
+        - "<!italic><#9ca3af>  <count> ᴇɪɴᴛʀäɢᴇ</#9ca3af>"

@@ -98,6 +98,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "cancel" -> executeCancel(player);
             case "socket" -> executeSocket(player, args);
             case "blacklist" -> executeBlacklist(player, args);
+            case "config" -> executeConfig(player);
             case "locate" -> {
                 if (!droneSettings.locateParticlesEnabled()) {
                     player.sendMessage(plugin.component("usage-main"));
@@ -238,6 +239,15 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         plugin.reloadPlugin();
         menuHandler.updateSettings(droneManager.settings());
         droneManager.sendMessage(player, "reload");
+        return true;
+    }
+
+    private boolean executeConfig(Player player) {
+        if (!player.hasPermission("drone.admin.config")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
+        plugin.getConfigEditorHandler().openEditor(player);
         return true;
     }
 
@@ -1105,7 +1115,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> commands = new ArrayList<>(List.of("admin", "preview", "toggle", "reload", "list", "decline", "cancel", "convert"));
+            List<String> commands = new ArrayList<>(List.of("admin", "preview", "toggle", "reload", "list", "decline", "cancel", "convert", "config"));
             if (droneSettings.playersEnabled()) {
                 commands.add("send");
                 commands.add("blacklist");

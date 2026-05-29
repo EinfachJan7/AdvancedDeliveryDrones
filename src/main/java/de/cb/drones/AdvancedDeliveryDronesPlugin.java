@@ -1,6 +1,10 @@
 package de.cb.drones;
 
 import de.cb.drones.command.DroneCommand;
+import de.cb.drones.configeditor.ConfigEditorGUI;
+import de.cb.drones.configeditor.ConfigEditorGuiSettings;
+import de.cb.drones.configeditor.ConfigEditorHandler;
+import de.cb.drones.configeditor.ConfigEditorService;
 import de.cb.drones.config.DatabaseManager;
 import de.cb.drones.config.LanguageManager;
 import de.cb.drones.config.PlayerBlacklistRepository;
@@ -34,6 +38,9 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private DroneCommand droneCommand;
     private LanguageManager languageManager;
     private DatabaseManager databaseManager;
+    private ConfigEditorService configEditorService;
+    private ConfigEditorGUI configEditorGUI;
+    private ConfigEditorHandler configEditorHandler;
 
     @Override
     public void onEnable() {
@@ -56,6 +63,9 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         this.socketRepository = new SocketRepository(this, maxSockets);
         this.discordWebhookManager = new DiscordWebhookManager(this);
         this.guiConfig = loadGuiConfig();
+        this.configEditorService = new ConfigEditorService(this);
+        this.configEditorGUI = new ConfigEditorGUI(this, configEditorService, new ConfigEditorGuiSettings(guiConfig));
+        this.configEditorHandler = new ConfigEditorHandler(this, configEditorService, configEditorGUI);
         this.droneManager = new DroneManager(
                 this,
                 DroneSettings.fromConfig(getConfig(), guiConfig),
@@ -132,6 +142,12 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         this.socketRepository.reload();
         discordWebhookManager.loadSettings();
         this.guiConfig = loadGuiConfig();
+        if (configEditorGUI != null) {
+            configEditorGUI.reloadSettings(new ConfigEditorGuiSettings(guiConfig));
+        }
+        if (configEditorHandler != null) {
+            configEditorHandler.reloadGuiSettings(new ConfigEditorGuiSettings(guiConfig));
+        }
         droneManager.updateSettings(DroneSettings.fromConfig(getConfig(), guiConfig));
         droneManager.updateDatabaseManager(databaseManager);
         if (droneCommand != null) {
@@ -211,5 +227,9 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
 
     public SocketRepository getSocketRepository() {
         return socketRepository;
+    }
+
+    public ConfigEditorHandler getConfigEditorHandler() {
+        return configEditorHandler;
     }
 }

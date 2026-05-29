@@ -33,6 +33,7 @@ permissions:
       drone.admin.reload: true
       drone.admin.list: true
       drone.admin.update-notify: true
+      drone.admin.config: true
   drone.socket:
     default: true
     description: Erlaubt die Nutzung von Delivery-Sockets
@@ -82,6 +83,9 @@ permissions:
   drone.admin.update-notify:
     default: op
     description: Erlaubt Benachrichtigungen über verfügbare Updates
+  drone.admin.config:
+    default: op
+    description: Erlaubt den ingame Config-Editor
   
   # Blacklist-Befehle
   drone.blacklist:
