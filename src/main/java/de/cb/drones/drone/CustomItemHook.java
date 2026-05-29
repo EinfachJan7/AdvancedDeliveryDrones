@@ -1,9 +1,7 @@
 package de.cb.drones.drone;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 public class CustomItemHook {
 
@@ -15,8 +13,6 @@ public class CustomItemHook {
 
         try {
             switch (provider.toUpperCase()) {
-                case "NATIVE":
-                    return getNativeCustomItem(settings);
                 case "NEXO":
                     return getNexoItem(settings.customModelItemId());
                 case "ORAXEN":
@@ -31,20 +27,6 @@ public class CustomItemHook {
             Bukkit.getLogger().warning("[AdvancedDeliveryDrones] Failed to load custom item from provider " + provider + " for id " + settings.customModelItemId() + ": " + e.getMessage());
             return null;
         }
-    }
-
-    private static ItemStack getNativeCustomItem(DroneSettings settings) {
-        if (settings.nativeData() > 0) {
-            ItemStack customModel = new ItemStack(settings.nativeMaterial());
-            ItemMeta meta = customModel.getItemMeta();
-            if (meta != null) {
-                meta.setCustomModelData(settings.nativeData());
-                meta.displayName(net.kyori.adventure.text.minimessage.MiniMessage.miniMessage().deserialize("<gold>Drone</gold>"));
-                customModel.setItemMeta(meta);
-            }
-            return customModel;
-        }
-        return null;
     }
 
     private static ItemStack getNexoItem(String id) throws Exception {

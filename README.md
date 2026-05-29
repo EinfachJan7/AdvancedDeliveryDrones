@@ -15,7 +15,7 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 > - ✅ **Performance (1.0.2)** — cached landing spots, optimized ground scan, velocity-based cruise flight
 > - ✅ **Cooldown system (1.0.3)** — configurable send cooldowns for players and sockets
 > - ✅ **Self-send blocking (1.0.4)** — prevent sending to yourself and own sockets
-> - ✅ **Custom drone models (1.0.6)** — skull fallback or custom items via NATIVE, Nexo, Oraxen, ItemsAdder
+> - ✅ **Custom drone models (1.0.6)** — skull fallback or custom items via Nexo, Oraxen, ItemsAdder
 > - ✅ **Flight polish (1.0.7)** — precomputed routes, smooth per-tick path sync, configurable glow
 > - 📋 **Future:** Built-in ADD pack workflow, advanced logistics, multi-target routing
 
@@ -27,7 +27,6 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 - Default: player-head skull texture (`skull-texture`)
 - Optional custom item on the armor stand helmet via `custom-model.provider`:
   - `NONE` — skull texture only
-  - `NATIVE` — vanilla item + `CustomModelData` (`native-material`, `native-data`)
   - `NEXO`, `ORAXEN`, `ITEMSADDER` — item from the respective plugin (`item-id`)
 - `glowing-enabled` — toggle outline glow on the drone entity (default `true`)
 
@@ -230,6 +229,6 @@ Parent permissions (`drone.send`, `drone.use`, `drone.socket`, `drone.admin`, `d
 | `socket-pending-returns.yml` | Pending socket returns (auto-generated) |
 | `drones.yml` | Active drones (auto-generated) |
 
-Key `settings.drone` options: `speed`, `startup-speed`, `startup-seconds`, `approach-speed`, `approach-distance`, `skull-texture`, `custom-model.*` (`provider`, `native-material`, `native-data`, `item-id`), `glowing-enabled`, `delivery-radius`, `despawn-time-minutes`, `despawn-mode`, `max-active-per-sender`, `carry-leashed-animals`, `max-leashed-animals-per-drone`, `max-sockets-per-player`, `players-enabled`, `sockets-enabled`, `follow-gliding-player`, `follow-airborne-player-before-landing`, `airborne-follow-min-height`, `airborne-follow-max-seconds-after-start`, `blocked-worlds`, particles, `flight-sound`, `inventory-size`, `hologram.*`, `bossbar.*`, `locate-particles.*`, `container-integration.*`, `collection-animation.enabled`, `launch-animation.*`.
+Key `settings.drone` options: `speed`, `startup-speed`, `startup-seconds`, `approach-speed`, `approach-distance`, `skull-texture`, `custom-model.*` (`provider`, `item-id`), `glowing-enabled`, `delivery-radius`, `despawn-time-minutes`, `despawn-mode`, `max-active-per-sender`, `carry-leashed-animals`, `max-leashed-animals-per-drone`, `max-sockets-per-player`, `players-enabled`, `sockets-enabled`, `follow-gliding-player`, `follow-airborne-player-before-landing`, `airborne-follow-min-height`, `airborne-follow-max-seconds-after-start`, `blocked-worlds`, particles, `flight-sound`, `inventory-size`, `hologram.*`, `bossbar.*`, `locate-particles.*`, `container-integration.*`, `collection-animation.enabled`, `launch-animation.*`.
 
 ---

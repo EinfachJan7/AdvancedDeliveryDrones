@@ -29,13 +29,9 @@ settings:
     approach-distance: 100.0
     skull-texture: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzM1YWEzZTJiZjE4NTQ0Zjc1ZTZlMTViMDI2Zjc0N2I1OTllMThmOTZhOWVjNTQ1N2JkNTFhZDhkZjA0YTE2YiJ9fX0="
     custom-model:
-      # Available providers: NONE, NATIVE, NEXO, ORAXEN, ITEMSADDER
-      # NATIVE = Uses Minecraft's built-in CustomModelData
+      # Available providers: NONE, NEXO, ORAXEN, ITEMSADDER
       provider: "NONE"
-      # --- Settings for NATIVE provider ---
-      native-material: "CARVED_PUMPKIN"
-      native-data: 1
-      # --- Settings for NEXO, ORAXEN, and ITEMSADDER providers ---
+      # Item id for NEXO, ORAXEN, and ITEMSADDER
       item-id: "drone_item"
     glowing-enabled: true
     delivery-radius: 10.0

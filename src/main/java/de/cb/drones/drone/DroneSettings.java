@@ -57,8 +57,6 @@ public record DroneSettings(
         boolean locateParticlesEnabled,
         ParticleEffect locateParticle,
         String customModelProvider,
-        Material nativeMaterial,
-        int nativeData,
         String customModelItemId,
         boolean glowingEnabled
 ) {
@@ -113,8 +111,6 @@ public record DroneSettings(
         ParticleEffect locateParticle = parseParticleEffect(cfg.getString(section + "locate-particles.particle", "HAPPY_VILLAGER"));
         
         String customModelProvider = cfg.getString(section + "custom-model.provider", "NONE").toUpperCase();
-        Material nativeMaterial = parseMaterial(cfg.getString(section + "custom-model.native-material", "CARVED_PUMPKIN"), Material.CARVED_PUMPKIN);
-        int nativeData = cfg.getInt(section + "custom-model.native-data", 1);
         String customModelItemId = cfg.getString(section + "custom-model.item-id", "drone_item");
         boolean glowingEnabled = cfg.getBoolean(section + "glowing-enabled", true);
 
@@ -167,8 +163,6 @@ public record DroneSettings(
                 locateParticlesEnabled,
                 locateParticle,
                 customModelProvider,
-                nativeMaterial,
-                nativeData,
                 customModelItemId,
                 glowingEnabled
         );
