@@ -136,8 +136,6 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 
 ### 🔌 PlaceholderAPI (optional)
 
-Soft dependency — the plugin runs without [PlaceholderAPI](https://github.com/PlaceholderAPI/PlaceholderAPI). If it is installed, the expansion registers on startup and reload.
-
 | | |
 |---|---|
 | **Identifier** | `deliverydrones` |
@@ -371,22 +369,5 @@ Parent permissions (`drone.send`, `drone.use`, `drone.socket`, `drone.admin`, `d
 | `drone.admin.send` | Admin coordinate send | OP |
 | `drone.admin.list` | List active drones | OP |
 | `drone.admin.reload` | Reload configs | OP |
-
----
-
-## ⚙️ Configuration
-
-| File | Purpose |
-|------|---------|
-| `config.yml` | Flight, particles, sounds, hologram, boss bar, Discord, feature toggles, follow settings |
-| `gui.yml` | Menu layouts, items, titles |
-| `languages/*.yml` | All player-facing messages (MiniMessage) |
-| `players.yml` | Per-player receive toggle (auto-generated) |
-| `blacklists.yml` | Player blacklists (auto-generated) |
-| `sockets.yml` | Sockets, trust, socket blacklists (auto-generated) |
-| `socket-pending-returns.yml` | Pending socket returns (auto-generated) |
-| `drones.yml` | Active drones (auto-generated) |
-
-Key `settings.drone` options: `speed`, `startup-speed`, `startup-seconds`, `approach-speed`, `approach-distance`, `skull-texture`, `custom-model.*` (`provider`, `item-id`), `glowing-enabled`, `delivery-radius`, `despawn-time-minutes`, `despawn-mode`, `max-active-per-sender`, `carry-leashed-animals`, `max-leashed-animals-per-drone`, `max-sockets-per-player`, `players-enabled`, `sockets-enabled`, `follow-gliding-player`, `follow-airborne-player-before-landing`, `airborne-follow-min-height`, `airborne-follow-max-seconds-after-start`, `blocked-worlds`, particles, `flight-sound`, `inventory-size`, `hologram.*`, `bossbar.*`, `locate-particles.*`, `container-integration.*`, `collection-animation.enabled`, `launch-animation.*`.
 
 ---
