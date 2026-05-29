@@ -343,6 +343,67 @@ public final class DroneManager {
         return new ArrayList<>(activeDrones.values());
     }
 
+    public int activeOutgoingCount(UUID senderId) {
+        return activeBySender.getOrDefault(senderId, 0);
+    }
+
+    public List<DeliveryDrone> getOutgoingDrones(UUID senderId) {
+        return activeDrones.values().stream()
+                .filter(drone -> drone.senderId().equals(senderId))
+                .toList();
+    }
+
+    public List<DeliveryDrone> getIncomingDrones(UUID receiverId) {
+        return activeDrones.values().stream()
+                .filter(drone -> drone.receiverId().equals(receiverId))
+                .toList();
+    }
+
+    public int countOutgoing(UUID senderId) {
+        return getOutgoingDrones(senderId).size();
+    }
+
+    public int countIncoming(UUID receiverId) {
+        return getIncomingDrones(receiverId).size();
+    }
+
+    public int countIncomingFlying(UUID receiverId) {
+        return (int) getIncomingDrones(receiverId).stream().filter(DeliveryDrone::isFlying).count();
+    }
+
+    public int countIncomingLanded(UUID receiverId) {
+        return (int) getIncomingDrones(receiverId).stream().filter(DeliveryDrone::isLanded).count();
+    }
+
+    public DeliveryDrone findNearestLandedDrone(Player player) {
+        if (player.getWorld() == null) {
+            return null;
+        }
+        DeliveryDrone nearest = null;
+        double nearestSq = Double.MAX_VALUE;
+        Location playerLoc = player.getLocation();
+        for (DeliveryDrone drone : getIncomingDrones(player.getUniqueId())) {
+            if (!drone.isLanded()) {
+                continue;
+            }
+            Location droneLoc = drone.currentLocation();
+            if (droneLoc.getWorld() == null || !droneLoc.getWorld().equals(player.getWorld())) {
+                continue;
+            }
+            double distSq = droneLoc.distanceSquared(playerLoc);
+            if (distSq < nearestSq) {
+                nearestSq = distSq;
+                nearest = drone;
+            }
+        }
+        return nearest;
+    }
+
+    public int pendingReturnStacks(UUID playerId) {
+        List<ItemStack> stacks = pendingReturns.get(playerId);
+        return stacks == null ? 0 : stacks.size();
+    }
+
     public boolean isDroneFlyingToSocket(String socketName) {
         return activeDrones.values().stream()
             .anyMatch(drone -> drone.socketName() != null && drone.socketName().equals(socketName));

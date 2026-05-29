@@ -11,6 +11,7 @@ import de.cb.drones.drone.DroneInteractionListener;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.socket.SocketRepository;
+import de.cb.drones.placeholder.PlaceholderHook;
 import de.cb.drones.update.UpdateNotificationListener;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -86,6 +87,8 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(
                 new UpdateNotificationListener(this, languageManager, getDescription().getVersion()), this
         );
+
+        PlaceholderHook.register(this);
     }
 
     @Override
@@ -134,6 +137,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         if (droneCommand != null) {
             droneCommand.updateMenuHandlerSettings(droneManager.settings());
         }
+        PlaceholderHook.register(this);
     }
 
     private void saveGuiConfig() {
@@ -195,5 +199,17 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
 
     public PlayerBlacklistRepository getBlacklistRepository() {
         return blacklistRepository;
+    }
+
+    public DroneManager getDroneManager() {
+        return droneManager;
+    }
+
+    public PlayerSettingsRepository getPlayerSettings() {
+        return playerSettings;
+    }
+
+    public SocketRepository getSocketRepository() {
+        return socketRepository;
     }
 }

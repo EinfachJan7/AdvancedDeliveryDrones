@@ -203,6 +203,62 @@ public final class DeliveryDrone {
         return !landed;
     }
 
+    public boolean isSocketDelivery() {
+        return socketName != null && !socketName.isBlank();
+    }
+
+    public long estimatedEtaSeconds() {
+        if (landed) {
+            return 0L;
+        }
+        return etaSeconds(Bukkit.getCurrentTick());
+    }
+
+    public int distanceToTargetMeters() {
+        if (landed) {
+            return 0;
+        }
+        long tick = Bukkit.getCurrentTick();
+        Location loc = currentLocation();
+        Player receiver = Bukkit.getPlayer(receiverId);
+        if (!isSocketDelivery() && receiver != null && receiver.getLocation().getWorld() != null
+                && receiver.getLocation().getWorld().equals(loc.getWorld())) {
+            return (int) Math.round(receiver.getLocation().distance(loc));
+        }
+        double traveled = calculateTraveledDistance(tick);
+        return (int) Math.max(0.0, pathTotalDistance() - traveled);
+    }
+
+    public int despawnSecondsRemaining() {
+        if (!landed) {
+            return -1;
+        }
+        long ticksLeft = settings.despawnTicks() - (Bukkit.getCurrentTick() - lastInteractionTick);
+        return (int) Math.max(0L, ticksLeft / 20L);
+    }
+
+    public int filledInventorySlots() {
+        int count = 0;
+        for (ItemStack stack : inventory.getContents()) {
+            if (stack != null && !stack.getType().isAir()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public int attachedAnimalCount() {
+        return attachedAnimalTypes.size();
+    }
+
+    public String senderName() {
+        return Bukkit.getOfflinePlayer(senderId).getName() == null ? "" : Bukkit.getOfflinePlayer(senderId).getName();
+    }
+
+    public Location targetLocation() {
+        return fixedTarget.clone();
+    }
+
     public boolean isExpired(long currentTick) {
         // Despawn timer only starts after landing
         if (!landed) {

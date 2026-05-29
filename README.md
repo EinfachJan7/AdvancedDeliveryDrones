@@ -17,6 +17,7 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 > - ✅ **Self-send blocking (1.0.4)** — prevent sending to yourself and own sockets
 > - ✅ **Custom drone models (1.0.6)** — skull fallback or custom items via Nexo, Oraxen, ItemsAdder
 > - ✅ **Flight polish (1.0.7)** — precomputed routes, smooth per-tick path sync, configurable glow
+> - ✅ **PlaceholderAPI (1.0.7)** — optional expansion with many placeholders and UUID → player name resolution
 > - 📋 **Future:** Built-in ADD pack workflow, advanced logistics, multi-target routing
 
 ---
@@ -132,6 +133,163 @@ Physical drone deliveries for Minecraft Paper servers: visible flight, package i
 - Faster ground scan: highest-block shortcut, center fast-path, coarse-to-fine radius search, skip unloaded chunks
 - **Precomputed flight path (1.0.7)**: route geometry is built once per delivery (and rebuilt when the target moves); position per tick is sampled from the path instead of recalculating every tick
 - **Smooth cruise sync (1.0.7)**: the stand is teleported to the expected path position each tick (velocity cleared, stand ticking disabled) for steady client-side motion
+
+### 🔌 PlaceholderAPI (optional)
+
+Soft dependency — the plugin runs without [PlaceholderAPI](https://github.com/PlaceholderAPI/PlaceholderAPI). If it is installed, the expansion registers on startup and reload.
+
+| | |
+|---|---|
+| **Identifier** | `deliverydrones` |
+| **Syntax** | `%deliverydrones_<placeholder>%` |
+| **Test** | `/papi parse me %deliverydrones_outgoing_count%` |
+
+**UUID → player name:** Placeholders that refer to players return **names**, not raw UUIDs. Use `*_uuid` when you need the UUID string. Any UUID can be resolved with `%deliverydrones_playername_<uuid>%` (aliases: `name_`, `uuid_to_name_`, `player_name_`).
+
+**Indexed placeholders:** Use `_1_`, `_2_`, … or omit the index for the first entry (`%deliverydrones_outgoing_receiver%` = `%deliverydrones_outgoing_1_receiver%`).
+
+#### Player (viewer)
+
+| Placeholder | Description |
+|-------------|-------------|
+| `can_receive` / `receive_enabled` | Can receive drones (`true` / `false`) |
+| `outgoing_count` | Outgoing drones (as sender) |
+| `incoming_count` | Incoming drones (as receiver) |
+| `incoming_flying_count` | Incoming, still flying |
+| `incoming_landed_count` | Incoming, landed |
+| `active_outgoing` / `outgoing_active` | Active send slots used |
+| `active_slots_max` / `max_active` | Max concurrent outgoing drones |
+| `can_send` / `can_launch` | May send another drone |
+| `blacklist_count` | Players on personal blacklist |
+| `blacklist_names` | Blacklisted player names (comma-separated) |
+| `socket_count` | Owned sockets |
+| `socket_max` / `max_sockets` | Max sockets per player |
+| `socket_names` | Socket names (comma-separated) |
+| `socket_slots_free` | Remaining socket slots |
+| `cooldown_player` / `send_cooldown_player` | Player send cooldown (config, seconds) |
+| `cooldown_socket` / `send_cooldown_socket` | Socket send cooldown (config, seconds) |
+| `cooldown_player_remaining` | Remaining player cooldown (seconds) |
+| `cooldown_socket_remaining` | Remaining socket cooldown (seconds) |
+| `pending_returns` | Pending return item stacks |
+| `has_incoming` / `has_outgoing` / `has_landed_incoming` | Boolean flags |
+| `nearest_landed_distance` | Distance to nearest landed incoming drone (same world) |
+| `nearest_landed_world` / `_x` / `_y` / `_z` | Position of nearest landed drone |
+| `nearest_landed_uuid` | Drone UUID |
+| `nearest_landed_sender` / `nearest_landed_sender_name` | Sender **name** of nearest landed drone |
+| `players_enabled` / `sockets_enabled` / `glowing_enabled` | Feature toggles |
+| `custom_model_provider` / `custom_model_item_id` | Custom model config |
+| `version` / `plugin_version` | Plugin version |
+| `database_type` / `language` | Config meta |
+
+#### Server totals
+
+| Placeholder | Description |
+|-------------|-------------|
+| `total_drones` / `active_drones` | All active drones |
+| `total_flying` | Flying drones |
+| `total_landed` | Landed drones |
+
+#### Resolve any player UUID to a name
+
+| Placeholder | Description |
+|-------------|-------------|
+| `playername_<uuid>` | Player name for UUID (falls back to UUID if unknown) |
+| `name_<uuid>` | Alias |
+| `uuid_to_name_<uuid>` | Alias |
+| `player_name_<uuid>` | Alias |
+
+Example: `%deliverydrones_playername_550e8400-e29b-41d4-a716-446655440000%`
+
+#### Outgoing / incoming drone (index)
+
+Replace `outgoing` with `incoming` for incoming drones. Fields apply to both unless noted.
+
+| Field | Description |
+|-------|-------------|
+| `sender` / `sender_name` | Sender **player name** |
+| `sender_uuid` | Sender UUID |
+| `receiver` / `receiver_name` | Receiver **player name** (socket owner name for socket deliveries) |
+| `receiver_uuid` | Receiver UUID |
+| `socket` / `socket_name` | Socket name (empty if player delivery) |
+| `is_socket` | Socket delivery (`true` / `false`) |
+| `uuid` / `id` | Drone UUID |
+| `stand_uuid` / `entity_uuid` | Armor stand entity UUID |
+| `world`, `x`, `y`, `z` | Current position |
+| `target_world`, `target_x`, `target_y`, `target_z` | Target position |
+| `distance` / `distance_target` | Distance to target (metres) |
+| `eta` / `eta_seconds` | Estimated arrival (seconds, `0` if landed) |
+| `flying` / `is_flying` | In flight |
+| `landed` / `is_landed` | Landed |
+| `opened` / `was_opened` | Opened by receiver |
+| `animals_only` | Animals-only delivery |
+| `item_count` / `items` | Filled inventory slots |
+| `animal_count` / `animals` | Animals in transit |
+| `despawn_seconds` / `despawn_remaining` | Seconds until despawn (landed only) |
+| `distance_player` | Distance from viewer to drone (same world) |
+
+Examples:
+
+- `%deliverydrones_outgoing_1_sender%` — name of sender of your first outgoing drone
+- `%deliverydrones_incoming_2_eta%` — ETA of second incoming drone
+- `%deliverydrones_outgoing_receiver%` — receiver name (first outgoing)
+
+#### Drone by UUID
+
+`%deliverydrones_id_<drone-uuid>_<field>%` or `%deliverydrones_drone_<drone-uuid>_<field>%` — same fields as in the table above.
+
+Example: `%deliverydrones_id_a1b2c3d4-e5f6-7890-abcd-ef1234567890_eta%`
+
+#### Socket (index)
+
+| Field | Description |
+|-------|-------------|
+| `name` | Socket name |
+| `world`, `x`, `y`, `z` | Location |
+| `coords` / `coordinates` | `x, y, z` string |
+| `owner` | Owner name |
+| `trusted_count` / `trusted_names` | Trust list size / names |
+| `blacklist_count` / `blacklist_names` | Socket blacklist size / names |
+| `created` | Creation timestamp (ms) |
+| `uuid` / `id` | Socket UUID |
+
+Example: `%deliverydrones_socket_1_trusted_names%`
+
+#### Config mirrors (`config_` prefix)
+
+| Placeholder | Maps to `settings.drone.*` |
+|-------------|---------------------------|
+| `config_speed` | `speed` |
+| `config_startup_speed` | `startup-speed` |
+| `config_startup_seconds` | `startup-seconds` |
+| `config_approach_speed` | `approach-speed` |
+| `config_approach_distance` | `approach-distance` |
+| `config_delivery_radius` | `delivery-radius` |
+| `config_despawn_minutes` | `despawn-time-minutes` |
+| `config_despawn_mode` | `despawn-mode` |
+| `config_inventory_size` | `inventory-size` |
+| `config_max_active_per_sender` | `max-active-per-sender` |
+| `config_max_sockets_per_player` | `max-sockets-per-player` |
+| `config_max_leashed_animals` | `max-leashed-animals-per-drone` |
+| `config_carry_leashed_animals` | `carry-leashed-animals` |
+| `config_follow_gliding` | `follow-gliding-player` |
+| `config_follow_airborne` | `follow-airborne-player-before-landing` |
+| `config_airborne_follow_min_height` | `airborne-follow-min-height` |
+| `config_airborne_follow_max_seconds` | `airborne-follow-max-seconds-after-start` |
+| `config_hologram_enabled` | `hologram.enabled` |
+| `config_bossbar_enabled` | `bossbar.enabled` |
+| `config_container_integration` | `container-integration.enabled` |
+| `config_container_search_radius` | `container-integration.search-radius` |
+| `config_launch_animation` | `launch-animation.enabled` |
+| `config_collection_animation` | `collection-animation.enabled` |
+| `config_locate_particles` | `locate-particles.enabled` |
+
+#### Scoreboard / TAB examples
+
+```text
+&aIncoming: %deliverydrones_incoming_flying_count% flying, %deliverydrones_incoming_landed_count% landed
+&7From: %deliverydrones_incoming_1_sender% (&e%deliverydrones_incoming_1_eta%s&7)
+&cCooldown: %deliverydrones_cooldown_player_remaining%s
+```
 
 ### 🌐 Languages
 - Messages in `plugins/AdvancedDeliveryDrones/languages/` (not in `config.yml`)
