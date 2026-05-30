@@ -47,7 +47,6 @@ public final class ConfigEditorService {
         }
         plugin.getConfig().set(option.configPath(), parsed);
         plugin.saveConfig();
-        reloadRuntime();
         return true;
     }
 
@@ -58,7 +57,6 @@ public final class ConfigEditorService {
         boolean current = plugin.getConfig().getBoolean(option.configPath());
         plugin.getConfig().set(option.configPath(), !current);
         plugin.saveConfig();
-        reloadRuntime();
         return true;
     }
 
@@ -80,7 +78,6 @@ public final class ConfigEditorService {
         int next = index < 0 ? 0 : (index + 1) % values.size();
         plugin.getConfig().set(option.configPath(), values.get(next));
         plugin.saveConfig();
-        reloadRuntime();
         return true;
     }
 

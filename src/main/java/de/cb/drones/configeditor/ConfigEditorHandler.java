@@ -12,14 +12,17 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public final class ConfigEditorHandler implements Listener {
     private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
@@ -28,6 +31,7 @@ public final class ConfigEditorHandler implements Listener {
     private final ConfigEditorService service;
     private final ConfigEditorGUI gui;
     private final Map<UUID, PendingChatInput> pendingChatInputs = new ConcurrentHashMap<>();
+    private final Set<UUID> playersWithChanges = new CopyOnWriteArraySet<>();
 
     public ConfigEditorHandler(AdvancedDeliveryDronesPlugin plugin, ConfigEditorService service, ConfigEditorGUI gui) {
         this.plugin = plugin;
@@ -114,7 +118,21 @@ public final class ConfigEditorHandler implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
-        pendingChatInputs.remove(event.getPlayer().getUniqueId());
+        UUID uuid = event.getPlayer().getUniqueId();
+        pendingChatInputs.remove(uuid);
+        playersWithChanges.remove(uuid);
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) {
+            return;
+        }
+        UUID uuid = player.getUniqueId();
+        if (!playersWithChanges.remove(uuid)) {
+            return;
+        }
+        service.reloadRuntime();
     }
 
     private void handleNavigation(Player player, ConfigEditorHolder holder, String navAction) {
@@ -148,13 +166,17 @@ public final class ConfigEditorHandler implements Listener {
     private void handleOptionClick(Player player, ConfigEditorHolder holder, ConfigOption option) {
         switch (option.type()) {
             case BOOLEAN -> {
-                service.toggleBoolean(option);
-                sendOptionValueMessage(player, "config-editor-boolean-toggled", option);
+                if (service.toggleBoolean(option)) {
+                    playersWithChanges.add(player.getUniqueId());
+                    sendOptionValueMessage(player, "config-editor-boolean-toggled", option);
+                }
                 gui.openOptions(player, holder.categoryId(), holder.page());
             }
             case ENUM -> {
-                service.cycleEnum(option);
-                sendOptionValueMessage(player, "config-editor-enum-cycled", option);
+                if (service.cycleEnum(option)) {
+                    playersWithChanges.add(player.getUniqueId());
+                    sendOptionValueMessage(player, "config-editor-enum-cycled", option);
+                }
                 gui.openOptions(player, holder.categoryId(), holder.page());
             }
             default -> {
@@ -184,6 +206,7 @@ public final class ConfigEditorHandler implements Listener {
         }
 
         if (service.applyValue(option, input)) {
+            playersWithChanges.add(player.getUniqueId());
             sendOptionValueMessage(player, "config-editor-value-updated", option);
         } else {
             player.sendMessage(plugin.component("config-editor-value-invalid"));
