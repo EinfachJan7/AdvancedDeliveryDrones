@@ -6,6 +6,7 @@
 
 global:
   fill-item:
+    # This isn't working at this moment, I will fix that in a future update. For now, the deafult is gray stained glass pane.
     material: "GRAY_STAINED_GLASS_PANE"
     name: " "
   back-item:
