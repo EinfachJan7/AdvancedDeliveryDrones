@@ -149,6 +149,11 @@ public final class ConfigEditorHandler implements Listener {
             // GUI wurde wirklich geschlossen, jetzt reloaden
             playersWithChanges.remove(uuid);
             service.reloadRuntime();
+            
+            // Sende Reload-Nachricht
+            String prefix = plugin.getLanguageManager().getString("prefix", "");
+            String message = plugin.getLanguageManager().getString("config-editor-reloaded", "<green>Config reloaded.</green>");
+            player.sendMessage(MINI_MESSAGE.deserialize(prefix + message));
         });
     }
 
