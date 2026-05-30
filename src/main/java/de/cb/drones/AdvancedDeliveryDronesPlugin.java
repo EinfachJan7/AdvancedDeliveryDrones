@@ -51,7 +51,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         de.cb.drones.config.ConfigUpdater.update(this, "gui.yml");
         
         // Initialize bStats metrics
-        int pluginId = 23353; // TODO: Replace with your plugin ID from https://bstats.org/what-is-my-plugin-id
+        int pluginId = 31663;
         new Metrics(this, pluginId);
         
         this.languageManager = new LanguageManager(this);
