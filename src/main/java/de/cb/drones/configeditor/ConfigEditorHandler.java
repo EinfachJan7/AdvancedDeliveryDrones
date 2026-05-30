@@ -238,11 +238,18 @@ public final class ConfigEditorHandler implements Listener {
     }
 
     private void sendOptionValueMessage(Player player, String key, ConfigOption option) {
+        if (!isConfigEditorMessagesEnabled()) {
+            return;
+        }
         String prefix = plugin.getLanguageManager().getString("prefix", "");
         String body = plugin.getLanguageManager().getString(key, key)
                 .replace("<option>", gui.localizedOptionName(option))
                 .replace("<value>", service.getDisplayValue(option));
         player.sendMessage(MINI_MESSAGE.deserialize(prefix + body));
+    }
+
+    private boolean isConfigEditorMessagesEnabled() {
+        return plugin.getConfig().getBoolean("plugin.config-editor-messages-enabled", true);
     }
 
     private record PendingChatInput(String categoryId, int page, String optionId) {

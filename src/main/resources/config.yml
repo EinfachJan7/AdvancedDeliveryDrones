@@ -7,6 +7,8 @@ config-version: 1
 plugin:
   # Check for updates on Modrinth on startup
   check-updates: true
+  # Show notifications when config settings are changed in the editor
+  config-editor-messages-enabled: true
 
 database:
   # Storage type for active Drones: "YAML" or "MYSQL"

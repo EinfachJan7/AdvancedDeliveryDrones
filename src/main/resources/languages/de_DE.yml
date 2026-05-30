@@ -166,3 +166,5 @@ config-editor-value-invalid: "<red>Ungültiger Wert. Nichts wurde geändert.</re
 config-editor-boolean-toggled: "<green><option> ist jetzt <white><value></white>.</green>"
 config-editor-enum-cycled: "<green><option> ist jetzt <white><value></white>.</green>"
 config-editor-reloaded: "<green>Config neu geladen.</green>"
+config-editor-messages-enabled-label: "Editor Messages"
+config-editor-messages-enabled-desc: "Benachrichtigungen bei Config-Änderungen anzeigen"

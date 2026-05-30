@@ -28,6 +28,8 @@ public final class ConfigEditorRegistry {
                 "Sprache", "Sprachauswahl", "de_DE", "en_EN", "es_ES", "fr_FR", "ru_RU", "zh_CN");
         register("plugin-check-updates", "plugin.check-updates", ConfigOptionType.BOOLEAN, "general", Material.LEVER,
                 "Update-Check", "Modrinth-Updates beim Start prüfen");
+        register("config-editor-messages", "plugin.config-editor-messages-enabled", ConfigOptionType.BOOLEAN, "general", Material.WRITTEN_BOOK,
+                "Editor Messages", "Benachrichtigungen bei Config-Änderungen anzeigen");
 
         register("speed", "settings.drone.speed", ConfigOptionType.DOUBLE, "flight", Material.SUGAR,
                 "Fluggeschwindigkeit", "Geschwindigkeit der Drohne");
