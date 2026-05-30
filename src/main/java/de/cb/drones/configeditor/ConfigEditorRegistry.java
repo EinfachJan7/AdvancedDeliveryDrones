@@ -17,16 +17,15 @@ public final class ConfigEditorRegistry {
             new ConfigCategory("visual", Material.AMETHYST_SHARD, "Darstellung"),
             new ConfigCategory("animations", Material.FIREWORK_ROCKET, "Animationen"),
             new ConfigCategory("containers", Material.CHEST, "Container"),
-            new ConfigCategory("discord", Material.PAPER, "Discord"),
-            new ConfigCategory("database", Material.HOPPER, "Datenbank")
+            new ConfigCategory("discord", Material.PAPER, "Discord")
     );
 
     private static final Map<String, ConfigOption> OPTIONS_BY_ID = new LinkedHashMap<>();
     private static final Map<String, List<ConfigOption>> OPTIONS_BY_CATEGORY = new LinkedHashMap<>();
 
     static {
-        register("language", "language", ConfigOptionType.STRING, "general", Material.BOOK,
-                "Sprache", "Sprachdatei ohne .yml (z.B. de_DE)");
+        registerEnum("language", "language", "general", Material.BOOK,
+                "Sprache", "Sprachauswahl", "de_DE", "en_EN", "es_ES", "fr_FR", "ru_RU", "zh_CN");
         register("plugin-check-updates", "plugin.check-updates", ConfigOptionType.BOOLEAN, "general", Material.LEVER,
                 "Update-Check", "Modrinth-Updates beim Start prüfen");
 
@@ -77,8 +76,6 @@ public final class ConfigEditorRegistry {
                 "Sockets aktiv", "Lieferstationen ein/aus");
         register("players-enabled", "settings.drone.players-enabled", ConfigOptionType.BOOLEAN, "gameplay", Material.PLAYER_HEAD,
                 "Spieler-Ziele aktiv", "Spieler als Ziel ein/aus");
-        register("blocked-worlds", "settings.drone.blocked-worlds", ConfigOptionType.STRING_LIST, "gameplay", Material.GRASS_BLOCK,
-                "Blockierte Welten", "Komma-getrennte Weltnamen");
         register("inventory-size", "settings.drone.inventory-size", ConfigOptionType.INT, "gameplay", Material.CHEST,
                 "Inventargröße", "Paket-Inventar (9–54)");
 
@@ -90,8 +87,6 @@ public final class ConfigEditorRegistry {
                 "Custom-Model ID", "Item-ID beim Provider");
         register("glowing-enabled", "settings.drone.glowing-enabled", ConfigOptionType.BOOLEAN, "visual", Material.GLOWSTONE_DUST,
                 "Leuchten", "Drohne leuchtet");
-        register("particle-types", "settings.drone.particle-types", ConfigOptionType.STRING_LIST, "visual", Material.FIREWORK_STAR,
-                "Partikel-Typen", "Komma-getrennt, z.B. ELECTRIC_SPARK");
         register("particle-count", "settings.drone.particle-count", ConfigOptionType.INT, "visual", Material.BLAZE_POWDER,
                 "Partikel-Anzahl", "Partikel pro Tick");
         register("particle-trail-length", "settings.drone.particle-trail-length", ConfigOptionType.INT, "visual", Material.STRING,
@@ -132,8 +127,6 @@ public final class ConfigEditorRegistry {
                 "Container-Integration", "Automatisches Entladen");
         register("container-search-radius", "settings.drone.container-integration.search-radius", ConfigOptionType.INT, "containers", Material.COMPASS,
                 "Suchradius", "Radius um Socket");
-        register("container-blacklist", "settings.drone.container-integration.blacklist", ConfigOptionType.STRING_LIST, "containers", Material.IRON_BARS,
-                "Container-Blacklist", "Blockierte Container-Typen");
 
         register("discord-enabled", "discord.enabled", ConfigOptionType.BOOLEAN, "discord", Material.LEVER,
                 "Discord aktiv", "Webhook-Benachrichtigungen");
@@ -167,21 +160,6 @@ public final class ConfigEditorRegistry {
                 "Max. Items", "Max. Items im Embed");
         register("discord-max-animals", "discord.max-animals-display", ConfigOptionType.INT, "discord", Material.LEAD,
                 "Max. Tiere", "Max. Tiere im Embed");
-
-        registerEnum("database-type", "database.type", "database", Material.ENDER_CHEST,
-                "Datenbank-Typ", "YAML oder MYSQL", "YAML", "MYSQL");
-        register("mysql-host", "database.mysql.host", ConfigOptionType.STRING, "database", Material.COMPASS,
-                "MySQL Host", "Server-Adresse");
-        register("mysql-port", "database.mysql.port", ConfigOptionType.INT, "database", Material.REPEATER,
-                "MySQL Port", "Port (Standard 3306)");
-        register("mysql-database", "database.mysql.database", ConfigOptionType.STRING, "database", Material.BOOK,
-                "MySQL Datenbank", "Datenbankname");
-        register("mysql-username", "database.mysql.username", ConfigOptionType.STRING, "database", Material.NAME_TAG,
-                "MySQL Benutzer", "Benutzername");
-        register("mysql-password", "database.mysql.password", ConfigOptionType.STRING, "database", Material.IRON_DOOR,
-                "MySQL Passwort", "Passwort");
-        register("mysql-table-prefix", "database.mysql.table-prefix", ConfigOptionType.STRING, "database", Material.OAK_SIGN,
-                "Tabellen-Prefix", "Präfix für Tabellen");
     }
 
     private ConfigEditorRegistry() {

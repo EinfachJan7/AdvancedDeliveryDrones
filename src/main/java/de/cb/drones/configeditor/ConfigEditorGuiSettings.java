@@ -53,7 +53,6 @@ public final class ConfigEditorGuiSettings {
                 "<!italic><#9ca3af>  <description>",
                 "<!italic><#4b5563>┌────────────────────┐",
                 "<!italic><#9ca3af>  ᴡᴇʀᴛ: <#f3f4f6><value>",
-                "<!italic><#9ca3af>  ᴛʏᴘ: <#f3f4f6><type>",
                 "<!italic><#4b5563>└────────────────────┘",
                 "<!italic><#22d3ee>⬥ <italic><action></italic>"
         ));

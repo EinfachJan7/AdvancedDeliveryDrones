@@ -156,13 +156,11 @@ public final class ConfigEditorGUI {
         String name = localizedOptionName(option);
         String description = localizedOptionDescription(option);
         String value = service.getDisplayValue(option);
-        String type = localizedType(option.type());
         String action = localizedAction(option.type());
 
         String nameLine = guiSettings.optionNameFormat()
                 .replace("<name>", name)
                 .replace("<value>", value)
-                .replace("<type>", type)
                 .replace("<action>", action)
                 .replace("<description>", description);
 
@@ -171,7 +169,6 @@ public final class ConfigEditorGUI {
             lore.add(MINI_MESSAGE.deserialize(line
                     .replace("<name>", name)
                     .replace("<value>", value)
-                    .replace("<type>", type)
                     .replace("<action>", action)
                     .replace("<description>", description)
                     .replace("<path>", option.configPath())));
@@ -244,10 +241,6 @@ public final class ConfigEditorGUI {
 
     public String localizedOptionDescription(ConfigOption option) {
         return plugin.getLanguageManager().getString("config-editor-option-" + option.id() + "-desc", option.description());
-    }
-
-    private String localizedType(ConfigOptionType type) {
-        return plugin.getLanguageManager().getString("config-editor-type-" + type.name().toLowerCase(), type.name());
     }
 
     private String localizedAction(ConfigOptionType type) {

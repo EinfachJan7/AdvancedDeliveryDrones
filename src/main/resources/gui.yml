@@ -602,7 +602,6 @@ config-editor:
       - "<!italic><gray>  <description>"
       - "<!italic><gray>┌────────────────────┐"
       - "<!italic><gray>  ᴡᴇʀᴛ: <white><value>"
-      - "<!italic><gray>  ᴛʏᴘ: <white><type>"
       - "<!italic><gray>└────────────────────┘"
       - "<!italic><aqua>⬥ <italic><action></italic>"
   pagination:
