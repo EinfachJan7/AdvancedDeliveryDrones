@@ -4,15 +4,22 @@
 # This file contains all GUI configurations for the drone plugin.
 # =============================================================================
 
+global:
+  fill-item:
+    material: "GRAY_STAINED_GLASS_PANE"
+    name: " "
+  back-item:
+    material: "ARROW"
+    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
+    lore:
+      - "<!italic><gray>  Zurück"
+
 # =============================================================================
 # SEND MODE GUI - Choose between sending animals or items
 # =============================================================================
 send-mode:
   title: "<!italic><dark_gray>✦ <gold>sᴇɴᴅ ᴍᴏᴅᴇ</gold> <dark_gray>✦"
   size: 27
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   items:
     animals:
       position: 11
@@ -41,9 +48,6 @@ send-mode:
 main-menu:
   title: "<!italic><gold>ᴅʀᴏɴᴇ ᴍᴇɴᴜ</gold>"
   size: 54
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   items:
     # --- Main Actions ---
     send:
@@ -116,13 +120,7 @@ main-menu:
 blacklist-management:
   title: "<!italic><dark_gray>🚫 <red>ʙʟᴀᴄᴋʟɪsᴛ</red>"
   size: 27
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 18
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴍᴇɴᴜ"
   items:
@@ -146,13 +144,7 @@ blacklist-management:
 blacklist-player-add-selection:
   title: "<!italic><dark_gray>👤 <red>ʙʟᴏᴄᴋ ᴘʟᴀʏᴇʀ</red>"
   size: 54
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 45
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ ʙʟᴀᴄᴋʟɪsᴛ"
   player-head-item:
@@ -170,13 +162,7 @@ blacklist-player-add-selection:
 blacklist-player-remove-selection:
   title: "<!italic><dark_gray>👤 <green>ᴜɴʙʟᴏᴄᴋ ᴘʟᴀʏᴇʀ</green>"
   size: 54
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 45
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ ʙʟᴀᴄᴋʟɪsᴛ"
   player-head-item:
@@ -194,13 +180,7 @@ blacklist-player-remove-selection:
 blacklist-socket-add-selection:
   title: "<!italic><dark_gray>📡 <red>ʙʟᴏᴄᴋ ғʀᴏᴍ sᴏᴄᴋᴇᴛ</red>"
   size: 54
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 45
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ sᴏᴄᴋᴇᴛ ʙʟᴏᴄᴋ ᴍᴇɴᴜ"
   player-head-item:
@@ -219,20 +199,14 @@ blacklist-socket-add-selection:
 blacklist-socket-remove-selection:
   title: "<!italic><dark_gray>📡 <green>ᴜɴʙʟᴏᴄᴋ ғʀᴏᴍ sᴏᴄᴋᴇᴛ</green>"
   size: 54
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 45
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ sᴏᴄᴋᴇᴛ ʙʟᴏᴄᴋ ᴍᴇɴᴜ"
   player-head-item:
     name-format: "<!italic><green><bold><player></bold></green>"
     lore:
       - "<!italic><gray>┌────────────────────┐"
-      - "<!italic><gray>  ᴜɴʙʟᴏᴄᴋ ғʀᴏᴍ sᴏᴄᴋᴇᴛ:"
+      - "<!italic><gray>  ᴜɴʙʟᴏᴄᴋ ᴘʟᴀʏᴇʀ:"
       - "<!italic><white>  ➤ <player>"
       - "<!italic><gray>└────────────────────┘"
       - "<!italic><green>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴜɴʙʟᴏᴄᴋ</italic>"
@@ -243,13 +217,7 @@ blacklist-socket-remove-selection:
 player-selection:
   title: "<!italic><dark_gray>👤 <green>sᴇʟᴇᴄᴛ ᴘʟᴀʏᴇʀ</green>"
   size: 54
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 45
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴍᴇɴᴜ"
   player-head-item:
@@ -267,13 +235,7 @@ player-selection:
 trust-player-selection:
   title: "<!italic><dark_gray>👤 <green>ᴛʀᴜsᴛ ᴘʟᴀʏᴇʀ</green>"
   size: 54
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 45
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ ᴛʀᴜsᴛ ᴍᴇɴᴜ"
   player-head-item:
@@ -292,13 +254,7 @@ trust-player-selection:
 untrust-player-selection:
   title: "<!italic><dark_gray>👤 <red>ʀᴇᴍᴏᴠᴇ ᴛʀᴜsᴛ</red>"
   size: 54
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 45
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ ᴛʀᴜsᴛ ᴍᴇɴᴜ"
   player-head-item:
@@ -317,13 +273,8 @@ untrust-player-selection:
 target-selection:
   title: "<!italic><dark_gray>🎯 <gold>sᴇʟᴇᴄᴛ ᴛᴀʀɢᴇᴛ</gold>"
   size: 27
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
     position: 26
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴍᴇɴᴜ"
   items:
@@ -354,13 +305,7 @@ target-selection:
 socket-selection:
   title: "<!italic><dark_gray>📡 <gold>sᴇʟᴇᴄᴛ sᴏᴄᴋᴇᴛ</gold>"
   size: 54
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 45
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ ᴛᴀʀɢᴇᴛ sᴇʟᴇᴄᴛɪᴏɴ"
 
@@ -377,13 +322,7 @@ socket-item-format:
 socket-management:
   title: "<!italic><dark_gray>📡 <gold>sᴏᴄᴋᴇᴛ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ</gold>"
   size: 54
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 45
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴍᴇɴᴜ"
   socket-management-item:
@@ -409,13 +348,7 @@ socket-management:
 socket-trust-menu:
   title: "<!italic><dark_gray>✓ <green>ᴛʀᴜsᴛ</green>"
   size: 27
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 18
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ sᴏᴄᴋᴇᴛ ᴇᴅɪᴛᴏʀ"
   items:
@@ -424,7 +357,7 @@ socket-trust-menu:
       material: "EMERALD"
       name: "<!italic><green><bold>✓ ᴛʀᴜsᴛ ᴘʟᴀʏᴇʀ</bold></green>"
       lore:
-        - "<!italic><gray>  ᴀᴅᴅ ᴘʟᴀʏᴇʀ ᴛᴏ"
+        - "<!italic><gray>  ᴀᴅɢ ᴘʟᴀʏᴇʀ ᴛᴏ"
         - "<!italic><gray>  ᴛʜɪs sᴏᴄᴋᴇᴛ"
     untrust:
       position: 15
@@ -440,13 +373,7 @@ socket-trust-menu:
 socket-blacklist-menu:
   title: "<!italic><dark_gray>🚫 <red>sᴏᴄᴋᴇᴛ ʙʟᴏᴄᴋ</red>"
   size: 27
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
   back-item:
-    position: 18
-    material: "ARROW"
-    name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
       - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ sᴏᴄᴋᴇᴛ ᴇᴅɪᴛᴏʀ"
   items:
@@ -470,9 +397,9 @@ socket-blacklist-menu:
 socket-edit:
   title: "<!italic><dark_gray>✏️ <gold>sᴏᴄᴋᴇᴛ ᴇᴅɪᴛᴏʀ</gold>"
   size: 27
-  fill-item:
-    material: "GRAY_STAINED_GLASS_PANE"
-    name: " "
+  back-item:
+    lore:
+      - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ"
   items:
     rename:
       position: 10
@@ -515,12 +442,6 @@ socket-edit:
       lore:
         - "<!italic><gray>  ᴄʟɪᴄᴋ ᴛᴏ ʀᴇᴍᴏᴠᴇ"
         - "<!italic><gray>  ᴛʜɪs sᴏᴄᴋᴇᴛ"
-    back:
-      position: 18
-      material: "ARROW"
-      name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
-      lore:
-        - "<!italic><gray>  ʙᴀᴄᴋ ᴛᴏ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ"
 
 # =============================================================================
 # SIGN RENAME CONFIGURATION
@@ -536,9 +457,6 @@ config-editor:
   categories:
     title: "<!italic><dark_gray>⚙ <gold>ᴄᴏɴꜰɪɢ ᴇᴅɪᴛᴏʀ</gold>"
     size: 54
-    fill-item:
-      material: "GRAY_STAINED_GLASS_PANE"
-      name: " "
     content-slots:
       - 10
       - 11
@@ -557,9 +475,6 @@ config-editor:
   options:
     title: "<!italic><dark_gray>⚙ <aqua><category></aqua>"
     size: 54
-    fill-item:
-      material: "GRAY_STAINED_GLASS_PANE"
-      name: " "
     content-slots:
       - 10
       - 11
@@ -607,10 +522,6 @@ config-editor:
   pagination:
     back:
       position: 45
-      material: "ARROW"
-      name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
-      lore:
-        - "<!italic><gray>  ʙᴀᴄᴋ"
     previous:
       position: 48
       material: "ARROW"

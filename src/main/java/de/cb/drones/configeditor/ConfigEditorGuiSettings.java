@@ -144,16 +144,38 @@ public final class ConfigEditorGuiSettings {
     }
 
     private static GuiItem parseFillItem(FileConfiguration cfg, String section) {
-        Material material = parseMaterial(cfg.getString(section + ".material", "GRAY_STAINED_GLASS_PANE"), Material.GRAY_STAINED_GLASS_PANE);
-        String name = cfg.getString(section + ".name", " ");
+        Material defaultMaterial = Material.GRAY_STAINED_GLASS_PANE;
+        String defaultName = " ";
+        if (cfg.contains("global.fill-item")) {
+            defaultMaterial = parseMaterial(cfg.getString("global.fill-item.material"), defaultMaterial);
+            defaultName = cfg.getString("global.fill-item.name", defaultName);
+        }
+
+        Material material = parseMaterial(cfg.getString(section + ".material"), defaultMaterial);
+        String name = cfg.getString(section + ".name", defaultName);
         return new GuiItem(-1, material, name, List.of());
     }
 
     private static GuiItem parseNavItem(FileConfiguration cfg, String section, int defaultPos, Material defaultMaterial, String defaultName, List<String> defaultLore) {
         int position = cfg.getInt(section + ".position", defaultPos);
-        Material material = parseMaterial(cfg.getString(section + ".material", defaultMaterial.name()), defaultMaterial);
-        String name = cfg.getString(section + ".name", defaultName);
-        List<String> lore = nonEmptyLore(cfg.getStringList(section + ".lore"), defaultLore);
+        
+        Material fallbackMaterial = defaultMaterial;
+        String fallbackName = defaultName;
+        List<String> fallbackLore = defaultLore;
+        
+        boolean isBack = section.endsWith(".back");
+        if (isBack && cfg.contains("global.back-item")) {
+            fallbackMaterial = parseMaterial(cfg.getString("global.back-item.material"), fallbackMaterial);
+            fallbackName = cfg.getString("global.back-item.name", fallbackName);
+            List<String> globalLore = cfg.getStringList("global.back-item.lore");
+            if (globalLore != null && !globalLore.isEmpty()) {
+                fallbackLore = globalLore;
+            }
+        }
+        
+        Material material = parseMaterial(cfg.getString(section + ".material", fallbackMaterial.name()), fallbackMaterial);
+        String name = cfg.getString(section + ".name", fallbackName);
+        List<String> lore = nonEmptyLore(cfg.getStringList(section + ".lore"), fallbackLore);
         return new GuiItem(position, material, name, lore);
     }
 

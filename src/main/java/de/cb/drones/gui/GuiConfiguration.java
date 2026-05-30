@@ -205,29 +205,90 @@ public class GuiConfiguration {
             items.put(key, new GuiItem(position, material, name, lore));
         }
         
-        // Parse back item if it exists in YAML
+        // Parse back item
         String backSection = section + "back-item";
-        GuiItem defaultBackItem = defaultItems.get("back");
-        int defaultBackPosition = (defaultBackItem != null) ? defaultBackItem.position() : 18;
+        boolean hasLocalBackItem = cfg.contains(backSection);
+        boolean isExplicitlyDisabled = hasLocalBackItem && cfg.isBoolean(backSection) && !cfg.getBoolean(backSection);
+        boolean hasGlobalBackItem = cfg.contains("global.back-item");
+        boolean isRootMenu = section.equals("main-menu.") || section.equals("send-mode.");
         
-        // Check if back-item section exists in YAML
-        boolean hasBackItemInYaml = cfg.contains(backSection);
+        boolean shouldHaveBackItem = (hasLocalBackItem && !isExplicitlyDisabled) 
+                || (hasGlobalBackItem && !isRootMenu && !isExplicitlyDisabled);
         
-        if (hasBackItemInYaml) {
-            int backPosition = cfg.getInt(backSection + ".position", defaultBackPosition);
-            Material backMaterial = parseMaterial(cfg.getString(backSection + ".material", defaultBackItem != null ? defaultBackItem.material().name() : "ARROW"), defaultBackItem != null ? defaultBackItem.material() : Material.ARROW);
-            String backName = cfg.getString(backSection + ".name", defaultBackItem != null ? defaultBackItem.name() : "<yellow>Zurück");
-            List<String> backLore = cfg.getStringList(backSection + ".lore");
-            if (backLore.isEmpty()) {
-                backLore = defaultBackItem != null ? defaultBackItem.lore() : List.of("<gray>Zurück");
+        if (shouldHaveBackItem) {
+            GuiItem defaultBackItem = defaultItems.get("back");
+            
+            // 1. Position
+            int backPosition;
+            if (hasLocalBackItem && cfg.isInt(backSection + ".position")) {
+                backPosition = cfg.getInt(backSection + ".position");
+            } else if (hasGlobalBackItem && cfg.isInt("global.back-item.position")) {
+                backPosition = cfg.getInt("global.back-item.position");
+            } else if (defaultBackItem != null) {
+                backPosition = defaultBackItem.position();
+            } else {
+                backPosition = size - 9;
             }
+            
+            // 2. Material
+            Material backMaterial = null;
+            if (hasLocalBackItem && cfg.contains(backSection + ".material")) {
+                backMaterial = parseMaterial(cfg.getString(backSection + ".material"), null);
+            }
+            if (backMaterial == null && hasGlobalBackItem && cfg.contains("global.back-item.material")) {
+                backMaterial = parseMaterial(cfg.getString("global.back-item.material"), null);
+            }
+            if (backMaterial == null && defaultBackItem != null) {
+                backMaterial = defaultBackItem.material();
+            }
+            if (backMaterial == null) {
+                backMaterial = Material.ARROW;
+            }
+            
+            // 3. Name
+            String backName = null;
+            if (hasLocalBackItem && cfg.contains(backSection + ".name")) {
+                backName = cfg.getString(backSection + ".name");
+            }
+            if (backName == null && hasGlobalBackItem && cfg.contains("global.back-item.name")) {
+                backName = cfg.getString("global.back-item.name");
+            }
+            if (backName == null && defaultBackItem != null) {
+                backName = defaultBackItem.name();
+            }
+            if (backName == null) {
+                backName = "<yellow>Zurück";
+            }
+            
+            // 4. Lore
+            List<String> backLore = null;
+            if (hasLocalBackItem && cfg.contains(backSection + ".lore")) {
+                backLore = cfg.getStringList(backSection + ".lore");
+            }
+            if ((backLore == null || backLore.isEmpty()) && hasGlobalBackItem && cfg.contains("global.back-item.lore")) {
+                backLore = cfg.getStringList("global.back-item.lore");
+            }
+            if ((backLore == null || backLore.isEmpty()) && defaultBackItem != null) {
+                backLore = defaultBackItem.lore();
+            }
+            if (backLore == null || backLore.isEmpty()) {
+                backLore = List.of("<gray>Zurück");
+            }
+            
             items.put("back", new GuiItem(backPosition, backMaterial, backName, backLore));
         }
         
         // Parse fill item
         String fillSection = section + "fill-item";
-        Material fillMaterial = parseMaterial(cfg.getString(fillSection + ".material", "GRAY_STAINED_GLASS_PANE"), Material.GRAY_STAINED_GLASS_PANE);
-        String fillName = cfg.getString(fillSection + ".name", " ");
+        Material defaultFillMaterial = Material.GRAY_STAINED_GLASS_PANE;
+        String defaultFillName = " ";
+        if (cfg.contains("global.fill-item")) {
+            defaultFillMaterial = parseMaterial(cfg.getString("global.fill-item.material"), defaultFillMaterial);
+            defaultFillName = cfg.getString("global.fill-item.name", defaultFillName);
+        }
+        
+        Material fillMaterial = parseMaterial(cfg.getString(fillSection + ".material", defaultFillMaterial.name()), defaultFillMaterial);
+        String fillName = cfg.getString(fillSection + ".name", defaultFillName);
         GuiItem fillItem = new GuiItem(-1, fillMaterial, fillName, List.of());
         
         return new GuiSettings(title, size, items, fillItem);
