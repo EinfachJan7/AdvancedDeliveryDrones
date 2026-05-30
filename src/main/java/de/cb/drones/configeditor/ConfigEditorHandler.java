@@ -129,10 +129,27 @@ public final class ConfigEditorHandler implements Listener {
             return;
         }
         UUID uuid = player.getUniqueId();
-        if (!playersWithChanges.remove(uuid)) {
+        if (!playersWithChanges.contains(uuid)) {
             return;
         }
-        service.reloadRuntime();
+        
+        // Verzögere die Prüfung um 1 Tick, um zu sehen ob ein neues Inventory geöffnet wird
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline()) {
+                playersWithChanges.remove(uuid);
+                return;
+            }
+            
+            // Prüfe ob der Spieler immer noch ein ConfigEditor Inventory offen hat
+            if (player.getOpenInventory().getTopInventory().getHolder() instanceof ConfigEditorHolder) {
+                // Noch offen, nicht reloaden
+                return;
+            }
+            
+            // GUI wurde wirklich geschlossen, jetzt reloaden
+            playersWithChanges.remove(uuid);
+            service.reloadRuntime();
+        });
     }
 
     private void handleNavigation(Player player, ConfigEditorHolder holder, String navAction) {
