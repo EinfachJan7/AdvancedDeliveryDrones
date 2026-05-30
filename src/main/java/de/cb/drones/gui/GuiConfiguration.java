@@ -280,15 +280,30 @@ public class GuiConfiguration {
         
         // Parse fill item
         String fillSection = section + "fill-item";
-        Material defaultFillMaterial = Material.GRAY_STAINED_GLASS_PANE;
-        String defaultFillName = " ";
-        if (cfg.contains("global.fill-item")) {
-            defaultFillMaterial = parseMaterial(cfg.getString("global.fill-item.material"), defaultFillMaterial);
-            defaultFillName = cfg.getString("global.fill-item.name", defaultFillName);
+        boolean hasLocalFillItem = cfg.contains(fillSection);
+        boolean hasGlobalFillItem = cfg.contains("global.fill-item");
+        
+        Material fillMaterial = Material.GRAY_STAINED_GLASS_PANE;
+        String fillName = " ";
+        
+        // 1. Try local fill-item first
+        if (hasLocalFillItem && cfg.contains(fillSection + ".material")) {
+            fillMaterial = parseMaterial(cfg.getString(fillSection + ".material"), fillMaterial);
+        }
+        // 2. If no local, try global fill-item
+        else if (hasGlobalFillItem && cfg.contains("global.fill-item.material")) {
+            fillMaterial = parseMaterial(cfg.getString("global.fill-item.material"), fillMaterial);
         }
         
-        Material fillMaterial = parseMaterial(cfg.getString(fillSection + ".material", defaultFillMaterial.name()), defaultFillMaterial);
-        String fillName = cfg.getString(fillSection + ".name", defaultFillName);
+        // 1. Try local fill-item name first
+        if (hasLocalFillItem && cfg.contains(fillSection + ".name")) {
+            fillName = cfg.getString(fillSection + ".name");
+        }
+        // 2. If no local, try global fill-item name
+        else if (hasGlobalFillItem && cfg.contains("global.fill-item.name")) {
+            fillName = cfg.getString("global.fill-item.name");
+        }
+        
         GuiItem fillItem = new GuiItem(-1, fillMaterial, fillName, List.of());
         
         return new GuiSettings(title, size, items, fillItem);

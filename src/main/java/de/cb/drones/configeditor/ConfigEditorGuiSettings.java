@@ -144,16 +144,31 @@ public final class ConfigEditorGuiSettings {
     }
 
     private static GuiItem parseFillItem(FileConfiguration cfg, String section) {
-        Material defaultMaterial = Material.GRAY_STAINED_GLASS_PANE;
-        String defaultName = " ";
-        if (cfg.contains("global.fill-item")) {
-            defaultMaterial = parseMaterial(cfg.getString("global.fill-item.material"), defaultMaterial);
-            defaultName = cfg.getString("global.fill-item.name", defaultName);
+        boolean hasLocalFillItem = cfg.contains(section);
+        boolean hasGlobalFillItem = cfg.contains("global.fill-item");
+        
+        Material fillMaterial = Material.GRAY_STAINED_GLASS_PANE;
+        String fillName = " ";
+        
+        // 1. Try local fill-item first
+        if (hasLocalFillItem && cfg.contains(section + ".material")) {
+            fillMaterial = parseMaterial(cfg.getString(section + ".material"), fillMaterial);
         }
-
-        Material material = parseMaterial(cfg.getString(section + ".material"), defaultMaterial);
-        String name = cfg.getString(section + ".name", defaultName);
-        return new GuiItem(-1, material, name, List.of());
+        // 2. If no local, try global fill-item
+        else if (hasGlobalFillItem && cfg.contains("global.fill-item.material")) {
+            fillMaterial = parseMaterial(cfg.getString("global.fill-item.material"), fillMaterial);
+        }
+        
+        // 1. Try local fill-item name first
+        if (hasLocalFillItem && cfg.contains(section + ".name")) {
+            fillName = cfg.getString(section + ".name");
+        }
+        // 2. If no local, try global fill-item name
+        else if (hasGlobalFillItem && cfg.contains("global.fill-item.name")) {
+            fillName = cfg.getString("global.fill-item.name");
+        }
+        
+        return new GuiItem(-1, fillMaterial, fillName, List.of());
     }
 
     private static GuiItem parseNavItem(FileConfiguration cfg, String section, int defaultPos, Material defaultMaterial, String defaultName, List<String> defaultLore) {
