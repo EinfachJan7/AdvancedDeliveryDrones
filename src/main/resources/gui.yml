@@ -593,7 +593,7 @@ config-editor:
     name-format: "<!italic><gold><bold><name></bold></gold>"
     lore:
       - "<!italic><gray>┌────────────────────┐"
-      - "<!italic><gray>  <count> ᴇɪɴsᴛᴇʟʟᴜɴɢ(en)"
+      - "<!italic><gray>  <count> sᴇᴛᴛɪɴɢ(s)"
       - "<!italic><gray>└────────────────────┘"
       - "<!italic><gold>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴏᴘᴇɴ</italic>"
   option-item:
@@ -601,7 +601,7 @@ config-editor:
     lore:
       - "<!italic><gray>  <description>"
       - "<!italic><gray>┌────────────────────┐"
-      - "<!italic><gray>  ᴡᴇʀᴛ: <white><value>"
+      - "<!italic><gray>  ᴠᴀʟᴜᴇ: <white><value>"
       - "<!italic><gray>└────────────────────┘"
       - "<!italic><aqua>⬥ <italic><action></italic>"
   pagination:
@@ -610,22 +610,22 @@ config-editor:
       material: "ARROW"
       name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
       lore:
-        - "<!italic><gray>  ᴢᴜʀüᴄᴋ"
+        - "<!italic><gray>  ʙᴀᴄᴋ"
     previous:
       position: 48
       material: "ARROW"
       name: "<!italic><yellow>◀ ᴘʀᴇᴠ</yellow>"
       lore:
-        - "<!italic><gray>  ᴠᴏʀʜᴇʀɪɢᴇ sᴇɪᴛᴇ"
+        - "<!italic><gray>  ᴘʀᴇᴠɪᴏᴜs ᴘᴀɢᴇ"
     next:
       position: 50
       material: "ARROW"
       name: "<!italic><yellow>ɴᴇxᴛ ▶</yellow>"
       lore:
-        - "<!italic><gray>  ɴäᴄʜsᴛᴇ sᴇɪᴛᴇ"
+        - "<!italic><gray>  ɴᴇxᴛ ᴘᴀɢᴇ"
     page-info:
       position: 49
       material: "PAPER"
-      name: "<!italic><white>sᴇɪᴛᴇ <page>/<pages>"
+      name: "<!italic><white>ᴘᴀɢᴇ <page>/<pages>"
       lore:
-        - "<!italic><gray>  <count> ᴇɪɴᴛʀäɢᴇ"
+        - "<!italic><gray>  <count> ᴇɴᴛʀɪᴇs"

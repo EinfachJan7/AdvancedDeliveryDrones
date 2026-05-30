@@ -168,5 +168,5 @@ config-editor-value-invalid: "<red>Неверное значение. Ничег
 config-editor-boolean-toggled: "<green><option> теперь <white><value></white>.</green>"
 config-editor-enum-cycled: "<green><option> теперь <white><value></white>.</green>"
 config-editor-reloaded: "<green>Конфиг перезагружен.</green>"
-config-editor-messages-enabled-label: "Сообщения редактора"
-config-editor-messages-enabled-desc: "Показывать уведомления при изменении параметров конфигурации"
+config-editor-option-config-editor-messages-name: "Сообщения редактора"
+config-editor-option-config-editor-messages-desc: "Показывать уведомления при изменении параметров конфигурации"
