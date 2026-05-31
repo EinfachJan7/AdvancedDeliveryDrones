@@ -594,8 +594,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
 
-        if (socketRepository.getSocketsByOwner(player.getUniqueId()).stream()
-                .anyMatch(s -> s.name().equals(socketName))) {
+        if (socketRepository.socketNameExistsGlobally(socketName)) {
             droneManager.sendMessage(player, "socket-exists", "<name>", socketName);
             return true;
         }
@@ -702,7 +701,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
 
-        if (socketRepository.socketNameExists(player.getUniqueId(), newName)) {
+        if (socketRepository.socketNameExistsGlobally(newName) && !newName.equalsIgnoreCase(oldName)) {
             droneManager.sendMessage(player, "socket-exists", "<name>", newName);
             return true;
         }

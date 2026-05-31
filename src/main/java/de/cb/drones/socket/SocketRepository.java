@@ -155,6 +155,23 @@ public final class SocketRepository {
         return config.contains(socketPath);
     }
 
+    public boolean socketNameExistsGlobally(String name) {
+        if (!config.contains(SOCKETS_PATH)) {
+            return false;
+        }
+        for (String ownerKey : config.getConfigurationSection(SOCKETS_PATH).getKeys(false)) {
+            String ownerPath = SOCKETS_PATH + "." + ownerKey;
+            if (config.getConfigurationSection(ownerPath) != null) {
+                for (String socketName : config.getConfigurationSection(ownerPath).getKeys(false)) {
+                    if (socketName.equalsIgnoreCase(name)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean addTrustedPlayer(UUID ownerId, String socketName, UUID playerUuid) {
         DeliverySocket socket = getSocket(ownerId, socketName);
         if (socket == null) {
@@ -243,7 +260,8 @@ public final class SocketRepository {
         if (socket == null) {
             return false;
         }
-        if (socketNameExists(ownerId, newName)) {
+        // Check globally (case-insensitive) but allow renaming to same name (different case)
+        if (socketNameExistsGlobally(newName) && !newName.equalsIgnoreCase(oldName)) {
             return false;
         }
 

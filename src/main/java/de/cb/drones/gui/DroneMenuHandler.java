@@ -741,8 +741,8 @@ public class DroneMenuHandler implements Listener {
             return;
         }
         
-        // Check if new name already exists
-        if (socketRepository.socketNameExists(playerId, newName)) {
+        // Check if new name already exists (globally)
+        if (socketRepository.socketNameExistsGlobally(newName) && !newName.equalsIgnoreCase(oldName)) {
             droneManager.sendMessage(player, "socket-exists", "<name>", newName);
             return;
         }
