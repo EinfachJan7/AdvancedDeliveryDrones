@@ -88,6 +88,7 @@ settings:
       enabled: true
       offset-y: 1.0
       format: "<gradient:#ffcc33:#ffaa00><bold>ᴘᴀᴄᴋᴀɢᴇ ғᴏʀ</bold></gradient> <white><receiver> <dark_gray>» <gray>ᴅᴇsᴘᴀᴡɴ: <#ffcc33><minutes>ᴍ <#ffcc33><seconds>s"
+      format-socket: "<gradient:#ffcc33:#ffaa00><bold>ᴘᴀᴄᴋᴀɢᴇ ғᴏʀ ꜱᴏᴄᴋᴇᴛ</bold></gradient> <white><socket> <dark_gray>» <gray>ᴅᴇsᴘᴀᴡɴ: <#ffcc33><minutes>ᴍ <#ffcc33><seconds>s"
     bossbar:
       enabled: true
       format: "Distance to drone: <distance>m | ETA: <eta>s"

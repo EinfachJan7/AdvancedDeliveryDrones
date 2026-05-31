@@ -39,6 +39,7 @@ public record DroneSettings(
         List<String> blockedWorlds,
         boolean hologramEnabled,
         String hologramFormat,
+        String hologramFormatSocket,
         double hologramOffset,
         boolean bossbarEnabled,
         String bossbarFormat,
@@ -93,6 +94,7 @@ public record DroneSettings(
                 .toList();
         boolean hologramEnabled = cfg.getBoolean(section + "hologram.enabled", true);
         String hologramFormat = cfg.getString(section + "hologram.format", "<yellow>Paket fuer <white><receiver></white> <gray>(<minutes>m <seconds>s)</gray>");
+        String hologramFormatSocket = cfg.getString(section + "hologram.format-socket", "<yellow>Paket fuer socket <white><socket></white> <gray>(<minutes>m <seconds>s)</gray>");
         double hologramOffset = cfg.getDouble(section + "hologram.offset-y", 1.0D);
         boolean bossbarEnabled = cfg.getBoolean(section + "bossbar.enabled", true);
         String bossbarFormat = cfg.getString(section + "bossbar.format", "<gold>Distanz: <white><distance>m</white> <gray>| ETA: <white><eta>s</white></gray>");
@@ -145,6 +147,7 @@ public record DroneSettings(
                 blockedWorlds,
                 hologramEnabled,
                 hologramFormat,
+                hologramFormatSocket,
                 hologramOffset,
                 bossbarEnabled,
                 bossbarFormat,

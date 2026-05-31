@@ -737,15 +737,29 @@ public final class DroneManager {
         long minutes = totalSeconds / 60L;
         long seconds = totalSeconds % 60L;
         
-        // Use socket name if drone is sent to a socket, otherwise use receiver name
-        String displayTarget = drone.socketName() != null ? drone.socketName() : drone.receiverName();
+        // Use different format based on delivery target
+        String format;
+        TagResolver resolver;
         
-        TagResolver resolver = TagResolver.resolver(
-                Placeholder.unparsed("receiver", displayTarget),
-                Placeholder.unparsed("minutes", String.valueOf(minutes)),
-                Placeholder.unparsed("seconds", String.format("%02d", seconds))
-        );
-        return miniMessage.deserialize(settings.hologramFormat(), resolver);
+        if (drone.socketName() != null) {
+            // Socket delivery: use socket format with socket name placeholder
+            format = settings.hologramFormatSocket();
+            resolver = TagResolver.resolver(
+                    Placeholder.unparsed("socket", drone.socketName()),
+                    Placeholder.unparsed("minutes", String.valueOf(minutes)),
+                    Placeholder.unparsed("seconds", String.format("%02d", seconds))
+            );
+        } else {
+            // Player delivery: use receiver format with receiver name placeholder
+            format = settings.hologramFormat();
+            resolver = TagResolver.resolver(
+                    Placeholder.unparsed("receiver", drone.receiverName()),
+                    Placeholder.unparsed("minutes", String.valueOf(minutes)),
+                    Placeholder.unparsed("seconds", String.format("%02d", seconds))
+            );
+        }
+        
+        return miniMessage.deserialize(format, resolver);
     }
 
     public String renderBossbar(double distance, long etaSeconds) {
