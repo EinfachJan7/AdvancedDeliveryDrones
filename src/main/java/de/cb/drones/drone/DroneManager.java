@@ -285,6 +285,10 @@ public final class DroneManager {
             }
         }
         drone.releaseLeashedAnimal();
+        
+        // Give leashes/leads for each transported animal
+        deliverLeashes(drone);
+        
         // Only reset countdown on first interaction
         if (!drone.wasOpenedByReceiver()) {
             drone.markInteraction(currentTick());
@@ -321,6 +325,29 @@ public final class DroneManager {
         
         // Mark notifications as sent to prevent duplicates
         drone.markNotificationsSent();
+    }
+
+    private void deliverLeashes(DeliveryDrone drone) {
+        if (!drone.animalsOnlyDelivery() || drone.attachedAnimalTypes().isEmpty()) {
+            return;
+        }
+        
+        int leashCount = drone.attachedAnimalTypes().size();
+        Location dropLocation = drone.currentLocation();
+        
+        // Try to find socket location for drops
+        if (drone.socketName() != null) {
+            for (de.cb.drones.socket.DeliverySocket s : socketRepository.getAllSockets()) {
+                if (s.name().equals(drone.socketName())) {
+                    dropLocation = s.location();
+                    break;
+                }
+            }
+        }
+        
+        // Drop leashes at the location
+        ItemStack leadItem = new ItemStack(org.bukkit.Material.LEAD, leashCount);
+        dropLocation.getWorld().dropItemNaturally(dropLocation, leadItem);
     }
 
     public boolean canSenderLaunch(UUID senderId) {
