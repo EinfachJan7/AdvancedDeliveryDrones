@@ -2,6 +2,10 @@
 # ADVANCED DELIVERY DRONES - GUI CONFIGURATION
 # =============================================================================
 # This file contains all GUI configurations for the drone plugin.
+#
+# PLAYER_HEAD items support an optional custom skull texture:
+#   material: "PLAYER_HEAD"
+#   value: "<base64-texture>"   # also accepts head-texture or texture
 # =============================================================================
 
 global:
@@ -54,6 +58,8 @@ main-menu:
     send:
       position: 20
       material: "PLAYER_HEAD"
+      # Optional: custom skull texture (Base64). Omit to use the default Steve head.
+      # value: "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUv..."
       name: "<!italic><green><bold>✈ sᴇɴᴅ ᴅʀᴏɴᴇ</bold></green>"
       lore:
         - "<!italic><gray>┌────────────────────┐"

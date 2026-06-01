@@ -153,7 +153,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (!droneManager.canSenderLaunch(sender.getUniqueId())) {
-            droneManager.sendMessage(sender, "sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender()));
+            droneManager.sendMessage(sender, "sender-limit-reached", "<max>", String.valueOf(droneManager.maxActiveForSender(sender.getUniqueId())));
             return true;
         }
 
@@ -202,7 +202,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
         if (!droneManager.canSenderLaunch(player.getUniqueId())) {
-            droneManager.sendMessage(player, "sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender()));
+            droneManager.sendMessage(player, "sender-limit-reached", "<max>", String.valueOf(droneManager.maxActiveForSender(player.getUniqueId())));
             return true;
         }
 
@@ -916,7 +916,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
                 
         if (!droneManager.canSenderLaunch(player.getUniqueId())) {
-            droneManager.sendMessage(player, "sender-limit-reached", "<max>", String.valueOf(droneManager.maxActivePerSender()));
+            droneManager.sendMessage(player, "sender-limit-reached", "<max>", String.valueOf(droneManager.maxActiveForSender(player.getUniqueId())));
             return true;
         }
 

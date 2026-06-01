@@ -9,6 +9,7 @@ import de.cb.drones.drone.GuiSettings;
 import de.cb.drones.drone.GuiItem;
 import de.cb.drones.socket.DeliverySocket;
 import de.cb.drones.socket.SocketRepository;
+import de.cb.drones.util.SkullTextureUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -78,7 +79,7 @@ public class DroneMenuGUI {
         for (Map.Entry<String, GuiItem> entry : menuSettings.items().entrySet()) {
             GuiItem item = entry.getValue();
             if (item.position() >= 0 && item.position() < menuSettings.size()) {
-                ItemStack menuItem = createMenuItem(item.material(), item.name(), item.lore());
+                ItemStack menuItem = createMenuItem(item);
                 menu.setItem(item.position(), menuItem);
             }
         }
@@ -120,14 +121,22 @@ public class DroneMenuGUI {
         // Add back button if configured (this will override fill items and player heads if conflict)
         GuiItem backItem = menuSettings.items().get("back");
         if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
-            ItemStack backButton = createMenuItem(backItem.material(), backItem.name(), backItem.lore());
+            ItemStack backButton = createMenuItem(backItem);
             menu.setItem(backItem.position(), backButton);
         }
         
         sender.openInventory(menu);
     }
     
+    private ItemStack createMenuItem(GuiItem item) {
+        return createMenuItem(item.material(), item.name(), item.lore(), item.headTexture());
+    }
+
     private ItemStack createMenuItem(Material material, String name, List<String> lore) {
+        return createMenuItem(material, name, lore, null);
+    }
+
+    private ItemStack createMenuItem(Material material, String name, List<String> lore, String headTexture) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
@@ -137,11 +146,16 @@ public class DroneMenuGUI {
                 loreComponents.add(MINI_MESSAGE.deserialize(line));
             }
             meta.lore(loreComponents);
-            
+
+            if (material == Material.PLAYER_HEAD && headTexture != null && meta instanceof SkullMeta skullMeta) {
+                SkullTextureUtils.applyTexture(skullMeta, headTexture);
+                meta = skullMeta;
+            }
+
             // Mark this item as a GUI item to prevent manipulation
             PersistentDataContainer pdc = meta.getPersistentDataContainer();
             pdc.set(guiItemKey, PersistentDataType.BYTE, (byte) 1);
-            
+
             item.setItemMeta(meta);
         }
         return item;
@@ -286,7 +300,7 @@ public class DroneMenuGUI {
         for (Map.Entry<String, GuiItem> entry : menuSettings.items().entrySet()) {
             GuiItem item = entry.getValue();
             if (item.position() >= 0 && item.position() < menuSettings.size()) {
-                ItemStack menuItem = createMenuItem(item.material(), item.name(), item.lore());
+                ItemStack menuItem = createMenuItem(item);
                 menu.setItem(item.position(), menuItem);
             }
         }
@@ -323,7 +337,7 @@ public class DroneMenuGUI {
         // Add back button if configured (this will override fill items and socket items if conflict)
         GuiItem backItem = menuSettings.items().get("back");
         if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
-            ItemStack backButton = createMenuItem(backItem.material(), backItem.name(), backItem.lore());
+            ItemStack backButton = createMenuItem(backItem);
             menu.setItem(backItem.position(), backButton);
         }
 
@@ -406,7 +420,7 @@ public class DroneMenuGUI {
         if (playerSockets.isEmpty()) {
             GuiItem noSocketsItem = menuSettings.items().get("no-sockets-item");
             if (noSocketsItem != null && noSocketsItem.position() >= 0 && noSocketsItem.position() < size) {
-                ItemStack noSocketsButton = createMenuItem(noSocketsItem.material(), noSocketsItem.name(), noSocketsItem.lore());
+                ItemStack noSocketsButton = createMenuItem(noSocketsItem);
                 menu.setItem(noSocketsItem.position(), noSocketsButton);
             }
         }
@@ -414,7 +428,7 @@ public class DroneMenuGUI {
         // Add back button if configured
         GuiItem backItem = menuSettings.items().get("back");
         if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
-            ItemStack backButton = createMenuItem(backItem.material(), backItem.name(), backItem.lore());
+            ItemStack backButton = createMenuItem(backItem);
             menu.setItem(backItem.position(), backButton);
         }
 
@@ -478,36 +492,36 @@ public class DroneMenuGUI {
         // Add action items
         GuiItem renameItem = menuSettings.items().get("rename");
         if (renameItem != null && renameItem.position() >= 0 && renameItem.position() < size) {
-            ItemStack renameButton = createMenuItem(renameItem.material(), renameItem.name(), renameItem.lore());
+            ItemStack renameButton = createMenuItem(renameItem);
             menu.setItem(renameItem.position(), renameButton);
         }
 
         GuiItem relocateItem = menuSettings.items().get("relocate");
         if (relocateItem != null && relocateItem.position() >= 0 && relocateItem.position() < size) {
-            ItemStack relocateButton = createMenuItem(relocateItem.material(), relocateItem.name(), relocateItem.lore());
+            ItemStack relocateButton = createMenuItem(relocateItem);
             menu.setItem(relocateItem.position(), relocateButton);
         }
 
         GuiItem trustManagementItem = menuSettings.items().get("trust-management");
         if (trustManagementItem != null && trustManagementItem.position() >= 0 && trustManagementItem.position() < size) {
-            menu.setItem(trustManagementItem.position(), createMenuItem(trustManagementItem.material(), trustManagementItem.name(), trustManagementItem.lore()));
+            menu.setItem(trustManagementItem.position(), createMenuItem(trustManagementItem));
         }
 
         GuiItem blacklistManagementItem = menuSettings.items().get("blacklist-management");
         if (blacklistManagementItem != null && blacklistManagementItem.position() >= 0 && blacklistManagementItem.position() < size) {
-            menu.setItem(blacklistManagementItem.position(), createMenuItem(blacklistManagementItem.material(), blacklistManagementItem.name(), blacklistManagementItem.lore()));
+            menu.setItem(blacklistManagementItem.position(), createMenuItem(blacklistManagementItem));
         }
 
         GuiItem deleteItem = menuSettings.items().get("delete");
         if (deleteItem != null && deleteItem.position() >= 0 && deleteItem.position() < size) {
-            ItemStack deleteButton = createMenuItem(deleteItem.material(), deleteItem.name(), deleteItem.lore());
+            ItemStack deleteButton = createMenuItem(deleteItem);
             menu.setItem(deleteItem.position(), deleteButton);
         }
 
         // Add back button
         GuiItem backItem = menuSettings.items().get("back");
         if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
-            ItemStack backButton = createMenuItem(backItem.material(), backItem.name(), backItem.lore());
+            ItemStack backButton = createMenuItem(backItem);
             menu.setItem(backItem.position(), backButton);
         }
 
@@ -538,7 +552,7 @@ public class DroneMenuGUI {
 
         for (GuiItem item : menuSettings.items().values()) {
             if (item.position() >= 0 && item.position() < menuSettings.size()) {
-                menu.setItem(item.position(), createMenuItem(item.material(), item.name(), item.lore()));
+                menu.setItem(item.position(), createMenuItem(item));
             }
         }
 
@@ -618,7 +632,7 @@ public class DroneMenuGUI {
         // Add back button if configured (this will override fill items and player heads if conflict)
         GuiItem backItem = menuSettings.items().get("back");
         if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
-            ItemStack backButton = createMenuItem(backItem.material(), backItem.name(), backItem.lore());
+            ItemStack backButton = createMenuItem(backItem);
             menu.setItem(backItem.position(), backButton);
         }
 
@@ -643,13 +657,13 @@ public class DroneMenuGUI {
         for (Map.Entry<String, GuiItem> entry : menuSettings.items().entrySet()) {
             GuiItem item = entry.getValue();
             if (item.position() >= 0 && item.position() < menuSettings.size()) {
-                menu.setItem(item.position(), createMenuItem(item.material(), item.name(), item.lore()));
+                menu.setItem(item.position(), createMenuItem(item));
             }
         }
 
         GuiItem backItem = menuSettings.items().get("back");
         if (backItem != null && backItem.position() >= 0 && backItem.position() < menuSettings.size()) {
-            menu.setItem(backItem.position(), createMenuItem(backItem.material(), backItem.name(), backItem.lore()));
+            menu.setItem(backItem.position(), createMenuItem(backItem));
         }
 
         player.openInventory(menu);
@@ -734,7 +748,7 @@ public class DroneMenuGUI {
 
         GuiItem backItem = menuSettings.items().get("back");
         if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
-            menu.setItem(backItem.position(), createMenuItem(backItem.material(), backItem.name(), backItem.lore()));
+            menu.setItem(backItem.position(), createMenuItem(backItem));
         }
 
         player.openInventory(menu);

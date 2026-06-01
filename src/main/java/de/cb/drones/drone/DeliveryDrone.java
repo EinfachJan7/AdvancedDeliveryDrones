@@ -1,7 +1,6 @@
 package de.cb.drones.drone;
 
-import com.destroystokyo.paper.profile.PlayerProfile;
-import com.destroystokyo.paper.profile.ProfileProperty;
+import de.cb.drones.util.SkullTextureUtils;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -249,6 +248,34 @@ public final class DeliveryDrone {
 
     public int attachedAnimalCount() {
         return attachedAnimalTypes.size();
+    }
+
+    public int totalItemAmount() {
+        return DroneContentFormatter.totalItemAmount(inventory.getContents());
+    }
+
+    public String formatItemsSummary() {
+        return DroneContentFormatter.formatItemsSummary(inventory.getContents());
+    }
+
+    public String formatItemsList() {
+        return DroneContentFormatter.formatItemsList(inventory.getContents());
+    }
+
+    public String formatAnimalsSummary() {
+        return DroneContentFormatter.formatAnimalsSummary(attachedAnimalTypes);
+    }
+
+    public String formatAnimalsList() {
+        return DroneContentFormatter.formatAnimalsList(attachedAnimalTypes);
+    }
+
+    public ItemStack inventoryItemAt(int oneBasedIndex) {
+        return DroneContentFormatter.getInventoryItemAt(inventory.getContents(), oneBasedIndex);
+    }
+
+    public EntityType animalTypeAt(int oneBasedIndex) {
+        return DroneContentFormatter.getAnimalTypeAt(attachedAnimalTypes, oneBasedIndex);
     }
 
     public String senderName() {
@@ -1673,16 +1700,7 @@ public final class DeliveryDrone {
     }
 
     private static void applyTexture(SkullMeta meta, String base64Texture) {
-        if (base64Texture == null || base64Texture.isBlank()) {
-            return;
-        }
-        try {
-            PlayerProfile profile = Bukkit.createProfile(UUID.randomUUID(), "drone");
-            profile.setProperty(new ProfileProperty("textures", base64Texture.trim()));
-            meta.setPlayerProfile(profile);
-        } catch (Exception ignored) {
-            // keep default skull when profile api fails
-        }
+        SkullTextureUtils.applyTexture(meta, base64Texture);
     }
 
     private void initBossbar(DroneManager manager) {

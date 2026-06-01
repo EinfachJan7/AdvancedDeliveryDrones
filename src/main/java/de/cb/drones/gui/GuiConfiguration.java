@@ -201,8 +201,17 @@ public class GuiConfiguration {
             if (lore.isEmpty()) {
                 lore = defaultItem.lore();
             }
-            
-            items.put(key, new GuiItem(position, material, name, lore));
+
+            String headTexture = null;
+            if (material == Material.PLAYER_HEAD) {
+                headTexture = firstNonBlank(
+                        cfg.getString(itemSection + ".value"),
+                        cfg.getString(itemSection + ".head-texture"),
+                        cfg.getString(itemSection + ".texture")
+                );
+            }
+
+            items.put(key, new GuiItem(position, material, name, lore, headTexture));
         }
         
         // Parse back item
@@ -275,7 +284,7 @@ public class GuiConfiguration {
                 backLore = List.of("<gray>Zurück");
             }
             
-            items.put("back", new GuiItem(backPosition, backMaterial, backName, backLore));
+            items.put("back", new GuiItem(backPosition, backMaterial, backName, backLore, null));
         }
         
         // Parse fill item
@@ -309,6 +318,15 @@ public class GuiConfiguration {
         return new GuiSettings(title, size, items, fillItem);
     }
     
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value.trim();
+            }
+        }
+        return null;
+    }
+
     private static Material parseMaterial(String value, Material fallback) {
         if (value == null || value.isBlank()) {
             return fallback;

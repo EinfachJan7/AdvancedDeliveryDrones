@@ -32,6 +32,8 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
     private static final Pattern INDEXED = Pattern.compile("^(outgoing|incoming|socket)_(?:(\\d+)_)?(.+)$");
     private static final Pattern DRONE_BY_ID = Pattern.compile("^(?:id|drone)_([0-9a-fA-F-]{32,36})_(.+)$");
     private static final Pattern PLAYER_NAME = Pattern.compile("^(?:playername|player_name|name|uuid_to_name)_([0-9a-fA-F-]{32,36})$");
+    private static final Pattern DRONE_ITEM_INDEX = Pattern.compile("^item_(\\d+)_(name|amount|material|type)$");
+    private static final Pattern DRONE_ANIMAL_INDEX = Pattern.compile("^animal_(\\d+)_(name|type)$");
 
     private final AdvancedDeliveryDronesPlugin plugin;
 
@@ -140,7 +142,7 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             case "incoming_flying_count" -> String.valueOf(drones.countIncomingFlying(id));
             case "incoming_landed_count" -> String.valueOf(drones.countIncomingLanded(id));
             case "active_outgoing", "outgoing_active" -> String.valueOf(drones.activeOutgoingCount(id));
-            case "active_slots_max", "max_active" -> String.valueOf(drones.maxActivePerSender());
+            case "active_slots_max", "max_active" -> String.valueOf(drones.maxActiveForSender(id));
             case "can_send", "can_launch" -> bool(drones.canSenderLaunch(id));
             case "blacklist_count" -> String.valueOf(blacklist.getPlayerBlacklist(id).size());
             case "blacklist_names" -> PlaceholderPlayerNames.joinNames(blacklist.getPlayerBlacklist(id));
@@ -273,6 +275,16 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
     }
 
     private String resolveDroneField(DeliveryDrone drone, String field, Player viewer) {
+        Matcher itemMatcher = DRONE_ITEM_INDEX.matcher(field);
+        if (itemMatcher.matches()) {
+            return emptyIfNull(resolveDroneItemField(drone, Integer.parseInt(itemMatcher.group(1)), itemMatcher.group(2)));
+        }
+
+        Matcher animalMatcher = DRONE_ANIMAL_INDEX.matcher(field);
+        if (animalMatcher.matches()) {
+            return emptyIfNull(resolveDroneAnimalField(drone, Integer.parseInt(animalMatcher.group(1)), animalMatcher.group(2)));
+        }
+
         Location loc = drone.currentLocation();
         Location target = drone.targetLocation();
         return switch (field) {
@@ -306,7 +318,25 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             case "opened", "was_opened" -> bool(drone.wasOpenedByReceiver());
             case "animals_only" -> bool(drone.animalsOnlyDelivery());
             case "item_count", "items" -> String.valueOf(drone.filledInventorySlots());
+            case "items_total", "items_total_amount", "item_amount_total" -> String.valueOf(drone.totalItemAmount());
+            case "items_summary", "contents_items" -> drone.formatItemsSummary();
+            case "items_list", "items_slots", "items_slot_list" -> drone.formatItemsList();
             case "animal_count", "animals" -> String.valueOf(drone.attachedAnimalCount());
+            case "animals_summary", "animals_list", "contents_animals" -> drone.formatAnimalsSummary();
+            case "animals_types", "animals_type_list" -> drone.formatAnimalsList();
+            case "has_items" -> bool(drone.filledInventorySlots() > 0);
+            case "has_animals" -> bool(drone.attachedAnimalCount() > 0);
+            case "contents_summary" -> {
+                String items = drone.formatItemsSummary();
+                String animals = drone.formatAnimalsSummary();
+                if (items.isEmpty()) {
+                    yield animals;
+                }
+                if (animals.isEmpty()) {
+                    yield items;
+                }
+                yield items + ", " + animals;
+            }
             case "despawn_seconds", "despawn_remaining" -> {
                 int remaining = drone.despawnSecondsRemaining();
                 yield remaining < 0 ? "" : String.valueOf(remaining);
@@ -319,6 +349,47 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             }
             default -> null;
         };
+    }
+
+    private String resolveDroneItemField(DeliveryDrone drone, int index, String property) {
+        org.bukkit.inventory.ItemStack stack = drone.inventoryItemAt(index);
+        if (stack == null) {
+            return "";
+        }
+        return switch (property) {
+            case "name" -> formatItemDisplayName(stack);
+            case "amount" -> String.valueOf(stack.getAmount());
+            case "material", "type" -> stack.getType().name();
+            default -> null;
+        };
+    }
+
+    private String resolveDroneAnimalField(DeliveryDrone drone, int index, String property) {
+        org.bukkit.entity.EntityType type = drone.animalTypeAt(index);
+        if (type == null) {
+            return "";
+        }
+        String formatted = type.getKey().getKey().replace('_', ' ');
+        if (!formatted.isEmpty()) {
+            formatted = formatted.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + formatted.substring(1);
+        }
+        return switch (property) {
+            case "name" -> formatted;
+            case "type" -> type.name();
+            default -> null;
+        };
+    }
+
+    private static String formatItemDisplayName(org.bukkit.inventory.ItemStack stack) {
+        if (stack.hasItemMeta() && stack.getItemMeta().hasDisplayName()) {
+            return net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                    .serialize(stack.getItemMeta().displayName());
+        }
+        String key = stack.getType().getKey().getKey().replace('_', ' ');
+        if (key.isEmpty()) {
+            return stack.getType().name();
+        }
+        return key.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + key.substring(1);
     }
 
     private String formatNearestLanded(DroneManager drones, Player player, String field) {

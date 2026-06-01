@@ -16,6 +16,11 @@ permissions:
     children:
       drone.send.players: true
       drone.cancel: true
+  # Beispiel: drone.send.max.2 erlaubt 2 gleichzeitige Drohnen (unabhängig von max-active-per-sender in der Config)
+  # Funktioniert mit LuckPerms-Gruppen: /lp group vip permission set drone.send.max.3 true
+  drone.send.max.*:
+    default: false
+    description: Erlaubt N gleichzeitige ausgehende Drohnen (z.B. drone.send.max.2 fuer 2 Drohnen)
   drone.use:
     default: true
     description: Erlaubt die Nutzung von Drohnen-Funktionen

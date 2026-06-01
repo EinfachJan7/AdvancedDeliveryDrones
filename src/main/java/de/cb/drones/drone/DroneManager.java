@@ -3,6 +3,7 @@ package de.cb.drones.drone;
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
 import de.cb.drones.config.SocketPendingReturnsRepository;
 import de.cb.drones.discord.DiscordWebhookManager;
+import de.cb.drones.util.SendMaxPermissions;
 import de.cb.drones.performance.PerformanceOptimizer;
 import de.cb.drones.config.DronePersistence;
 import de.cb.drones.config.YamlDronePersistence;
@@ -351,7 +352,18 @@ public final class DroneManager {
     }
 
     public boolean canSenderLaunch(UUID senderId) {
-        return activeBySender.getOrDefault(senderId, 0) < settings.maxActivePerSender();
+        return activeBySender.getOrDefault(senderId, 0) < maxActiveForSender(senderId);
+    }
+
+    public int maxActiveForSender(UUID senderId) {
+        Player player = Bukkit.getPlayer(senderId);
+        if (player != null) {
+            int permissionMax = SendMaxPermissions.resolveMaxFromPermissions(player);
+            if (permissionMax > 0) {
+                return permissionMax;
+            }
+        }
+        return settings.maxActivePerSender();
     }
 
     public int maxActivePerSender() {

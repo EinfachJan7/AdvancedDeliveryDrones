@@ -7,5 +7,10 @@ public record GuiItem(
         int position,
         Material material,
         String name,
-        List<String> lore
-) {}
+        List<String> lore,
+        String headTexture
+) {
+    public GuiItem(int position, Material material, String name, List<String> lore) {
+        this(position, material, name, lore, null);
+    }
+}
