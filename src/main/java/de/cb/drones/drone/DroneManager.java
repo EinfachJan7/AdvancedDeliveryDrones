@@ -474,10 +474,6 @@ public final class DroneManager {
         }
         if (!keepForPersistence) {
             activeDrones.remove(drone.droneId());
-            UUID standId = drone.standId();
-            if (standId != null) {
-                byEntityUuid.remove(standId);
-            }
             byInventory.remove(drone.inventory());
             // Return items based on despawn mode
             boolean shouldReturnItems = settings.despawnMode() == DroneSettings.DespawnMode.COLLECT || 
@@ -514,6 +510,12 @@ public final class DroneManager {
         }
         if (newStandId != null) {
             byEntityUuid.put(newStandId, drone);
+        }
+    }
+
+    public void removeDroneFromEntityMap(UUID standId) {
+        if (standId != null) {
+            byEntityUuid.remove(standId);
         }
     }
 

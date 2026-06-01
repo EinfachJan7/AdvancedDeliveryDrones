@@ -1641,8 +1641,13 @@ public final class DeliveryDrone {
 
     private void performDestroy() {
         // Unregister from performance optimizer
-        if (droneManager != null && droneManager.getPerformanceOptimizer() != null) {
-            droneManager.getPerformanceOptimizer().unregisterDrone(droneId);
+        if (droneManager != null) {
+            if (droneManager.getPerformanceOptimizer() != null) {
+                droneManager.getPerformanceOptimizer().unregisterDrone(droneId);
+            }
+            if (standId != null) {
+                droneManager.removeDroneFromEntityMap(standId);
+            }
         }
         
         releaseLeashedAnimal();
