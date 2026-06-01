@@ -107,6 +107,11 @@ public final class ComposeDraftRepository {
         persist();
     }
 
+    public void clearAll() {
+        config.set("drafts", null);
+        persist();
+    }
+
     public Map<UUID, StoredComposeDraft> loadAll() {
         ConfigurationSection section = config.getConfigurationSection("drafts");
         if (section == null) {

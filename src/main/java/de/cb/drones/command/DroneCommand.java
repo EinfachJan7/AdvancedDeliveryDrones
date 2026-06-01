@@ -86,6 +86,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     public void saveComposeDrafts() {
+        composeDraftRepository.clearAll();
         for (Map.Entry<UUID, PendingSendDraft> entry : sendDrafts.entrySet()) {
             UUID senderId = entry.getKey();
             boolean animalsOnly = composeHubAnimalsOnly.getOrDefault(senderId, entry.getValue().animalsOnlyMode());
@@ -1033,9 +1034,26 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 contents,
                 animalsOnly
         );
-        sendDrafts.put(sender.getUniqueId(), draft);
-        persistComposeDraft(sender.getUniqueId(), draft, animalsOnly);
+        storeComposeDraftInMemory(sender.getUniqueId(), draft, animalsOnly);
         scheduleComposeHubReopen(sender, holder);
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onComposeHubClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player sender)) {
+            return;
+        }
+        Inventory inv = event.getInventory();
+        if (!(inv.getHolder() instanceof ComposeHubInventoryHolder holder)) {
+            return;
+        }
+        if (!holder.senderId().equals(sender.getUniqueId())) {
+            return;
+        }
+        if (droneManager.settings().openInventoryOnSend()) {
+            return;
+        }
+        saveComposeHubStateToMemory(sender, holder);
     }
 
     private void handleLegacyComposeClose(Player sender, ComposeInventoryHolder holder, Inventory inv) {
@@ -1431,8 +1449,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                     new ItemStack[droneManager.settings().inventorySize()],
                     true
             );
-            sendDrafts.put(sender.getUniqueId(), emptyDraft);
-            persistComposeDraft(sender.getUniqueId(), emptyDraft, true);
+            storeComposeDraftInMemory(sender.getUniqueId(), emptyDraft, true);
             droneManager.sendMessage(sender, "compose-hub-animals-only-on");
         } else {
             PendingSendDraft draft = sendDrafts.get(sender.getUniqueId());
@@ -1448,10 +1465,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                         draft.contents(),
                         false
                 );
-                sendDrafts.put(sender.getUniqueId(), updated);
-                persistComposeDraft(sender.getUniqueId(), updated, false);
+                storeComposeDraftInMemory(sender.getUniqueId(), updated, false);
             } else {
-                composeDraftRepository.delete(sender.getUniqueId());
+                composeHubAnimalsOnly.remove(sender.getUniqueId());
             }
             droneManager.sendMessage(sender, "compose-hub-animals-only-off");
         }
@@ -1793,9 +1809,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (!spawnDroneFromSelection(sender, composeHolder, deliveryInventory)) {
             return;
         }
-        composeHubAnimalsOnly.remove(sender.getUniqueId());
-        sendDrafts.remove(sender.getUniqueId());
-        composeDraftRepository.delete(sender.getUniqueId());
+        clearComposeDraftMemory(sender.getUniqueId());
     }
 
     private static void placeSendModeItem(Inventory inventory, GuiSettings sendMode, String itemKey) {
@@ -1926,35 +1940,23 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             boolean exactSocketTarget,
             String socketName
     ) {
-        Optional<StoredComposeDraft> stored = composeDraftRepository.load(sender.getUniqueId());
-        if (stored.isEmpty()) {
+        PendingSendDraft draft = sendDrafts.get(sender.getUniqueId());
+        if (draft == null) {
             return;
         }
-        StoredComposeDraft draft = stored.get();
         if (!draft.receiverId().equals(receiver.getUniqueId())) {
-            composeDraftRepository.delete(sender.getUniqueId());
-            sendDrafts.remove(sender.getUniqueId());
-            composeHubAnimalsOnly.remove(sender.getUniqueId());
+            clearComposeDraftMemory(sender.getUniqueId());
             return;
         }
         if (!Objects.equals(draft.socketName(), socketName) || draft.exactSocketTarget() != exactSocketTarget) {
-            composeDraftRepository.delete(sender.getUniqueId());
-            sendDrafts.remove(sender.getUniqueId());
-            composeHubAnimalsOnly.remove(sender.getUniqueId());
+            clearComposeDraftMemory(sender.getUniqueId());
             return;
         }
         if (!locationsMatch(draft.fixedTarget(), fixedTarget)) {
-            composeDraftRepository.delete(sender.getUniqueId());
-            sendDrafts.remove(sender.getUniqueId());
-            composeHubAnimalsOnly.remove(sender.getUniqueId());
+            clearComposeDraftMemory(sender.getUniqueId());
             return;
         }
-        sendDrafts.put(sender.getUniqueId(), fromStoredDraft(sender.getUniqueId(), draft));
-        if (draft.animalsOnlyMode()) {
-            composeHubAnimalsOnly.put(sender.getUniqueId(), true);
-        } else {
-            composeHubAnimalsOnly.remove(sender.getUniqueId());
-        }
+        storeComposeDraftInMemory(sender.getUniqueId(), draft, draft.animalsOnlyMode());
     }
 
     private static boolean locationsMatch(Location stored, Location current) {
@@ -1973,12 +1975,43 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 && stored.getBlockZ() == current.getBlockZ();
     }
 
-    private void persistComposeDraft(UUID senderId, PendingSendDraft draft, boolean animalsOnly) {
-        if (draft == null) {
-            composeDraftRepository.delete(senderId);
-            return;
+    private void storeComposeDraftInMemory(UUID senderId, PendingSendDraft draft, boolean animalsOnly) {
+        sendDrafts.put(senderId, draft);
+        if (animalsOnly) {
+            composeHubAnimalsOnly.put(senderId, true);
+        } else {
+            composeHubAnimalsOnly.remove(senderId);
         }
-        composeDraftRepository.save(senderId, toStoredDraft(draft, animalsOnly));
+    }
+
+    private void clearComposeDraftMemory(UUID senderId) {
+        sendDrafts.remove(senderId);
+        composeHubAnimalsOnly.remove(senderId);
+    }
+
+    private void saveComposeHubStateToMemory(Player sender, ComposeHubInventoryHolder holder) {
+        boolean animalsOnly = holder.animalsOnlyMode()
+                || composeHubAnimalsOnly.getOrDefault(sender.getUniqueId(), false);
+        int size = droneManager.settings().inventorySize();
+        PendingSendDraft existing = sendDrafts.get(sender.getUniqueId());
+        ItemStack[] contents;
+        if (existing != null && existing.contents() != null && existing.contents().length == size) {
+            contents = existing.contents();
+        } else {
+            contents = new ItemStack[size];
+        }
+        PendingSendDraft draft = new PendingSendDraft(
+                holder.senderId(),
+                holder.receiverId(),
+                holder.fixedTarget(),
+                holder.adminSend(),
+                holder.selectedAnimalIds(),
+                holder.exactSocketTarget(),
+                holder.socketName(),
+                contents,
+                animalsOnly
+        );
+        storeComposeDraftInMemory(sender.getUniqueId(), draft, animalsOnly);
     }
 
     private static StoredComposeDraft toStoredDraft(PendingSendDraft draft, boolean animalsOnly) {
