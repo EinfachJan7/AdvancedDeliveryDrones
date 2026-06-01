@@ -78,6 +78,7 @@ socket-not-found: "<red>Точка <white><name></white> не найдена.</r
 socket-none: "<gray>Вы не создали ни одной точки.</gray>"
 socket-list-header: "<gold>Ваши точки (<white><count></white>):</gold>"
 socket-name-too-long: "<red>Имя точки не должно превышать 32 символов.</red>"
+socket-name-invalid: "<red>Имя точки содержит недопустимые символы.</red>"
 socket-deleted: "<green>Точка <white><name></white> удалена!</green>"
 socket-relocated: "<green>Точка <white><name></white> перемещена на вашу текущую позицию!</green>"
 socket-renamed: "<green>Точка <white><old></white> переименована в <white><new></white>!</green>"
