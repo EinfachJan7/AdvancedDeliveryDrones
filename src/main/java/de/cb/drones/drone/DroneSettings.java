@@ -232,7 +232,10 @@ public record DroneSettings(
         if (value == null || value.isBlank()) {
             return fallback;
         }
-        Material parsed = Material.matchMaterial(value.trim(), true);
+        Material parsed = Material.matchMaterial(value.trim(), false);
+        if (parsed == null) {
+            parsed = Material.matchMaterial(value.trim(), true);
+        }
         return parsed == null ? fallback : parsed;
     }
 

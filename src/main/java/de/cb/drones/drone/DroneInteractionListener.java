@@ -227,6 +227,6 @@ public final class DroneInteractionListener implements Listener {
     }
 
     private static boolean blocksArmorStandInteraction(DeliveryDrone drone) {
-        return drone.isFlying() || drone.isAnimating();
+        return true;
     }
 }
