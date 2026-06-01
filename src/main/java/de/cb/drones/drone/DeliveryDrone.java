@@ -32,6 +32,8 @@ public final class DeliveryDrone {
     private final String receiverName;
     private final Location fixedTarget;
     private final Location startLocation;
+    /** Unchanged send point for animal return (startLocation moves during flight). */
+    private Location originalSendLocation;
     private long flightStartTick;
     /** Wall-clock flight start for airborne follow window (not reset by mid-flight follow). */
     private long deliveryFlightStartTick = -1L;
@@ -152,10 +154,12 @@ public final class DeliveryDrone {
         if (stand != null) {
             this.standId = stand.getUniqueId();
             this.startLocation = stand.getLocation().clone();
+            this.originalSendLocation = stand.getLocation().clone();
             this.lastKnownLocation = stand.getLocation().clone();
         } else {
             this.standId = null;
             this.startLocation = fixedTarget.clone(); // Will be overwritten in fromPersistentData
+            this.originalSendLocation = fixedTarget.clone();
             this.lastKnownLocation = fixedTarget.clone(); // Will be overwritten in fromPersistentData
         }
         this.lastInteractionTick = createdTick;
@@ -326,10 +330,11 @@ public final class DeliveryDrone {
         if (returningToSender || attachedAnimalTypes.isEmpty()) {
             return;
         }
-        Location sendPoint = startLocation.clone();
+        Location sendPoint = originalSendLocation.clone();
         if (sendPoint.getWorld() == null) {
             return;
         }
+        Location safeTarget = manager.resolveSafeReturnLanding(sendPoint);
         returningToSender = true;
         landed = false;
         landingNotified = false;
@@ -367,12 +372,12 @@ public final class DeliveryDrone {
             startLocation.setYaw(current.getYaw());
             startLocation.setPitch(current.getPitch());
         }
-        fixedTarget.setWorld(sendPoint.getWorld());
-        fixedTarget.setX(sendPoint.getX());
-        fixedTarget.setY(sendPoint.getY());
-        fixedTarget.setZ(sendPoint.getZ());
-        fixedTarget.setYaw(sendPoint.getYaw());
-        fixedTarget.setPitch(sendPoint.getPitch());
+        fixedTarget.setWorld(safeTarget.getWorld());
+        fixedTarget.setX(safeTarget.getX());
+        fixedTarget.setY(safeTarget.getY());
+        fixedTarget.setZ(safeTarget.getZ());
+        fixedTarget.setYaw(safeTarget.getYaw());
+        fixedTarget.setPitch(safeTarget.getPitch());
 
         long nowTick = Bukkit.getCurrentTick();
         flightStartTick = nowTick;
@@ -382,6 +387,9 @@ public final class DeliveryDrone {
         invalidateFlightPath();
         recomputeFlightPath();
         invalidateLandingCache();
+        pendingLanding = null;
+        smoothLanding = false;
+        smoothLandingEnd = null;
 
         Player sender = Bukkit.getPlayer(senderId);
         if (sender != null && sender.isOnline()) {
@@ -390,11 +398,11 @@ public final class DeliveryDrone {
     }
 
     public void teleportReturnToSender(DroneManager manager) {
-        if (attachedAnimalTypes.isEmpty() || startLocation.getWorld() == null) {
+        if (attachedAnimalTypes.isEmpty() || originalSendLocation.getWorld() == null) {
             return;
         }
         returningToSender = true;
-        Location landing = startLocation.clone();
+        Location landing = manager.resolveSafeReturnLanding(originalSendLocation.clone());
         if (beaconTicker != null) {
             beaconTicker.cancel();
             beaconTicker = null;
@@ -407,11 +415,28 @@ public final class DeliveryDrone {
         }
         spawnedTransportAnimalIds.clear();
         releaseLeashedAnimal();
-        landAt(manager, landing);
+        landed = false;
+        landingNotified = false;
+        pendingLanding = landing.clone();
+        smoothLanding = true;
+        smoothLandingStart = currentLocation().clone();
+        smoothLandingEnd = landing.clone();
+        smoothLandingStartTick = Bukkit.getCurrentTick();
+        fixedTarget.setWorld(landing.getWorld());
+        fixedTarget.setX(landing.getX());
+        fixedTarget.setY(landing.getY());
+        fixedTarget.setZ(landing.getZ());
+        if (ticker == null || ticker.isCancelled()) {
+            landAt(manager, landing);
+        }
     }
 
     public Location startLocation() {
         return startLocation.clone();
+    }
+
+    public Location originalSendLocation() {
+        return originalSendLocation.clone();
     }
     
     public List<UUID> getSpawnedTransportAnimalIds() {
@@ -2123,6 +2148,12 @@ public final class DeliveryDrone {
         drone.startLocation.setWorld(startLocation.getWorld());
         drone.startLocation.setYaw(startLocation.getYaw());
         drone.startLocation.setPitch(startLocation.getPitch());
+        drone.originalSendLocation.setX(startLocation.getX());
+        drone.originalSendLocation.setY(startLocation.getY());
+        drone.originalSendLocation.setZ(startLocation.getZ());
+        drone.originalSendLocation.setWorld(startLocation.getWorld());
+        drone.originalSendLocation.setYaw(startLocation.getYaw());
+        drone.originalSendLocation.setPitch(startLocation.getPitch());
         
         drone.lastKnownLocation = lastKnownLocation;
         drone.flightStartTick = flightStartTick;

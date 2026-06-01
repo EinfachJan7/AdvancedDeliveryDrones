@@ -68,6 +68,8 @@ public final class ConfigEditorRegistry {
                 "Max. Tiere", "Tiere pro Drohne");
         register("animal-return-mode", "settings.drone.animal-return-mode", ConfigOptionType.STRING, "gameplay", Material.LEAD,
                 "Tier-Rückkehr", "FLY oder TELEPORT bei Abbruch");
+        register("open-inventory-on-send", "settings.drone.open-inventory-on-send", ConfigOptionType.BOOLEAN, "gameplay", Material.CHEST,
+                "Inventar direkt öffnen", "true = Paket beim Senden direkt; false = Compose-Hub");
         register("send-cooldown-player", "settings.drone.send-cooldown-seconds-player", ConfigOptionType.INT, "gameplay", Material.CLOCK,
                 "Cooldown Spieler", "Sekunden zwischen Spieler-Sends");
         register("send-cooldown-socket", "settings.drone.send-cooldown-seconds-socket", ConfigOptionType.INT, "gameplay", Material.CLOCK,

@@ -45,6 +45,18 @@ compose-hub:
         - "<!italic><gray>  ᴅʀᴏʜɴᴇ ᴀʙ"
         - "<!italic><gray>└────────────────────┘"
         - "<!italic><yellow>⬥ <italic>ᴋʟɪᴄᴋ ᴛᴏ sᴇɴᴅᴇɴ</italic>"
+    send-animals:
+      position: 13
+      material: "LEAD"
+      name: "<!italic><gold><bold>🐾 ɴᴜʀ ᴀnɪᴍᴀʟs</bold></gold>"
+      lore:
+        - "<!italic><gray>┌────────────────────┐"
+        - "<!italic><gray>  sᴄʜᴀʟᴛᴇᴛ ᴜᴍ:"
+        - "<!italic><gray>  ɴᴜʀ ᴀnɢᴇʟᴇɪɴᴛᴇ"
+        - "<!italic><gray>  ᴛɪᴇʀᴇ sᴇɴᴅᴇɴ"
+        - "<!italic><gray>  (ᴋᴇɪɴᴇ ɪᴛᴇᴍs)"
+        - "<!italic><gray>└────────────────────┘"
+        - "<!italic><gold>⬥ <italic>ᴋʟɪᴄᴋ ᴛᴏ ᴛᴏɢɢʟᴇ</italic>"
 
 # =============================================================================
 # SEND MODE GUI - Choose between sending animals or items

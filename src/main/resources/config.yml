@@ -44,6 +44,9 @@ settings:
     # When a delivery with animals is aborted (offline, cancel, decline, …):
     # FLY = drone flies back to the send point; TELEPORT = instant return to send point
     animal-return-mode: FLY
+    # false = compose-hub GUI (load / launch / leashed-only toggle); send-mode is ignored
+    # true = open package inventory directly; closing sends the drone; send-mode when leashed animals nearby
+    open-inventory-on-send: false
     max-leashed-animals-per-drone: 1
     max-sockets-per-player: 1
     # Send cooldown settings (in seconds)

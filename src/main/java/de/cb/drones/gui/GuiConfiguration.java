@@ -341,6 +341,7 @@ public class GuiConfiguration {
     private static Map<String, GuiItem> createDefaultComposeHubItems() {
         Map<String, GuiItem> items = new HashMap<>();
         items.put("load-items", new GuiItem(11, Material.CHEST, "<green>Items einlegen", List.of("<gray>Öffnet das Paket-Inventar")));
+        items.put("send-animals", new GuiItem(13, Material.LEAD, "<gold>Nur Tiere", List.of("<gray>Nur angeleinte Tiere senden")));
         items.put("launch", new GuiItem(15, Material.NETHER_STAR, "<yellow>Drohne abschicken", List.of("<gray>Sendet die Drohne ab")));
         return items;
     }

@@ -1065,7 +1065,7 @@ public final class DroneManager {
     }
 
     private void returnAnimalsToOriginalLocation(DeliveryDrone drone) {
-        Location originalLocation = drone.startLocation();
+        Location originalLocation = drone.originalSendLocation();
         if (originalLocation.getWorld() == null) {
             return;
         }
@@ -1154,22 +1154,66 @@ public final class DroneManager {
         }
     }
 
+    public Location resolveSafeReturnLanding(Location reference) {
+        World world = reference.getWorld();
+        if (world == null) {
+            return reference.clone();
+        }
+        int x = reference.getBlockX();
+        int z = reference.getBlockZ();
+        int refY = reference.getBlockY();
+        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+            world.getChunkAt(x >> 4, z >> 4).load();
+        }
+        int safeY = findSafeLandingY(world, x, refY, z);
+        return new Location(world, x + 0.5, safeY + 0.1, z + 0.5, reference.getYaw(), reference.getPitch());
+    }
+
     private Location findSafeSpawnLocation(Location originalLocation) {
-        World world = originalLocation.getWorld();
-        int x = originalLocation.getBlockX();
-        int z = originalLocation.getBlockZ();
-        
-        // Find the highest safe ground level
-        int y = world.getHighestBlockYAt(x, z, org.bukkit.HeightMap.MOTION_BLOCKING_NO_LEAVES);
-        
-        // Ensure we're not spawning too high (prevent fall damage)
-        int maxY = y + 3; // Maximum 3 blocks above ground
-        int spawnY = Math.min(originalLocation.getBlockY(), maxY);
-        
-        // Ensure minimum height (not below bedrock)
-        spawnY = Math.max(spawnY, world.getMinHeight() + 1);
-        
-        return new Location(world, x + 0.5, spawnY, z + 0.5);
+        return resolveSafeReturnLanding(originalLocation);
+    }
+
+    private static boolean isSafeGround(World world, int x, int y, int z) {
+        org.bukkit.block.Block ground = world.getBlockAt(x, y, z);
+        org.bukkit.block.Block feet = world.getBlockAt(x, y + 1, z);
+        org.bukkit.block.Block head = world.getBlockAt(x, y + 2, z);
+        return ground.getType().isSolid()
+                && !ground.isLiquid()
+                && ground.getType() != Material.BEDROCK
+                && !feet.getType().isSolid()
+                && !feet.isLiquid()
+                && !head.getType().isSolid()
+                && !head.isLiquid();
+    }
+
+    private static int findSafeLandingY(World world, int x, int startY, int z) {
+        if (!world.isChunkLoaded(x >> 4, z >> 4)) {
+            return Math.max(world.getMinHeight() + 1, startY);
+        }
+        int highest = world.getHighestBlockYAt(x, z, org.bukkit.HeightMap.MOTION_BLOCKING_NO_LEAVES);
+        if (highest >= world.getMinHeight() && highest < world.getMaxHeight() - 2 && isSafeGround(world, x, highest, z)) {
+            return highest + 1;
+        }
+        for (int dy = 0; dy <= 16; dy++) {
+            int yDown = startY - dy;
+            if (yDown >= world.getMinHeight() && yDown < world.getMaxHeight() - 2 && isSafeGround(world, x, yDown, z)) {
+                return yDown + 1;
+            }
+            if (dy > 0) {
+                int yUp = startY + dy;
+                if (yUp >= world.getMinHeight() && yUp < world.getMaxHeight() - 2 && isSafeGround(world, x, yUp, z)) {
+                    return yUp + 1;
+                }
+            }
+        }
+        if (world.getEnvironment() == World.Environment.NETHER && highest >= 120) {
+            for (int y = 115; y > world.getMinHeight(); y--) {
+                if (isSafeGround(world, x, y, z)) {
+                    return y + 1;
+                }
+            }
+        }
+        return Math.max(world.getMinHeight() + 1, highest + 1);
     }
     
     private void applyFallProtection(LivingEntity entity) {
