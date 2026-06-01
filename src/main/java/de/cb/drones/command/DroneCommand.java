@@ -606,10 +606,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         Location loc = player.getLocation();
         try {
-            socketRepository.addSocket(player.getUniqueId(), player.getName(), socketName, loc);
+            socketRepository.addSocket(player.getUniqueId(), player.getName(), socketName, loc, droneManager.maxSocketsFor(player));
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("Maximum") && e.getMessage().contains("socket(s) per player")) {
-                droneManager.sendMessage(player, "socket-limit-reached", "<max>", String.valueOf(droneManager.settings().maxSocketsPerPlayer()));
+                droneManager.sendMessage(player, "socket-limit-reached", "<max>", String.valueOf(droneManager.maxSocketsFor(player)));
                 return true;
             }
             throw e;
@@ -1337,7 +1337,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (droneManager.settings().carryLeashedAnimals()) {
             List<LivingEntity> leashedAnimals = listSenderLeashedAnimals(sender);
             if (!leashedAnimals.isEmpty()) {
-                int maxAnimals = droneManager.settings().maxLeashedAnimalsPerDrone();
+                int maxAnimals = droneManager.maxLeashedAnimalsFor(sender);
                 if (maxAnimals > 0 && leashedAnimals.size() > maxAnimals) {
                     droneManager.sendMessage(sender, "too-many-leashed-animals", "<max>", String.valueOf(maxAnimals));
                     return;

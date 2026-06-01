@@ -370,6 +370,26 @@ public final class DroneManager {
         return settings.maxActivePerSender();
     }
 
+    public int maxLeashedAnimalsFor(Player player) {
+        if (player != null) {
+            int permissionMax = SendMaxPermissions.resolveLeashedMaxFromPermissions(player);
+            if (permissionMax > 0) {
+                return permissionMax;
+            }
+        }
+        return settings.maxLeashedAnimalsPerDrone();
+    }
+
+    public int maxSocketsFor(Player player) {
+        if (player != null) {
+            int permissionMax = SendMaxPermissions.resolveSocketsMaxFromPermissions(player);
+            if (permissionMax > 0) {
+                return permissionMax;
+            }
+        }
+        return settings.maxSocketsPerPlayer();
+    }
+
     public boolean isBlockedWorld(String worldName) {
         return settings.blockedWorlds().contains(worldName.toLowerCase());
     }

@@ -76,6 +76,7 @@ public final class DeliveryDrone {
     private Location collectionAnimationStart;
     private long collectionAnimationStartTick;
     private final int collectionAnimationDuration = 40; // 2 seconds at 20 ticks
+    private boolean launchAnimation;
     private long lastBossBarUpdate = 0L;
     private static final long BOSSBAR_UPDATE_INTERVAL = 20L;
     private int lastBossBarDistanceM = -1;
@@ -200,6 +201,10 @@ public final class DeliveryDrone {
     
     public boolean isFlying() {
         return !landed;
+    }
+
+    public boolean isAnimating() {
+        return launchAnimation || smoothLanding || collectionAnimation;
     }
 
     public boolean isSocketDelivery() {
@@ -432,6 +437,7 @@ public final class DeliveryDrone {
         int totalTicks = settings.launchAnimationSeconds() * 20;
         Location startAnimLocation = stand.getLocation().clone();
         float startYaw = stand.getYaw();
+        this.launchAnimation = true;
 
         class LaunchAnimationTask extends org.bukkit.scheduler.BukkitRunnable {
             int ticks = 0;
@@ -507,6 +513,7 @@ public final class DeliveryDrone {
                 ticks++;
 
                 if (ticks >= totalTicks) {
+                    launchAnimation = false;
                     cancel();
 
                     center.getWorld().spawnParticle(org.bukkit.Particle.EXPLOSION, center, 5, 0.4, 0.4, 0.4, 0.08);

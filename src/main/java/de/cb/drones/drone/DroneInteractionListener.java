@@ -79,8 +79,13 @@ public final class DroneInteractionListener implements Listener {
             droneManager.sendMessage(player, "wrong-user");
             return true;
         }
-        
+
         if (drone.isFlying()) {
+            droneManager.sendMessage(player, "drone-flying");
+            return true;
+        }
+
+        if (drone.isAnimating()) {
             droneManager.sendMessage(player, "drone-flying");
             return true;
         }
@@ -159,7 +164,7 @@ public final class DroneInteractionListener implements Listener {
     
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onInventoryClick(InventoryClickEvent event) {
-        // Block helmet manipulation for flying drones
+        // Block helmet manipulation for flying or animating drones
         if (event.getSlotType() != InventoryType.SlotType.ARMOR && 
             event.getSlot() != EquipmentSlot.HEAD.ordinal()) {
             return;
@@ -176,7 +181,7 @@ public final class DroneInteractionListener implements Listener {
             org.bukkit.entity.ArmorStand armorStand = (org.bukkit.entity.ArmorStand) event.getClickedInventory().getHolder();
             DeliveryDrone drone = droneManager.findByEntity(armorStand.getUniqueId());
             
-            if (drone != null && drone.isFlying()) {
+            if (drone != null && blocksArmorStandInteraction(drone)) {
                 event.setCancelled(true);
                 if (event.getWhoClicked() instanceof Player) {
                     Player player = (Player) event.getWhoClicked();
@@ -189,12 +194,12 @@ public final class DroneInteractionListener implements Listener {
     
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onInventoryDrag(InventoryDragEvent event) {
-        // Block dragging items onto/off drone helmet while flying
+        // Block dragging items onto/off drone helmet while flying or animating
         if (event.getInventory().getHolder() instanceof org.bukkit.entity.ArmorStand) {
             org.bukkit.entity.ArmorStand armorStand = (org.bukkit.entity.ArmorStand) event.getInventory().getHolder();
             DeliveryDrone drone = droneManager.findByEntity(armorStand.getUniqueId());
             
-            if (drone != null && drone.isFlying()) {
+            if (drone != null && blocksArmorStandInteraction(drone)) {
                 // Check if any slot involved is the helmet slot
                 for (Integer slot : event.getInventorySlots()) {
                     if (slot == EquipmentSlot.HEAD.ordinal()) {
@@ -212,13 +217,16 @@ public final class DroneInteractionListener implements Listener {
     
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerArmorStandManipulate(org.bukkit.event.player.PlayerArmorStandManipulateEvent event) {
-        // Block direct armor manipulation of flying drones
+        // Block direct armor manipulation of flying or animating drones
         DeliveryDrone drone = droneManager.findByEntity(event.getRightClicked().getUniqueId());
         
-        if (drone != null && drone.isFlying()) {
+        if (drone != null && blocksArmorStandInteraction(drone)) {
             event.setCancelled(true);
             droneManager.sendMessage(event.getPlayer(), "drone-armor-manipulate");
         }
     }
 
+    private static boolean blocksArmorStandInteraction(DeliveryDrone drone) {
+        return drone.isFlying() || drone.isAnimating();
     }
+}

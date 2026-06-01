@@ -67,13 +67,7 @@ public class DroneMenuGUI {
         holder.setInventory(menu);
         
         // First, fill all slots with fill item if configured
-        if (menuSettings.fillItem() != null) {
-            ItemStack filler = createMenuItem(menuSettings.fillItem().material(), 
-                menuSettings.fillItem().name(), menuSettings.fillItem().lore());
-            for (int i = 0; i < menuSettings.size(); i++) {
-                menu.setItem(i, filler);
-            }
-        }
+        fillInventory(menu, menuSettings, menuSettings.size());
         
         // Then add configurable menu items (this will override fill items)
         for (Map.Entry<String, GuiItem> entry : menuSettings.items().entrySet()) {
@@ -103,13 +97,7 @@ public class DroneMenuGUI {
         holder.setInventory(menu);
         
         // First, fill all slots with fill item if configured
-        if (menuSettings.fillItem() != null) {
-            ItemStack filler = createMenuItem(menuSettings.fillItem().material(), 
-                menuSettings.fillItem().name(), menuSettings.fillItem().lore());
-            for (int i = 0; i < size; i++) {
-                menu.setItem(i, filler);
-            }
-        }
+        fillInventory(menu, menuSettings, size);
         
         // Add player heads (this will override fill items)
         for (int i = 0; i < onlinePlayers.size() && i < size; i++) {
@@ -288,13 +276,7 @@ public class DroneMenuGUI {
         holder.setInventory(menu);
 
         // First, fill all slots with fill item if configured
-        if (menuSettings.fillItem() != null) {
-            ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
-                menuSettings.fillItem().name(), menuSettings.fillItem().lore());
-            for (int i = 0; i < menuSettings.size(); i++) {
-                menu.setItem(i, filler);
-            }
-        }
+        fillInventory(menu, menuSettings, menuSettings.size());
 
         // Then add configurable menu items (this will override fill items)
         for (Map.Entry<String, GuiItem> entry : menuSettings.items().entrySet()) {
@@ -318,14 +300,7 @@ public class DroneMenuGUI {
             MINI_MESSAGE.deserialize(menuSettings.title()));
         holder.setInventory(menu);
 
-        // First, fill all slots with fill item if configured
-        if (menuSettings.fillItem() != null) {
-            ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
-                menuSettings.fillItem().name(), menuSettings.fillItem().lore());
-            for (int i = 0; i < size; i++) {
-                menu.setItem(i, filler);
-            }
-        }
+        fillInventory(menu, menuSettings, size);
 
         // Add socket items (this will override fill items)
         for (int i = 0; i < allSockets.size() && i < size; i++) {
@@ -400,14 +375,7 @@ public class DroneMenuGUI {
             MINI_MESSAGE.deserialize(menuSettings.title()));
         holder.setInventory(menu);
 
-        // First, fill all slots with fill item if configured
-        if (menuSettings.fillItem() != null) {
-            ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
-                menuSettings.fillItem().name(), menuSettings.fillItem().lore());
-            for (int i = 0; i < size; i++) {
-                menu.setItem(i, filler);
-            }
-        }
+        fillInventory(menu, menuSettings, size);
 
         // Add socket items
         for (int i = 0; i < playerSockets.size() && i < size; i++) {
@@ -480,14 +448,7 @@ public class DroneMenuGUI {
             MINI_MESSAGE.deserialize(menuSettings.title()));
         holder.setInventory(menu);
 
-        // First, fill all slots with fill item if configured
-        if (menuSettings.fillItem() != null) {
-            ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
-                menuSettings.fillItem().name(), menuSettings.fillItem().lore());
-            for (int i = 0; i < size; i++) {
-                menu.setItem(i, filler);
-            }
-        }
+        fillInventory(menu, menuSettings, size);
 
         // Add action items
         GuiItem renameItem = menuSettings.items().get("rename");
@@ -755,11 +716,14 @@ public class DroneMenuGUI {
     }
 
     private void fillMenu(Inventory menu, GuiSettings menuSettings, int size) {
+        fillInventory(menu, menuSettings, size);
+    }
+
+    private void fillInventory(Inventory menu, GuiSettings menuSettings, int size) {
         if (menuSettings.fillItem() == null) {
             return;
         }
-        ItemStack filler = createMenuItem(menuSettings.fillItem().material(),
-                menuSettings.fillItem().name(), menuSettings.fillItem().lore());
+        ItemStack filler = createMenuItem(menuSettings.fillItem());
         for (int i = 0; i < size; i++) {
             menu.setItem(i, filler);
         }

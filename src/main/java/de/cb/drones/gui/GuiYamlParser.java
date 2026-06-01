@@ -25,26 +25,29 @@ public final class GuiYamlParser {
     }
 
     public static GuiItem parseFillItem(FileConfiguration cfg, String localFillSection) {
-        boolean hasLocalFillItem = cfg.contains(localFillSection);
-        boolean hasGlobalFillItem = cfg.contains("global.fill-item");
-
         Material fillMaterial = Material.GRAY_STAINED_GLASS_PANE;
         String fillName = " ";
 
-        if (hasLocalFillItem && cfg.contains(localFillSection + ".material")) {
-            fillMaterial = parseMaterial(cfg.getString(localFillSection + ".material"), fillMaterial);
-        } else if (hasGlobalFillItem && cfg.contains("global.fill-item.material")) {
-            fillMaterial = parseMaterial(cfg.getString("global.fill-item.material"), fillMaterial);
+        String localMaterial = cfg.getString(localFillSection + ".material");
+        if (localMaterial != null && !localMaterial.isBlank()) {
+            fillMaterial = parseMaterial(localMaterial, fillMaterial);
+        } else {
+            String globalMaterial = cfg.getString("global.fill-item.material");
+            if (globalMaterial != null && !globalMaterial.isBlank()) {
+                fillMaterial = parseMaterial(globalMaterial, fillMaterial);
+            }
         }
 
-        if (hasLocalFillItem && cfg.contains(localFillSection + ".name")) {
-            fillName = cfg.getString(localFillSection + ".name");
-        } else if (hasGlobalFillItem && cfg.contains("global.fill-item.name")) {
-            fillName = cfg.getString("global.fill-item.name");
+        String localName = cfg.getString(localFillSection + ".name");
+        String globalName = cfg.getString("global.fill-item.name");
+        if (localName != null) {
+            fillName = localName;
+        } else if (globalName != null) {
+            fillName = globalName;
         }
 
         String headTexture = parseHeadTexture(cfg, localFillSection, fillMaterial);
-        if (headTexture == null && hasGlobalFillItem) {
+        if (headTexture == null) {
             headTexture = parseHeadTexture(cfg, "global.fill-item", fillMaterial);
         }
 

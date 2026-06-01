@@ -147,10 +147,12 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             case "blacklist_count" -> String.valueOf(blacklist.getPlayerBlacklist(id).size());
             case "blacklist_names" -> PlaceholderPlayerNames.joinNames(blacklist.getPlayerBlacklist(id));
             case "socket_count" -> String.valueOf(sockets.getSocketsByOwner(id).size());
-            case "socket_max", "max_sockets" -> String.valueOf(sockets.getMaxSocketsPerPlayer());
+            case "socket_max", "max_sockets" -> String.valueOf(drones.maxSocketsFor(player));
             case "socket_names" -> joinSocketNames(sockets.getSocketsByOwner(id));
             case "socket_slots_free" -> String.valueOf(Math.max(0,
-                    sockets.getMaxSocketsPerPlayer() - sockets.getSocketsByOwner(id).size()));
+                    drones.maxSocketsFor(player) - sockets.getSocketsByOwner(id).size()));
+            case "max_leashed_animals_player", "leashed_max" ->
+                    String.valueOf(drones.maxLeashedAnimalsFor(player));
             case "cooldown_player", "send_cooldown_player" ->
                     String.valueOf(cfg.getInt(section + "send-cooldown-seconds-player", 0));
             case "cooldown_socket", "send_cooldown_socket" ->

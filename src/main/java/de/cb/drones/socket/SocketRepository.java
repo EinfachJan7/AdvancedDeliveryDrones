@@ -65,6 +65,10 @@ public final class SocketRepository {
     }
 
     public DeliverySocket addSocket(UUID ownerId, String ownerName, String name, Location location) {
+        return addSocket(ownerId, ownerName, name, location, maxSocketsPerPlayer);
+    }
+
+    public DeliverySocket addSocket(UUID ownerId, String ownerName, String name, Location location, int maxSockets) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Socket name cannot be null or blank");
         }
@@ -73,8 +77,8 @@ public final class SocketRepository {
         }
 
         List<DeliverySocket> existingSockets = getSocketsByOwner(ownerId);
-        if (existingSockets.size() >= maxSocketsPerPlayer) {
-            throw new IllegalArgumentException("Player already has " + existingSockets.size() + " socket(s). Maximum " + maxSocketsPerPlayer + " socket(s) per player.");
+        if (existingSockets.size() >= maxSockets) {
+            throw new IllegalArgumentException("Player already has " + existingSockets.size() + " socket(s). Maximum " + maxSockets + " socket(s) per player.");
         }
 
         String socketPath = SOCKETS_PATH + "." + ownerId + "." + name;

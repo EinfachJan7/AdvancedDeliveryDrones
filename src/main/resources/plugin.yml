@@ -21,6 +21,14 @@ permissions:
   drone.send.max.*:
     default: false
     description: Erlaubt N gleichzeitige ausgehende Drohnen (z.B. drone.send.max.2 fuer 2 Drohnen)
+  # Beispiel: drone.leashed.max.4 erlaubt 4 angeleinte Tiere pro Drohne (unabhaengig von max-leashed-animals-per-drone)
+  drone.leashed.max.*:
+    default: false
+    description: Erlaubt N angeleinte Tiere pro Drohne (z.B. drone.leashed.max.4)
+  # Beispiel: drone.sockets.max.3 erlaubt 3 Sockets pro Spieler (unabhaengig von max-sockets-per-player)
+  drone.sockets.max.*:
+    default: false
+    description: Erlaubt N Delivery-Sockets pro Spieler (z.B. drone.sockets.max.3)
   drone.use:
     default: true
     description: Erlaubt die Nutzung von Drohnen-Funktionen
