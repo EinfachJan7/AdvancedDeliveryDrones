@@ -35,6 +35,15 @@ compose-hub:
         - "<!italic><gray>  ᴘᴀᴋᴇᴛ-ɪɴᴠᴇɴᴛᴀʀ"
         - "<!italic><gray>└────────────────────┘"
         - "<!italic><green>⬥ <italic>ᴋʟɪᴄᴋ ᴛᴏ ᴏ̈ғғɴᴇɴ</italic>"
+      when-locked:
+        material: "BARRIER"
+        name: "<!italic><red><bold>📦 ɪᴛᴇᴍs ɢᴇsᴘᴇʀʀᴛ</bold></red>"
+        lore:
+          - "<!italic><gray>┌────────────────────┐"
+          - "<!italic><gray>  ɪᴍ ɴᴜʀ-ᴛɪᴇʀᴇ-ᴍᴏᴅᴜs"
+          - "<!italic><gray>  ᴋᴇɪɴᴇ ɪᴛᴇᴍs"
+          - "<!italic><gray>└────────────────────┘"
+          - "<!italic><red>⬥ <italic>ɴɪᴄʜᴛ ᴠᴇʀғüɢʙᴀʀ</italic>"
     launch:
       position: 15
       material: "NETHER_STAR"
@@ -57,6 +66,15 @@ compose-hub:
         - "<!italic><gray>  (ᴋᴇɪɴᴇ ɪᴛᴇᴍs)"
         - "<!italic><gray>└────────────────────┘"
         - "<!italic><gold>⬥ <italic>ᴋʟɪᴄᴋ ᴛᴏ ᴛᴏɢɢʟᴇ</italic>"
+      when-active:
+        enchanted: true
+        name: "<!italic><aqua><bold>🐾 ɴᴜʀ ᴀnɪᴍᴀʟs ✓</bold></aqua>"
+        lore:
+          - "<!italic><gray>┌────────────────────┐"
+          - "<!italic><aqua>  ᴀᴋᴛɪᴠ – ɴᴜʀ ᴛɪᴇʀᴇ"
+          - "<!italic><gray>  ᴋᴇɪɴᴇ ɪᴛᴇᴍs ᴍöɢʟɪᴄʜ"
+          - "<!italic><gray>└────────────────────┘"
+          - "<!italic><aqua>⬥ <italic>ᴋʟɪᴄᴋ ᴛᴏ ᴅᴇᴀᴋᴛɪᴠɪᴇʀᴇɴ</italic>"
 
 # =============================================================================
 # SEND MODE GUI - Choose between sending animals or items

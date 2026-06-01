@@ -1366,6 +1366,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         GuiItem launchItem = hub.items().get("launch");
         GuiItem animalsItem = hub.items().get("send-animals");
         if (loadItem != null && slot == loadItem.position()) {
+            if (holder.animalsOnlyMode()) {
+                droneManager.sendMessage(sender, "compose-hub-items-disabled");
+                return;
+            }
             Bukkit.getScheduler().runTask(plugin, () -> openComposeInventory(sender, holder));
             return;
         }
@@ -1602,12 +1606,20 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 menu.setItem(slot, filler);
             }
         }
-        placeSendModeItem(menu, hub, "load-items");
+        placeComposeHubButton(menu, "load-items", animalsOnlyMode);
         if (hub.items().containsKey("send-animals")) {
-            placeSendModeItem(menu, hub, "send-animals");
+            placeComposeHubButton(menu, "send-animals", animalsOnlyMode);
         }
-        placeSendModeItem(menu, hub, "launch");
+        placeComposeHubButton(menu, "launch", animalsOnlyMode);
         sender.openInventory(menu);
+    }
+
+    private void placeComposeHubButton(Inventory inventory, String itemKey, boolean animalsOnlyMode) {
+        GuiItem item = droneManager.settings().guiConfig().resolveComposeHubItem(itemKey, animalsOnlyMode);
+        if (item == null || item.position() < 0 || item.position() >= inventory.getSize()) {
+            return;
+        }
+        inventory.setItem(item.position(), GuiItemStacks.create(item));
     }
 
     private void openComposeInventory(Player sender, ComposeHubInventoryHolder hubHolder) {
@@ -1651,11 +1663,17 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private void launchDroneFromComposeHub(Player sender, ComposeHubInventoryHolder hubHolder) {
         boolean animalsOnlyMode = hubHolder.animalsOnlyMode();
         composeHubAnimalsOnly.remove(sender.getUniqueId());
-        PendingSendDraft draft = animalsOnlyMode ? null : sendDrafts.remove(sender.getUniqueId());
         int size = droneManager.settings().inventorySize();
-        ItemStack[] contents = animalsOnlyMode ? new ItemStack[size] : (draft != null && draft.contents() != null ? draft.contents() : new ItemStack[size]);
-        boolean hasItems = false;
-        if (!animalsOnlyMode) {
+        ItemStack[] contents;
+        boolean hasItems;
+        if (animalsOnlyMode) {
+            sendDrafts.remove(sender.getUniqueId());
+            contents = new ItemStack[size];
+            hasItems = false;
+        } else {
+            PendingSendDraft draft = sendDrafts.remove(sender.getUniqueId());
+            contents = draft != null && draft.contents() != null ? draft.contents() : new ItemStack[size];
+            hasItems = false;
             for (ItemStack stack : contents) {
                 if (stack != null && !stack.getType().isAir()) {
                     hasItems = true;
@@ -1675,11 +1693,16 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 ? nearbyLeashed.stream().map(LivingEntity::getUniqueId).toList()
                 : hubHolder.selectedAnimalIds();
         List<LivingEntity> attachedAnimals = resolveSelectedAnimals(hubHolder.senderId(), animalIds);
-        boolean animalsOnly = animalsOnlyMode || (!hasItems && !attachedAnimals.isEmpty());
-        if (!hasItems && attachedAnimals.isEmpty()) {
-            droneManager.sendMessage(sender, animalsOnlyMode ? "compose-hub-no-leashed-animals" : "compose-hub-empty");
+        if (animalsOnlyMode) {
+            if (attachedAnimals.isEmpty()) {
+                droneManager.sendMessage(sender, "compose-hub-no-leashed-animals");
+                return;
+            }
+        } else if (!hasItems && attachedAnimals.isEmpty()) {
+            droneManager.sendMessage(sender, "compose-hub-empty");
             return;
         }
+        boolean animalsOnly = animalsOnlyMode || (!hasItems && !attachedAnimals.isEmpty());
         ComposeInventoryHolder composeHolder = new ComposeInventoryHolder(
                 hubHolder.senderId(),
                 hubHolder.receiverId(),
@@ -1695,7 +1718,11 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 size,
                 MINI_MESSAGE.deserialize(plugin.getLanguageManager().getString("drone-inventory-title", "<gold>Delivery Drone</gold>"))
         );
-        deliveryInventory.setContents(contents);
+        if (animalsOnlyMode) {
+            deliveryInventory.clear();
+        } else {
+            deliveryInventory.setContents(contents);
+        }
         sender.closeInventory();
         spawnDroneFromSelection(sender, composeHolder, deliveryInventory);
     }
@@ -1751,9 +1778,14 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             droneManager.sendMessage(sender, "blacklist-player-blocked", "<player>", receiver.getName());
             return;
         }
-        List<LivingEntity> attachedAnimals = holder.selectedAnimalIds().isEmpty()
+        List<LivingEntity> attachedAnimals = holder.animalsOnly()
+                ? resolveSelectedAnimals(holder.senderId(), holder.selectedAnimalIds())
+                : (holder.selectedAnimalIds().isEmpty()
                 ? List.of()
-                : resolveSelectedAnimals(holder.senderId(), holder.selectedAnimalIds());
+                : resolveSelectedAnimals(holder.senderId(), holder.selectedAnimalIds()));
+        if (holder.animalsOnly()) {
+            deliveryInventory.clear();
+        }
         Location targetLocation = holder.fixedTarget() != null ? holder.fixedTarget() : receiver.getLocation().clone();
         de.cb.drones.drone.DeliveryDrone drone = droneManager.spawnDrone(
                 sender,

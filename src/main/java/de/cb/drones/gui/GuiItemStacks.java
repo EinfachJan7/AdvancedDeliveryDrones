@@ -5,6 +5,8 @@ import de.cb.drones.util.SkullTextureUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
@@ -38,6 +40,10 @@ public final class GuiItemStacks {
             meta.lore(loreComponents);
         }
         applyHeadTexture(meta, item.material(), item.headTexture());
+        if (item.enchanted()) {
+            meta.addEnchant(Enchantment.UNBREAKING, 1, true);
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        }
         if (metaCustomizer != null) {
             metaCustomizer.accept(meta);
         }

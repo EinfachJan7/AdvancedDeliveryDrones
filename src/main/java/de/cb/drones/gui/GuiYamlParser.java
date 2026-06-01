@@ -21,7 +21,16 @@ public final class GuiYamlParser {
             lore = fallback.lore();
         }
         String headTexture = parseHeadTexture(cfg, itemSection, material);
-        return new GuiItem(position, material, name, lore, headTexture);
+        boolean enchanted = cfg.getBoolean(itemSection + ".enchanted", false);
+        return new GuiItem(position, material, name, lore, headTexture, enchanted);
+    }
+
+    public static GuiItem parseComposeHubVariant(FileConfiguration cfg, String variantSection, GuiItem base) {
+        if (base == null || !cfg.contains(variantSection)) {
+            return null;
+        }
+        GuiItem parsed = parseItem(cfg, variantSection, base);
+        return parsed.withPosition(base.position());
     }
 
     public static GuiItem parseFillItem(FileConfiguration cfg, String localFillSection) {

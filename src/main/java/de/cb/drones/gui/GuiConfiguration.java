@@ -25,6 +25,7 @@ public class GuiConfiguration {
     );
     
     private final GuiSettings composeHub;
+    private final Map<String, GuiItem> composeHubItemVariants;
     private final GuiSettings sendMode;
     private final GuiSettings mainMenu;
     private final GuiSettings playerSelection;
@@ -71,6 +72,7 @@ public class GuiConfiguration {
     
     public GuiConfiguration(FileConfiguration guiConfig) {
         this.composeHub = parseGuiSettings(guiConfig, "compose-hub.", createDefaultComposeHubItems());
+        this.composeHubItemVariants = parseComposeHubItemVariants(guiConfig, this.composeHub);
         this.sendMode = parseGuiSettings(guiConfig, "send-mode.", createDefaultSendModeItems());
         this.mainMenu = parseGuiSettings(guiConfig, "main-menu.", createDefaultMainMenuItems());
         this.playerSelection = parseGuiSettings(guiConfig, "player-selection.", createDefaultPlayerSelectionItems());
@@ -167,6 +169,48 @@ public class GuiConfiguration {
     }
     
     public GuiSettings composeHub() { return composeHub; }
+
+    /**
+     * Resolves a compose-hub button for display (base item or variant when animals-only mode is active).
+     */
+    public GuiItem resolveComposeHubItem(String itemKey, boolean animalsOnlyMode) {
+        GuiItem base = composeHub.items().get(itemKey);
+        if (base == null) {
+            return null;
+        }
+        if (!animalsOnlyMode) {
+            return base;
+        }
+        if ("load-items".equals(itemKey)) {
+            GuiItem locked = composeHubItemVariants.get(itemKey + ":locked");
+            if (locked != null) {
+                return locked;
+            }
+            return new GuiItem(
+                    base.position(),
+                    Material.BARRIER,
+                    "<red>Items gesperrt",
+                    List.of("<gray>Im Nur-Tiere-Modus keine Items"),
+                    null,
+                    false
+            );
+        }
+        if ("send-animals".equals(itemKey)) {
+            GuiItem active = composeHubItemVariants.get(itemKey + ":active");
+            if (active != null) {
+                return base.mergeOverlay(active);
+            }
+            return base.mergeOverlay(new GuiItem(
+                    base.position(),
+                    base.material(),
+                    base.name(),
+                    base.lore(),
+                    base.headTexture(),
+                    true
+            ));
+        }
+        return base;
+    }
     public GuiSettings sendMode() { return sendMode; }
     public GuiSettings mainMenu() { return mainMenu; }
     public GuiSettings playerSelection() { return playerSelection; }
@@ -338,6 +382,27 @@ public class GuiConfiguration {
         return GuiYamlParser.parseMaterial(value, fallback);
     }
     
+    private static Map<String, GuiItem> parseComposeHubItemVariants(FileConfiguration cfg, GuiSettings composeHub) {
+        Map<String, GuiItem> variants = new HashMap<>();
+        for (String itemKey : composeHub.items().keySet()) {
+            GuiItem base = composeHub.items().get(itemKey);
+            if (base == null) {
+                continue;
+            }
+            String activePath = "compose-hub.items." + itemKey + ".when-active";
+            GuiItem active = GuiYamlParser.parseComposeHubVariant(cfg, activePath, base);
+            if (active != null) {
+                variants.put(itemKey + ":active", active);
+            }
+            String lockedPath = "compose-hub.items." + itemKey + ".when-locked";
+            GuiItem locked = GuiYamlParser.parseComposeHubVariant(cfg, lockedPath, base);
+            if (locked != null) {
+                variants.put(itemKey + ":locked", locked);
+            }
+        }
+        return Map.copyOf(variants);
+    }
+
     private static Map<String, GuiItem> createDefaultComposeHubItems() {
         Map<String, GuiItem> items = new HashMap<>();
         items.put("load-items", new GuiItem(11, Material.CHEST, "<green>Items einlegen", List.of("<gray>Öffnet das Paket-Inventar")));
