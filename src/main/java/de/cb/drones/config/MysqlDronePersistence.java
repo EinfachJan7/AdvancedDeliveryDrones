@@ -93,6 +93,8 @@ public class MysqlDronePersistence implements DronePersistence {
                 config.set(path + ".elapsedInteractionTicks", elapsedInteractionTicks);
                 
                 config.set(path + ".standParked", drone.isStandParked());
+                config.set(path + ".returningToSender", drone.isReturningToSender());
+                config.set(path + ".originalSendLocation", drone.originalSendLocation());
 
                 String yamlData = config.saveToString();
 
@@ -171,6 +173,8 @@ public class MysqlDronePersistence implements DronePersistence {
                     long lastInteractionTick = currentTick - elapsedInteractionTicks;
                     
                     boolean standParked = config.getBoolean(path + ".standParked");
+                    boolean returningToSender = config.getBoolean(path + ".returningToSender");
+                    Location originalSendLocation = config.getLocation(path + ".originalSendLocation");
                     
                     DeliveryDrone drone = DeliveryDrone.fromPersistentData(
                         droneId, senderId, receiverId, receiverName, fixedTarget, startLocation,
@@ -178,6 +182,9 @@ public class MysqlDronePersistence implements DronePersistence {
                         animalsOnlyDelivery, forceTargetChunkLoad, exactSocketTarget, socketName,
                         landed, openedByReceiver, lastInteractionTick, standParked, droneManager
                     );
+                    if (returningToSender) {
+                        drone.restoreReturnFlightState(true, originalSendLocation != null ? originalSendLocation : startLocation);
+                    }
                     
                     droneManager.addLoadedDrone(drone);
                     loaded++;

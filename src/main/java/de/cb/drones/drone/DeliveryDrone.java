@@ -438,6 +438,19 @@ public final class DeliveryDrone {
     public Location originalSendLocation() {
         return originalSendLocation.clone();
     }
+
+    public void restoreReturnFlightState(boolean returning, Location originalSend) {
+        this.returningToSender = returning;
+        if (originalSend == null || originalSend.getWorld() == null) {
+            return;
+        }
+        originalSendLocation.setWorld(originalSend.getWorld());
+        originalSendLocation.setX(originalSend.getX());
+        originalSendLocation.setY(originalSend.getY());
+        originalSendLocation.setZ(originalSend.getZ());
+        originalSendLocation.setYaw(originalSend.getYaw());
+        originalSendLocation.setPitch(originalSend.getPitch());
+    }
     
     public List<UUID> getSpawnedTransportAnimalIds() {
         return new ArrayList<>(spawnedTransportAnimalIds);

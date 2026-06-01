@@ -15,9 +15,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 
 /**
- * Persists compose-hub package contents and send context across server restarts.
+ * Persists compose-hub package contents and send context across server restarts (YAML or MySQL).
  */
 public final class ComposeDraftRepository {
+    private static final String MYSQL_KEY = "compose_drafts";
     private static final String ROOT = "drafts.";
 
     private final AdvancedDeliveryDronesPlugin plugin;
@@ -31,15 +32,30 @@ public final class ComposeDraftRepository {
     }
 
     public void reload() {
-        if (!file.exists()) {
-            try {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            } catch (IOException e) {
-                throw new IllegalStateException("Could not create compose-drafts.yml", e);
+        if (useMysql()) {
+            String data = plugin.getDatabaseManager().loadConfig(MYSQL_KEY);
+            this.config = new YamlConfiguration();
+            if (data != null) {
+                try {
+                    this.config.loadFromString(data);
+                } catch (Exception e) {
+                    plugin.getLogger().severe("Could not parse compose_drafts from MySQL!");
+                }
             }
+            if (file.exists()) {
+                file.delete();
+            }
+        } else {
+            if (!file.exists()) {
+                try {
+                    file.getParentFile().mkdirs();
+                    file.createNewFile();
+                } catch (IOException e) {
+                    throw new IllegalStateException("Could not create compose-drafts.yml", e);
+                }
+            }
+            this.config = YamlConfiguration.loadConfiguration(file);
         }
-        this.config = YamlConfiguration.loadConfiguration(file);
     }
 
     public Optional<StoredComposeDraft> load(UUID senderId) {
@@ -83,12 +99,12 @@ public final class ComposeDraftRepository {
         config.set(path + ".animalsOnlyMode", draft.animalsOnlyMode());
         config.set(path + ".selectedAnimalIds", draft.selectedAnimalIds().stream().map(UUID::toString).toList());
         config.set(path + ".inventory", draft.contents());
-        save();
+        persist();
     }
 
     public void delete(UUID senderId) {
         config.set(ROOT + senderId, null);
-        save();
+        persist();
     }
 
     public Map<UUID, StoredComposeDraft> loadAll() {
@@ -121,12 +137,22 @@ public final class ComposeDraftRepository {
         return items;
     }
 
-    private void save() {
-        try {
-            config.save(file);
-        } catch (IOException e) {
-            plugin.getLogger().severe("Could not save compose-drafts.yml: " + e.getMessage());
+    private void persist() {
+        if (useMysql()) {
+            plugin.getDatabaseManager().saveConfig(MYSQL_KEY, config.saveToString());
+        } else {
+            try {
+                config.save(file);
+            } catch (IOException e) {
+                plugin.getLogger().severe("Could not save compose-drafts.yml: " + e.getMessage());
+            }
         }
+    }
+
+    private boolean useMysql() {
+        return "MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML"))
+                && plugin.getDatabaseManager() != null
+                && plugin.getDatabaseManager().isConnected();
     }
 
     public record StoredComposeDraft(

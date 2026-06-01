@@ -16,11 +16,13 @@ import de.cb.drones.socket.SocketRepository;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -38,12 +40,14 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -58,6 +62,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private DroneSettings droneSettings;
     private final Map<UUID, PendingSendDraft> sendDrafts = new HashMap<>();
     private final Map<UUID, Boolean> composeHubAnimalsOnly = new HashMap<>();
+    private final Set<UUID> suppressComposeHubReopen = new HashSet<>();
     private final ComposeDraftRepository composeDraftRepository;
 
     public DroneCommand(
@@ -86,6 +91,13 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             boolean animalsOnly = composeHubAnimalsOnly.getOrDefault(senderId, entry.getValue().animalsOnlyMode());
             composeDraftRepository.save(senderId, toStoredDraft(entry.getValue(), animalsOnly));
         }
+    }
+
+    public void reloadComposeDrafts() {
+        composeDraftRepository.reload();
+        sendDrafts.clear();
+        composeHubAnimalsOnly.clear();
+        loadPersistedComposeDrafts();
     }
     
     public void updateMenuHandlerSettings(DroneSettings newSettings) {
@@ -988,7 +1000,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         return true;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onComposeInventoryClose(InventoryCloseEvent event) {
         if (!(event.getPlayer() instanceof Player sender)) {
             return;
@@ -1004,11 +1016,11 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             handleLegacyComposeClose(sender, holder, inv);
             return;
         }
-        ItemStack[] contents = new ItemStack[inv.getSize()];
-        for (int slot = 0; slot < contents.length; slot++) {
-            ItemStack stack = inv.getItem(slot);
-            contents[slot] = stack == null || stack.getType().isAir() ? null : stack.clone();
+        if (suppressComposeHubReopen.remove(sender.getUniqueId())) {
+            return;
         }
+        ItemStack[] contents = snapshotComposeContents(inv);
+        inv.clear();
         boolean animalsOnly = composeHubAnimalsOnly.getOrDefault(sender.getUniqueId(), false);
         PendingSendDraft draft = new PendingSendDraft(
                 holder.senderId(),
@@ -1023,6 +1035,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         );
         sendDrafts.put(sender.getUniqueId(), draft);
         persistComposeDraft(sender.getUniqueId(), draft, animalsOnly);
+        scheduleComposeHubReopen(sender, holder);
     }
 
     private void handleLegacyComposeClose(Player sender, ComposeInventoryHolder holder, Inventory inv) {
@@ -1402,6 +1415,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         composeHubAnimalsOnly.put(sender.getUniqueId(), enabled);
         if (enabled) {
             returnComposeDraftItemsToPlayer(sender);
+            suppressComposeHubReopen.add(sender.getUniqueId());
             PendingSendDraft emptyDraft = new PendingSendDraft(
                     holder.senderId(),
                     holder.receiverId(),
@@ -1886,6 +1900,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private void loadPersistedComposeDrafts() {
         for (Map.Entry<UUID, StoredComposeDraft> entry : composeDraftRepository.loadAll().entrySet()) {
             UUID senderId = entry.getKey();
+            if (droneManager.activeOutgoingCount(senderId) > 0) {
+                composeDraftRepository.delete(senderId);
+                continue;
+            }
             StoredComposeDraft stored = entry.getValue();
             sendDrafts.put(senderId, fromStoredDraft(senderId, stored));
             if (stored.animalsOnlyMode()) {
@@ -1984,21 +2002,76 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private void returnComposeDraftItemsToPlayer(Player player) {
-        PendingSendDraft draft = sendDrafts.get(player.getUniqueId());
-        if (draft == null || draft.contents() == null) {
-            return;
-        }
-        List<ItemStack> items = new ArrayList<>();
-        for (ItemStack stack : draft.contents()) {
-            if (stack != null && !stack.getType().isAir()) {
-                items.add(stack.clone());
-            }
-        }
+        List<ItemStack> items = drainAllPackedItems(player);
         if (items.isEmpty()) {
             return;
         }
         droneManager.giveItemsToPlayer(player, items);
         droneManager.sendMessage(player, "compose-hub-items-returned");
+    }
+
+    private List<ItemStack> drainAllPackedItems(Player player) {
+        List<ItemStack> items = captureComposeInventoryItems(player);
+        PendingSendDraft draft = sendDrafts.remove(player.getUniqueId());
+        if (draft != null && draft.contents() != null) {
+            for (ItemStack stack : draft.contents()) {
+                if (stack != null && !stack.getType().isAir()) {
+                    items.add(stack.clone());
+                }
+            }
+        }
+        return items;
+    }
+
+    private List<ItemStack> captureComposeInventoryItems(Player player) {
+        List<ItemStack> items = new ArrayList<>();
+        InventoryView view = player.getOpenInventory();
+        if (!(view.getTopInventory().getHolder() instanceof ComposeInventoryHolder composeHolder)) {
+            return items;
+        }
+        if (!composeHolder.senderId().equals(player.getUniqueId())) {
+            return items;
+        }
+        Inventory top = view.getTopInventory();
+        for (ItemStack stack : top.getContents()) {
+            if (stack != null && !stack.getType().isAir()) {
+                items.add(stack.clone());
+            }
+        }
+        top.clear();
+        return items;
+    }
+
+    private static ItemStack[] snapshotComposeContents(Inventory inv) {
+        ItemStack[] contents = new ItemStack[inv.getSize()];
+        for (int slot = 0; slot < contents.length; slot++) {
+            ItemStack stack = inv.getItem(slot);
+            contents[slot] = stack == null || stack.getType().isAir() ? null : stack.clone();
+        }
+        return contents;
+    }
+
+    private void scheduleComposeHubReopen(Player sender, ComposeInventoryHolder holder) {
+        boolean animalsOnly = composeHubAnimalsOnly.getOrDefault(sender.getUniqueId(), false);
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (sender.getOpenInventory().getTopInventory().getHolder() instanceof ComposeHubInventoryHolder) {
+                return;
+            }
+            Player receiver = Bukkit.getPlayer(holder.receiverId());
+            if (receiver == null || !receiver.isOnline()) {
+                droneManager.sendMessage(sender, "player-offline");
+                return;
+            }
+            openComposeHub(
+                    sender,
+                    receiver,
+                    holder.fixedTarget(),
+                    holder.exactSocketTarget(),
+                    holder.socketName(),
+                    holder.selectedAnimalIds(),
+                    animalsOnly
+            );
+        });
     }
 
     private record PendingSendDraft(

@@ -161,6 +161,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         droneManager.updateDatabaseManager(databaseManager);
         if (droneCommand != null) {
             droneCommand.updateMenuHandlerSettings(droneManager.settings());
+            droneCommand.reloadComposeDrafts();
         }
         PlaceholderHook.register(this);
     }

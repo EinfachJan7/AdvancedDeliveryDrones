@@ -22,8 +22,8 @@ public class DataConverter {
             }
         }
 
-        String[] fileNames = {"players", "blacklists", "socket-pending-returns", "sockets"};
-        String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets"};
+        String[] fileNames = {"players", "blacklists", "socket-pending-returns", "sockets", "compose-drafts"};
+        String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
 
         for (int i = 0; i < fileNames.length; i++) {
             File f = new File(plugin.getDataFolder(), fileNames[i] + ".yml");
@@ -47,8 +47,8 @@ public class DataConverter {
             return;
         }
 
-        String[] fileNames = {"players", "blacklists", "socket-pending-returns", "sockets"};
-        String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets"};
+        String[] fileNames = {"players", "blacklists", "socket-pending-returns", "sockets", "compose-drafts"};
+        String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
 
         for (int i = 0; i < fileNames.length; i++) {
             String data = db.loadConfig(dbKeys[i]);
