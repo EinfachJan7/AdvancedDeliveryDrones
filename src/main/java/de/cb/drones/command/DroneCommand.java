@@ -1413,9 +1413,13 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     private void toggleComposeHubAnimalsOnly(Player sender, ComposeHubInventoryHolder holder) {
         boolean enabled = !holder.animalsOnlyMode();
         composeHubAnimalsOnly.put(sender.getUniqueId(), enabled);
+        boolean composeInventoryOpen = sender.getOpenInventory().getTopInventory().getHolder()
+                instanceof ComposeInventoryHolder;
         if (enabled) {
             returnComposeDraftItemsToPlayer(sender);
-            suppressComposeHubReopen.add(sender.getUniqueId());
+            if (composeInventoryOpen) {
+                suppressComposeHubReopen.add(sender.getUniqueId());
+            }
             PendingSendDraft emptyDraft = new PendingSendDraft(
                     holder.senderId(),
                     holder.receiverId(),
@@ -1454,6 +1458,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         Player receiver = Bukkit.getPlayer(holder.receiverId());
         if (receiver == null || !receiver.isOnline()) {
             droneManager.sendMessage(sender, "player-offline");
+            suppressComposeHubReopen.remove(sender.getUniqueId());
             return;
         }
         openComposeHub(
@@ -1465,6 +1470,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 holder.selectedAnimalIds(),
                 enabled
         );
+        suppressComposeHubReopen.remove(sender.getUniqueId());
     }
 
     @EventHandler
@@ -1688,6 +1694,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             droneManager.sendMessage(sender, "compose-hub-items-disabled");
             return;
         }
+        suppressComposeHubReopen.remove(sender.getUniqueId());
         Player receiver = Bukkit.getPlayer(hubHolder.receiverId());
         if (receiver == null || !receiver.isOnline()) {
             droneManager.sendMessage(sender, "player-offline");
