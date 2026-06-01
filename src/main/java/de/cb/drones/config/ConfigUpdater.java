@@ -45,6 +45,41 @@ public class ConfigUpdater {
         }
     }
 
+    /**
+     * Adds keys from the JAR default that are missing in the on-disk file.
+     * Existing user values and custom keys are never overwritten or removed.
+     */
+    public static void mergeMissing(org.bukkit.plugin.java.JavaPlugin plugin, String fileName) {
+        File file = new File(plugin.getDataFolder(), fileName);
+        if (!file.exists()) {
+            plugin.saveResource(fileName, false);
+            return;
+        }
+
+        try (InputStream resource = plugin.getResource(fileName)) {
+            if (resource == null) {
+                return;
+            }
+
+            FileConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(resource, DEFAULT_CHARSET));
+            FileConfiguration current = YamlConfiguration.loadConfiguration(Files.newBufferedReader(file.toPath(), DEFAULT_CHARSET));
+
+            boolean changed = false;
+            for (String fullKey : defaults.getKeys(true)) {
+                if (!current.isSet(fullKey)) {
+                    current.set(fullKey, defaults.get(fullKey));
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                current.save(file);
+            }
+        } catch (IOException e) {
+            plugin.getLogger().severe("Could not merge config " + fileName + ": " + e.getMessage());
+        }
+    }
+
 
     //Used for separating keys in the keyBuilder inside parseComments method
     private static final char SEPARATOR = '.';

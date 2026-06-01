@@ -1,6 +1,7 @@
 package de.cb.drones.configeditor;
 
 import de.cb.drones.drone.GuiItem;
+import de.cb.drones.gui.GuiYamlParser;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -144,54 +145,34 @@ public final class ConfigEditorGuiSettings {
     }
 
     private static GuiItem parseFillItem(FileConfiguration cfg, String section) {
-        boolean hasLocalFillItem = cfg.contains(section);
-        boolean hasGlobalFillItem = cfg.contains("global.fill-item");
-        
-        Material fillMaterial = Material.GRAY_STAINED_GLASS_PANE;
-        String fillName = " ";
-        
-        // 1. Try local fill-item first
-        if (hasLocalFillItem && cfg.contains(section + ".material")) {
-            fillMaterial = parseMaterial(cfg.getString(section + ".material"), fillMaterial);
-        }
-        // 2. If no local, try global fill-item
-        else if (hasGlobalFillItem && cfg.contains("global.fill-item.material")) {
-            fillMaterial = parseMaterial(cfg.getString("global.fill-item.material"), fillMaterial);
-        }
-        
-        // 1. Try local fill-item name first
-        if (hasLocalFillItem && cfg.contains(section + ".name")) {
-            fillName = cfg.getString(section + ".name");
-        }
-        // 2. If no local, try global fill-item name
-        else if (hasGlobalFillItem && cfg.contains("global.fill-item.name")) {
-            fillName = cfg.getString("global.fill-item.name");
-        }
-        
-        return new GuiItem(-1, fillMaterial, fillName, List.of());
+        return GuiYamlParser.parseFillItem(cfg, section);
     }
 
     private static GuiItem parseNavItem(FileConfiguration cfg, String section, int defaultPos, Material defaultMaterial, String defaultName, List<String> defaultLore) {
         int position = cfg.getInt(section + ".position", defaultPos);
-        
+
         Material fallbackMaterial = defaultMaterial;
         String fallbackName = defaultName;
         List<String> fallbackLore = defaultLore;
-        
+
         boolean isBack = section.endsWith(".back");
         if (isBack && cfg.contains("global.back-item")) {
-            fallbackMaterial = parseMaterial(cfg.getString("global.back-item.material"), fallbackMaterial);
+            fallbackMaterial = GuiYamlParser.parseMaterial(cfg.getString("global.back-item.material"), fallbackMaterial);
             fallbackName = cfg.getString("global.back-item.name", fallbackName);
             List<String> globalLore = cfg.getStringList("global.back-item.lore");
             if (globalLore != null && !globalLore.isEmpty()) {
                 fallbackLore = globalLore;
             }
         }
-        
-        Material material = parseMaterial(cfg.getString(section + ".material", fallbackMaterial.name()), fallbackMaterial);
+
+        Material material = GuiYamlParser.parseMaterial(cfg.getString(section + ".material", fallbackMaterial.name()), fallbackMaterial);
         String name = cfg.getString(section + ".name", fallbackName);
         List<String> lore = nonEmptyLore(cfg.getStringList(section + ".lore"), fallbackLore);
-        return new GuiItem(position, material, name, lore);
+        String headTexture = GuiYamlParser.parseHeadTexture(cfg, section, material);
+        if (headTexture == null && isBack) {
+            headTexture = GuiYamlParser.parseHeadTexture(cfg, "global.back-item", material);
+        }
+        return new GuiItem(position, material, name, lore, headTexture);
     }
 
     private static List<Integer> parseSlots(FileConfiguration cfg, String path, List<Integer> defaults) {

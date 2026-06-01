@@ -3,11 +3,14 @@ package de.cb.drones.gui;
 import de.cb.drones.drone.GuiItem;
 import de.cb.drones.drone.GuiSettings;
 import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Handles all GUI configurations from the gui.yml file
@@ -187,47 +190,33 @@ public class GuiConfiguration {
     private static GuiSettings parseGuiSettings(FileConfiguration cfg, String section, Map<String, GuiItem> defaultItems) {
         String title = cfg.getString(section + "title", "GUI");
         int size = Math.max(9, Math.min(54, cfg.getInt(section + "size", 27)));
-        
+
         Map<String, GuiItem> items = new HashMap<>();
-        for (Map.Entry<String, GuiItem> entry : defaultItems.entrySet()) {
-            String key = entry.getKey();
-            GuiItem defaultItem = entry.getValue();
-            
-            String itemSection = section + "items." + key;
-            int position = cfg.getInt(itemSection + ".position", defaultItem.position());
-            Material material = parseMaterial(cfg.getString(itemSection + ".material", defaultItem.material().name()), defaultItem.material());
-            String name = cfg.getString(itemSection + ".name", defaultItem.name());
-            List<String> lore = cfg.getStringList(itemSection + ".lore");
-            if (lore.isEmpty()) {
-                lore = defaultItem.lore();
-            }
-
-            String headTexture = null;
-            if (material == Material.PLAYER_HEAD) {
-                headTexture = firstNonBlank(
-                        cfg.getString(itemSection + ".value"),
-                        cfg.getString(itemSection + ".head-texture"),
-                        cfg.getString(itemSection + ".texture")
-                );
-            }
-
-            items.put(key, new GuiItem(position, material, name, lore, headTexture));
+        Set<String> itemKeys = new LinkedHashSet<>(defaultItems.keySet());
+        ConfigurationSection itemsSection = cfg.getConfigurationSection(section + "items");
+        if (itemsSection != null) {
+            itemKeys.addAll(itemsSection.getKeys(false));
         }
-        
+        itemKeys.remove("back");
+
+        for (String key : itemKeys) {
+            String itemSection = section + "items." + key;
+            items.put(key, GuiYamlParser.parseItem(cfg, itemSection, defaultItems.get(key)));
+        }
+
         // Parse back item
         String backSection = section + "back-item";
         boolean hasLocalBackItem = cfg.contains(backSection);
         boolean isExplicitlyDisabled = hasLocalBackItem && cfg.isBoolean(backSection) && !cfg.getBoolean(backSection);
         boolean hasGlobalBackItem = cfg.contains("global.back-item");
         boolean isRootMenu = section.equals("main-menu.") || section.equals("send-mode.");
-        
-        boolean shouldHaveBackItem = (hasLocalBackItem && !isExplicitlyDisabled) 
+
+        boolean shouldHaveBackItem = (hasLocalBackItem && !isExplicitlyDisabled)
                 || (hasGlobalBackItem && !isRootMenu && !isExplicitlyDisabled);
-        
+
         if (shouldHaveBackItem) {
             GuiItem defaultBackItem = defaultItems.get("back");
-            
-            // 1. Position
+
             int backPosition;
             if (hasLocalBackItem && cfg.isInt(backSection + ".position")) {
                 backPosition = cfg.getInt(backSection + ".position");
@@ -238,14 +227,13 @@ public class GuiConfiguration {
             } else {
                 backPosition = size - 9;
             }
-            
-            // 2. Material
+
             Material backMaterial = null;
             if (hasLocalBackItem && cfg.contains(backSection + ".material")) {
-                backMaterial = parseMaterial(cfg.getString(backSection + ".material"), null);
+                backMaterial = GuiYamlParser.parseMaterial(cfg.getString(backSection + ".material"), null);
             }
             if (backMaterial == null && hasGlobalBackItem && cfg.contains("global.back-item.material")) {
-                backMaterial = parseMaterial(cfg.getString("global.back-item.material"), null);
+                backMaterial = GuiYamlParser.parseMaterial(cfg.getString("global.back-item.material"), null);
             }
             if (backMaterial == null && defaultBackItem != null) {
                 backMaterial = defaultBackItem.material();
@@ -253,8 +241,7 @@ public class GuiConfiguration {
             if (backMaterial == null) {
                 backMaterial = Material.ARROW;
             }
-            
-            // 3. Name
+
             String backName = null;
             if (hasLocalBackItem && cfg.contains(backSection + ".name")) {
                 backName = cfg.getString(backSection + ".name");
@@ -268,8 +255,7 @@ public class GuiConfiguration {
             if (backName == null) {
                 backName = "<yellow>Zurück";
             }
-            
-            // 4. Lore
+
             List<String> backLore = null;
             if (hasLocalBackItem && cfg.contains(backSection + ".lore")) {
                 backLore = cfg.getStringList(backSection + ".lore");
@@ -283,56 +269,22 @@ public class GuiConfiguration {
             if (backLore == null || backLore.isEmpty()) {
                 backLore = List.of("<gray>Zurück");
             }
-            
-            items.put("back", new GuiItem(backPosition, backMaterial, backName, backLore, null));
-        }
-        
-        // Parse fill item
-        String fillSection = section + "fill-item";
-        boolean hasLocalFillItem = cfg.contains(fillSection);
-        boolean hasGlobalFillItem = cfg.contains("global.fill-item");
-        
-        Material fillMaterial = Material.GRAY_STAINED_GLASS_PANE;
-        String fillName = " ";
-        
-        // 1. Try local fill-item first
-        if (hasLocalFillItem && cfg.contains(fillSection + ".material")) {
-            fillMaterial = parseMaterial(cfg.getString(fillSection + ".material"), fillMaterial);
-        }
-        // 2. If no local, try global fill-item
-        else if (hasGlobalFillItem && cfg.contains("global.fill-item.material")) {
-            fillMaterial = parseMaterial(cfg.getString("global.fill-item.material"), fillMaterial);
-        }
-        
-        // 1. Try local fill-item name first
-        if (hasLocalFillItem && cfg.contains(fillSection + ".name")) {
-            fillName = cfg.getString(fillSection + ".name");
-        }
-        // 2. If no local, try global fill-item name
-        else if (hasGlobalFillItem && cfg.contains("global.fill-item.name")) {
-            fillName = cfg.getString("global.fill-item.name");
-        }
-        
-        GuiItem fillItem = new GuiItem(-1, fillMaterial, fillName, List.of());
-        
-        return new GuiSettings(title, size, items, fillItem);
-    }
-    
-    private static String firstNonBlank(String... values) {
-        for (String value : values) {
-            if (value != null && !value.isBlank()) {
-                return value.trim();
+
+            String backHeadTexture = GuiYamlParser.parseHeadTexture(cfg, backSection, backMaterial);
+            if (backHeadTexture == null && hasGlobalBackItem) {
+                backHeadTexture = GuiYamlParser.parseHeadTexture(cfg, "global.back-item", backMaterial);
             }
+
+            items.put("back", new GuiItem(backPosition, backMaterial, backName, backLore, backHeadTexture));
         }
-        return null;
+
+        GuiItem fillItem = GuiYamlParser.parseFillItem(cfg, section + "fill-item");
+
+        return new GuiSettings(title, size, items, fillItem);
     }
 
     private static Material parseMaterial(String value, Material fallback) {
-        if (value == null || value.isBlank()) {
-            return fallback;
-        }
-        Material parsed = Material.matchMaterial(value.trim(), true);
-        return parsed == null ? fallback : parsed;
+        return GuiYamlParser.parseMaterial(value, fallback);
     }
     
     private static Map<String, GuiItem> createDefaultSendModeItems() {

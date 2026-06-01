@@ -48,7 +48,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         saveDefaultConfig();
         saveGuiConfig();
         de.cb.drones.config.ConfigUpdater.update(this, "config.yml");
-        de.cb.drones.config.ConfigUpdater.update(this, "gui.yml");
+        de.cb.drones.config.ConfigUpdater.mergeMissing(this, "gui.yml");
         
         // Initialize bStats metrics
         int pluginId = 31663;
@@ -121,7 +121,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         saveDefaultConfig();
         saveGuiConfig();
         de.cb.drones.config.ConfigUpdater.update(this, "config.yml");
-        de.cb.drones.config.ConfigUpdater.update(this, "gui.yml");
+        de.cb.drones.config.ConfigUpdater.mergeMissing(this, "gui.yml");
         reloadConfig();
         if (this.languageManager == null) {
             this.languageManager = new LanguageManager(this);

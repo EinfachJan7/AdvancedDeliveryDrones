@@ -2,6 +2,7 @@ package de.cb.drones.configeditor;
 
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
 import de.cb.drones.drone.GuiItem;
+import de.cb.drones.util.SkullTextureUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -11,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
@@ -202,6 +204,7 @@ public final class ConfigEditorGUI {
         ItemStack item = new ItemStack(template.material());
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
+            applyHeadTexture(meta, template);
             meta.displayName(MINI_MESSAGE.deserialize(name));
             if (!lore.isEmpty()) {
                 meta.lore(lore);
@@ -222,6 +225,7 @@ public final class ConfigEditorGUI {
         ItemStack filler = new ItemStack(fillItem.material());
         ItemMeta meta = filler.getItemMeta();
         if (meta != null) {
+            applyHeadTexture(meta, fillItem);
             meta.displayName(MINI_MESSAGE.deserialize(fillItem.name()));
             filler.setItemMeta(meta);
         }
@@ -265,5 +269,12 @@ public final class ConfigEditorGUI {
 
     public ConfigEditorGuiSettings guiSettings() {
         return guiSettings;
+    }
+
+    private static void applyHeadTexture(ItemMeta meta, GuiItem item) {
+        if (item.headTexture() == null || item.material() != Material.PLAYER_HEAD || !(meta instanceof SkullMeta skullMeta)) {
+            return;
+        }
+        SkullTextureUtils.applyTexture(skullMeta, item.headTexture());
     }
 }
