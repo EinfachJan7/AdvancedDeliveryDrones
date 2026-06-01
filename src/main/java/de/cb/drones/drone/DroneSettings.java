@@ -271,36 +271,6 @@ public record DroneSettings(
     public record ParticleEffect(Particle particle, Object data) {
     }
 
-    private static GuiSettings parseGuiSettings(FileConfiguration cfg, String section, Map<String, GuiItem> defaultItems) {
-        String title = cfg.getString(section + "title", "GUI");
-        int size = Math.max(9, Math.min(54, cfg.getInt(section + "size", 27)));
-        
-        Map<String, GuiItem> items = new HashMap<>();
-        for (Map.Entry<String, GuiItem> entry : defaultItems.entrySet()) {
-            String key = entry.getKey();
-            GuiItem defaultItem = entry.getValue();
-            
-            String itemSection = section + "items." + key;
-            int position = cfg.getInt(itemSection + ".position", defaultItem.position());
-            Material material = parseMaterial(cfg.getString(itemSection + ".material", defaultItem.material().name()), defaultItem.material());
-            String name = cfg.getString(itemSection + ".name", defaultItem.name());
-            List<String> lore = cfg.getStringList(itemSection + ".lore");
-            if (lore.isEmpty()) {
-                lore = defaultItem.lore();
-            }
-            
-            items.put(key, new GuiItem(position, material, name, lore));
-        }
-        
-        // Parse fill item
-        String fillSection = section + "fill-item";
-        Material fillMaterial = parseMaterial(cfg.getString(fillSection + ".material", "GRAY_STAINED_GLASS_PANE"), Material.GRAY_STAINED_GLASS_PANE);
-        String fillName = cfg.getString(fillSection + ".name", " ");
-        GuiItem fillItem = new GuiItem(-1, fillMaterial, fillName, List.of());
-        
-        return new GuiSettings(title, size, items, fillItem);
-    }
-
     private static org.bukkit.boss.BarColor parseBarColor(String value) {
         if (value == null || value.isBlank()) {
             return org.bukkit.boss.BarColor.YELLOW;
@@ -312,32 +282,4 @@ public record DroneSettings(
         }
     }
 
-    private static Map<String, GuiItem> createDefaultMainMenuItems() {
-        Map<String, GuiItem> items = new HashMap<>();
-        items.put("send", new GuiItem(11, Material.PLAYER_HEAD, "<green>Drohne senden", List.of("<gray>Wähle einen Spieler aus", "<gray>um ihm eine Drohne zu senden")));
-        items.put("toggle", new GuiItem(13, Material.REDSTONE, "<yellow>Drohnen-Empfang umschalten", List.of("<gray>Schalte ein/aus ob du", "<gray>Drohnen empfangen möchtest")));
-        items.put("decline", new GuiItem(15, Material.BARRIER, "<red>Eingehende Drohnen ablehnen", List.of("<gray>Lehne alle eingehenden", "<gray>Drohnen für dich ab")));
-        items.put("preview", new GuiItem(22, Material.ENDER_EYE, "<aqua>Drohne-Vorschau", List.of("<gray>Zeige eine Vorschau deiner", "<gray>aktiven Drohnen")));
-        return items;
-    }
-
-    private static Map<String, GuiItem> createDefaultPlayerSelectionItems() {
-        Map<String, GuiItem> items = new HashMap<>();
-        items.put("back", new GuiItem(45, Material.ARROW, "<yellow>Zurück", List.of("<gray>Zurück zum Hauptmenü")));
-        return items;
-    }
-
-    private static Map<String, GuiItem> createDefaultTargetSelectionItems() {
-        Map<String, GuiItem> items = new HashMap<>();
-        items.put("back", new GuiItem(26, Material.ARROW, "<yellow>Zurück", List.of("<gray>Zurück zum Hauptmenü")));
-        items.put("player", new GuiItem(11, Material.PLAYER_HEAD, "<green>Spieler auswählen", List.of("<gray>Wähle einen Spieler aus", "<gray>um ihm eine Drohne zu senden")));
-        items.put("socket", new GuiItem(15, Material.BEACON, "<yellow>Socket auswählen", List.of("<gray>Wähle einen Socket aus", "<gray>um dort eine Drohne zu senden")));
-        return items;
-    }
-
-    private static Map<String, GuiItem> createDefaultSocketSelectionItems() {
-        Map<String, GuiItem> items = new HashMap<>();
-        items.put("back", new GuiItem(45, Material.ARROW, "<yellow>Zurück", List.of("<gray>Zurück zur Zielauswahl")));
-        return items;
-    }
 }

@@ -35,7 +35,7 @@ public final class ConfigEditorGuiSettings {
                 "<!italic><gradient:#a855f7:#22d3ee>ᴄᴏɴꜰɪɢ ᴇᴅɪᴛᴏʀ</gradient>");
         this.categoriesSize = clampSize(guiConfig.getInt(section + "categories.size", 54));
         this.categoriesFillItem = parseFillItem(guiConfig, section + "categories.fill-item");
-        this.categoryContentSlots = parseSlots(guiConfig, section + "categories.content-slots", defaultCategorySlots());
+        this.categoryContentSlots = parseSlots(guiConfig, section + "categories.content-slots", defaultCategorySlots(), categoriesSize);
         this.categoryNameFormat = guiConfig.getString(section + "category-item.name-format",
                 "<!italic><gradient:#a855f7:#ec4899><bold><name></bold></gradient>");
         this.categoryLore = nonEmptyLore(guiConfig.getStringList(section + "category-item.lore"), List.of(
@@ -47,7 +47,7 @@ public final class ConfigEditorGuiSettings {
                 "<!italic><gradient:#22d3ee:#3b82f6><category></gradient>");
         this.optionsSize = clampSize(guiConfig.getInt(section + "options.size", 54));
         this.optionsFillItem = parseFillItem(guiConfig, section + "options.fill-item");
-        this.optionContentSlots = parseSlots(guiConfig, section + "options.content-slots", defaultOptionSlots());
+        this.optionContentSlots = parseSlots(guiConfig, section + "options.content-slots", defaultOptionSlots(), optionsSize);
         this.optionNameFormat = guiConfig.getString(section + "option-item.name-format",
                 "<!italic><gradient:#22d3ee:#3b82f6><bold><name></bold></gradient>");
         this.optionLore = nonEmptyLore(guiConfig.getStringList(section + "option-item.lore"), List.of(
@@ -141,7 +141,7 @@ public final class ConfigEditorGuiSettings {
     }
 
     private static int clampSize(int size) {
-        return Math.max(9, Math.min(54, size));
+        return de.cb.drones.gui.GuiItemStacks.normalizeInventorySize(size);
     }
 
     private static GuiItem parseFillItem(FileConfiguration cfg, String section) {
@@ -175,18 +175,28 @@ public final class ConfigEditorGuiSettings {
         return new GuiItem(position, material, name, lore, headTexture);
     }
 
-    private static List<Integer> parseSlots(FileConfiguration cfg, String path, List<Integer> defaults) {
+    private static List<Integer> parseSlots(FileConfiguration cfg, String path, List<Integer> defaults, int inventorySize) {
         List<Integer> slots = cfg.getIntegerList(path);
         if (slots.isEmpty()) {
-            return defaults;
+            return filterSlots(defaults, inventorySize);
         }
         List<Integer> valid = new ArrayList<>();
         for (Integer slot : slots) {
-            if (slot != null && slot >= 0 && slot < 54) {
+            if (slot != null && slot >= 0 && slot < inventorySize) {
                 valid.add(slot);
             }
         }
-        return valid.isEmpty() ? defaults : valid;
+        return valid.isEmpty() ? filterSlots(defaults, inventorySize) : valid;
+    }
+
+    private static List<Integer> filterSlots(List<Integer> slots, int inventorySize) {
+        List<Integer> valid = new ArrayList<>();
+        for (Integer slot : slots) {
+            if (slot != null && slot >= 0 && slot < inventorySize) {
+                valid.add(slot);
+            }
+        }
+        return valid.isEmpty() ? slots : valid;
     }
 
     private static List<Integer> defaultCategorySlots() {

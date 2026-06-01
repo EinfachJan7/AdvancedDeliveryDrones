@@ -12,10 +12,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static java.util.Set.of;
+
 /**
  * Handles all GUI configurations from the gui.yml file
  */
 public class GuiConfiguration {
+
+    private static final Set<String> GUI_SECTION_RESERVED_KEYS = of(
+            "title", "size", "items", "back-item", "fill-item", "content-slots",
+            "player-head-item", "socket-management-item"
+    );
     
     private final GuiSettings sendMode;
     private final GuiSettings mainMenu;
@@ -38,21 +45,26 @@ public class GuiConfiguration {
     private final String socketItemClickHint;
     private final String socketItemEmptyLine;
     private final Material socketItemMaterial;
+    private final String socketItemHeadTexture;
     private final String playerHeadNameFormat;
     private final List<String> playerHeadLore;
+    private final String playerHeadTexture;
     private final String trustPlayerHeadNameFormat;
     private final List<String> trustPlayerHeadLore;
+    private final String trustPlayerHeadTexture;
     private final String untrustPlayerHeadNameFormat;
     private final List<String> untrustPlayerHeadLore;
-    private final String blacklistAddPlayerHeadNameFormat;
-    private final List<String> blacklistAddPlayerHeadLore;
-    private final String blacklistRemovePlayerHeadNameFormat;
-    private final List<String> blacklistRemovePlayerHeadLore;
+    private final String untrustPlayerHeadTexture;
+    private final PlayerHeadItemConfig blacklistPlayerAddHead;
+    private final PlayerHeadItemConfig blacklistPlayerRemoveHead;
+    private final PlayerHeadItemConfig blacklistSocketAddHead;
+    private final PlayerHeadItemConfig blacklistSocketRemoveHead;
     private final String socketManagementItemNameFormat;
     private final String socketManagementItemLocationFormat;
     private final String socketManagementItemDeleteHint;
     private final String socketManagementItemEmptyLine;
     private final Material socketManagementItemMaterial;
+    private final String socketManagementItemHeadTexture;
     private final String signRenameBorderLine;
     private final String signRenameTitleLine;
     
@@ -80,6 +92,7 @@ public class GuiConfiguration {
         this.socketItemClickHint = guiConfig.getString("socket-item-format.click-hint", "<!italic><green>Klicke um Drohne zu senden</green>");
         this.socketItemEmptyLine = guiConfig.getString("socket-item-format.empty-line", "<!italic><gray></gray>");
         this.socketItemMaterial = parseMaterial(guiConfig.getString("socket-item-format.material", "BEACON"), Material.BEACON);
+        this.socketItemHeadTexture = GuiYamlParser.parseHeadTexture(guiConfig, "socket-item-format", this.socketItemMaterial);
 
         // Player head item format (regular)
         this.playerHeadNameFormat = guiConfig.getString("player-selection.player-head-item.name-format", "<!italic><white><player></white>");
@@ -91,6 +104,7 @@ public class GuiConfiguration {
             );
         }
         this.playerHeadLore = tempPlayerHeadLore;
+        this.playerHeadTexture = GuiYamlParser.parseHeadTexture(guiConfig, "player-selection.player-head-item", Material.PLAYER_HEAD);
 
         // Player head item format (trust)
         this.trustPlayerHeadNameFormat = guiConfig.getString("trust-player-selection.player-head-item.name-format", "<!italic><white><player></white>");
@@ -102,6 +116,7 @@ public class GuiConfiguration {
             );
         }
         this.trustPlayerHeadLore = tempTrustPlayerHeadLore;
+        this.trustPlayerHeadTexture = GuiYamlParser.parseHeadTexture(guiConfig, "trust-player-selection.player-head-item", Material.PLAYER_HEAD);
 
         // Player head item format (untrust)
         this.untrustPlayerHeadNameFormat = guiConfig.getString("untrust-player-selection.player-head-item.name-format", "<!italic><white><player></white>");
@@ -113,28 +128,28 @@ public class GuiConfiguration {
             );
         }
         this.untrustPlayerHeadLore = tempUntrustPlayerHeadLore;
+        this.untrustPlayerHeadTexture = GuiYamlParser.parseHeadTexture(guiConfig, "untrust-player-selection.player-head-item", Material.PLAYER_HEAD);
 
-        this.blacklistAddPlayerHeadNameFormat = guiConfig.getString(
-                "blacklist-player-add-selection.player-head-item.name-format",
-                "<!italic><gradient:#f87171:#ef4444><bold><player></bold></gradient>");
-        List<String> tempBlacklistAddLore = guiConfig.getStringList("blacklist-player-add-selection.player-head-item.lore");
-        if (tempBlacklistAddLore.isEmpty()) {
-            tempBlacklistAddLore = List.of(
-                    "<!italic><gray>Klicke um den Spieler zu sperren</gray>"
-            );
-        }
-        this.blacklistAddPlayerHeadLore = tempBlacklistAddLore;
-
-        this.blacklistRemovePlayerHeadNameFormat = guiConfig.getString(
-                "blacklist-player-remove-selection.player-head-item.name-format",
-                "<!italic><gradient:#4ade80:#22c55e><bold><player></bold></gradient>");
-        List<String> tempBlacklistRemoveLore = guiConfig.getStringList("blacklist-player-remove-selection.player-head-item.lore");
-        if (tempBlacklistRemoveLore.isEmpty()) {
-            tempBlacklistRemoveLore = List.of(
-                    "<!italic><gray>Klicke um die Sperre aufzuheben</gray>"
-            );
-        }
-        this.blacklistRemovePlayerHeadLore = tempBlacklistRemoveLore;
+        this.blacklistPlayerAddHead = PlayerHeadItemConfig.parse(
+                guiConfig,
+                "blacklist-player-add-selection.player-head-item",
+                "<!italic><gradient:#f87171:#ef4444><bold><player></bold></gradient>",
+                List.of("<!italic><gray>Klicke um den Spieler zu sperren</gray>"));
+        this.blacklistPlayerRemoveHead = PlayerHeadItemConfig.parse(
+                guiConfig,
+                "blacklist-player-remove-selection.player-head-item",
+                "<!italic><gradient:#4ade80:#22c55e><bold><player></bold></gradient>",
+                List.of("<!italic><gray>Klicke um die Sperre aufzuheben</gray>"));
+        this.blacklistSocketAddHead = PlayerHeadItemConfig.parse(
+                guiConfig,
+                "blacklist-socket-add-selection.player-head-item",
+                "<!italic><red><bold><player></bold></red>",
+                List.of("<!italic><gray>Klicke um den Spieler zu sperren</gray>"));
+        this.blacklistSocketRemoveHead = PlayerHeadItemConfig.parse(
+                guiConfig,
+                "blacklist-socket-remove-selection.player-head-item",
+                "<!italic><green><bold><player></bold></green>",
+                List.of("<!italic><gray>Klicke um die Sperre aufzuheben</gray>"));
         
         // Socket management item format
         this.socketManagementItemNameFormat = guiConfig.getString("socket-management.socket-management-item.name-format", "<!italic><white><name></white>");
@@ -142,6 +157,7 @@ public class GuiConfiguration {
         this.socketManagementItemDeleteHint = guiConfig.getString("socket-management.socket-management-item.delete-hint", "<!italic><red>Rechtsklick zum Löschen</red>");
         this.socketManagementItemEmptyLine = guiConfig.getString("socket-management.socket-management-item.empty-line", "<!italic><gray></gray>");
         this.socketManagementItemMaterial = parseMaterial(guiConfig.getString("socket-management.socket-management-item.material", "BEACON"), Material.BEACON);
+        this.socketManagementItemHeadTexture = GuiYamlParser.parseHeadTexture(guiConfig, "socket-management.socket-management-item", this.socketManagementItemMaterial);
         
         // Sign rename configuration
         this.signRenameBorderLine = guiConfig.getString("sign-rename.border-line", "^^^^^^^^^^^^^^^");
@@ -169,27 +185,33 @@ public class GuiConfiguration {
     public String socketItemClickHint() { return socketItemClickHint; }
     public String socketItemEmptyLine() { return socketItemEmptyLine; }
     public Material socketItemMaterial() { return socketItemMaterial; }
+    public String socketItemHeadTexture() { return socketItemHeadTexture; }
     public String playerHeadNameFormat() { return playerHeadNameFormat; }
     public List<String> playerHeadLore() { return playerHeadLore; }
+    public String playerHeadTexture() { return playerHeadTexture; }
     public String trustPlayerHeadNameFormat() { return trustPlayerHeadNameFormat; }
     public List<String> trustPlayerHeadLore() { return trustPlayerHeadLore; }
+    public String trustPlayerHeadTexture() { return trustPlayerHeadTexture; }
     public String untrustPlayerHeadNameFormat() { return untrustPlayerHeadNameFormat; }
     public List<String> untrustPlayerHeadLore() { return untrustPlayerHeadLore; }
-    public String blacklistAddPlayerHeadNameFormat() { return blacklistAddPlayerHeadNameFormat; }
-    public List<String> blacklistAddPlayerHeadLore() { return blacklistAddPlayerHeadLore; }
-    public String blacklistRemovePlayerHeadNameFormat() { return blacklistRemovePlayerHeadNameFormat; }
-    public List<String> blacklistRemovePlayerHeadLore() { return blacklistRemovePlayerHeadLore; }
+    public String untrustPlayerHeadTexture() { return untrustPlayerHeadTexture; }
+    public PlayerHeadItemConfig blacklistPlayerAddHead() { return blacklistPlayerAddHead; }
+    public PlayerHeadItemConfig blacklistPlayerRemoveHead() { return blacklistPlayerRemoveHead; }
+    public PlayerHeadItemConfig blacklistSocketAddHead() { return blacklistSocketAddHead; }
+    public PlayerHeadItemConfig blacklistSocketRemoveHead() { return blacklistSocketRemoveHead; }
     public String socketManagementItemNameFormat() { return socketManagementItemNameFormat; }
     public String socketManagementItemLocationFormat() { return socketManagementItemLocationFormat; }
     public String socketManagementItemDeleteHint() { return socketManagementItemDeleteHint; }
     public String socketManagementItemEmptyLine() { return socketManagementItemEmptyLine; }
     public Material socketManagementItemMaterial() { return socketManagementItemMaterial; }
+    public String socketManagementItemHeadTexture() { return socketManagementItemHeadTexture; }
     public String signRenameBorderLine() { return signRenameBorderLine; }
     public String signRenameTitleLine() { return signRenameTitleLine; }
     
     private static GuiSettings parseGuiSettings(FileConfiguration cfg, String section, Map<String, GuiItem> defaultItems) {
         String title = cfg.getString(section + "title", "GUI");
-        int size = Math.max(9, Math.min(54, cfg.getInt(section + "size", 27)));
+        int size = GuiYamlParser.normalizeInventorySize(cfg.getInt(section + "size", 27));
+        String sectionPath = section.endsWith(".") ? section.substring(0, section.length() - 1) : section;
 
         Map<String, GuiItem> items = new HashMap<>();
         Set<String> itemKeys = new LinkedHashSet<>(defaultItems.keySet());
@@ -197,10 +219,24 @@ public class GuiConfiguration {
         if (itemsSection != null) {
             itemKeys.addAll(itemsSection.getKeys(false));
         }
+        ConfigurationSection rootSection = cfg.getConfigurationSection(sectionPath);
+        if (rootSection != null) {
+            for (String key : rootSection.getKeys(false)) {
+                if (GUI_SECTION_RESERVED_KEYS.contains(key)) {
+                    continue;
+                }
+                String rootItemPath = sectionPath + "." + key;
+                if (cfg.contains(rootItemPath + ".material")
+                        || cfg.contains(rootItemPath + ".position")
+                        || cfg.contains(rootItemPath + ".name")) {
+                    itemKeys.add(key);
+                }
+            }
+        }
         itemKeys.remove("back");
 
         for (String key : itemKeys) {
-            String itemSection = section + "items." + key;
+            String itemSection = resolveItemSection(cfg, section, sectionPath, key);
             items.put(key, GuiYamlParser.parseItem(cfg, itemSection, defaultItems.get(key)));
         }
 
@@ -279,8 +315,20 @@ public class GuiConfiguration {
         }
 
         GuiItem fillItem = GuiYamlParser.parseFillItem(cfg, section + "fill-item");
+        List<Integer> contentSlots = cfg.getIntegerList(section + "content-slots");
 
-        return new GuiSettings(title, size, items, fillItem);
+        return new GuiSettings(title, size, items, fillItem, contentSlots);
+    }
+
+    private static String resolveItemSection(FileConfiguration cfg, String section, String sectionPath, String key) {
+        String nested = section + "items." + key;
+        if (cfg.contains(nested + ".material")
+                || cfg.contains(nested + ".position")
+                || cfg.contains(nested + ".name")
+                || cfg.getConfigurationSection(nested) != null) {
+            return nested;
+        }
+        return sectionPath + "." + key;
     }
 
     private static Material parseMaterial(String value, Material fallback) {

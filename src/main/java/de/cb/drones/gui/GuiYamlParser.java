@@ -84,4 +84,8 @@ public final class GuiYamlParser {
         }
         return null;
     }
+
+    public static int normalizeInventorySize(int requested) {
+        return GuiItemStacks.normalizeInventorySize(requested);
+    }
 }

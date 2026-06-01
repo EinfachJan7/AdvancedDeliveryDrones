@@ -418,21 +418,9 @@ public class DroneMenuHandler implements Listener {
             return;
         }
 
-        if (clicked.getType() != droneSettings.guiConfig().socketItemMaterial()) return;
-
-        org.bukkit.inventory.meta.ItemMeta meta = clicked.getItemMeta();
-        if (meta == null) return;
-
-        // Try to get socket name from persistent data first
-        String socketName = null;
-        if (meta.getPersistentDataContainer() != null) {
-            NamespacedKey socketNameKey = new NamespacedKey(plugin, "socket_name");
-            socketName = meta.getPersistentDataContainer().get(socketNameKey, org.bukkit.persistence.PersistentDataType.STRING);
-        }
-        
-        // Fallback to display name if persistent data is not available
+        String socketName = readSocketName(clicked);
         if (socketName == null) {
-            socketName = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
+            return;
         }
         
         player.closeInventory();
@@ -453,19 +441,10 @@ public class DroneMenuHandler implements Listener {
             return;
         }
 
-        if (clicked.getType() != droneSettings.guiConfig().socketManagementItemMaterial()) return;
-
-        org.bukkit.inventory.meta.ItemMeta meta = clicked.getItemMeta();
-        if (meta == null) return;
-
-        // Get socket name from persistent data
-        String socketName = null;
-        if (meta.getPersistentDataContainer() != null) {
-            NamespacedKey socketNameKey = new NamespacedKey(plugin, "socket_name");
-            socketName = meta.getPersistentDataContainer().get(socketNameKey, org.bukkit.persistence.PersistentDataType.STRING);
+        String socketName = readSocketName(clicked);
+        if (socketName == null) {
+            return;
         }
-
-        if (socketName == null) return;
 
         // Right click to delete, left click to edit
         if (isRightClick) {
@@ -646,6 +625,25 @@ public class DroneMenuHandler implements Listener {
             menuGUI.openSocketManagementMenu(player);
             return;
         }
+    }
+
+    private String readSocketName(ItemStack clicked) {
+        if (clicked == null || clicked.getType().isAir()) {
+            return null;
+        }
+        ItemMeta meta = clicked.getItemMeta();
+        if (meta == null) {
+            return null;
+        }
+        NamespacedKey socketNameKey = new NamespacedKey(plugin, "socket_name");
+        String socketName = meta.getPersistentDataContainer().get(socketNameKey, org.bukkit.persistence.PersistentDataType.STRING);
+        if (socketName != null && !socketName.isBlank()) {
+            return socketName;
+        }
+        if (meta.displayName() == null) {
+            return null;
+        }
+        return PlainTextComponentSerializer.plainText().serialize(meta.displayName());
     }
 
     @EventHandler

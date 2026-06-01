@@ -616,33 +616,7 @@ public final class DroneManager {
 
     private void destroyDroneAfterReturn(DeliveryDrone drone) {
         drone.clearItems();
-        returnAnimalsToStart(drone);
         destroyDrone(drone, false);
-    }
-
-    private void returnAnimalsToStart(DeliveryDrone drone) {
-        if (drone.attachedAnimalTypes() == null || drone.attachedAnimalTypes().isEmpty()) {
-            return;
-        }
-
-        Location startLoc = drone.startLocation();
-        if (startLoc != null && startLoc.getWorld() != null) {
-            for (org.bukkit.entity.EntityType type : drone.attachedAnimalTypes()) {
-                startLoc.getWorld().spawnEntity(startLoc.clone().add(0.0, 0.2, 0.0), type);
-            }
-        }
-
-        Player sender = Bukkit.getPlayer(drone.senderId());
-        ItemStack leadItem = new ItemStack(org.bukkit.Material.LEAD, drone.attachedAnimalTypes().size());
-
-        if (sender != null && sender.isOnline()) {
-            java.util.Map<Integer, ItemStack> overflow = sender.getInventory().addItem(leadItem);
-            if (!overflow.isEmpty()) {
-                overflow.values().forEach(stack -> sender.getWorld().dropItemNaturally(sender.getLocation(), stack));
-            }
-        } else {
-            pendingReturns.computeIfAbsent(drone.senderId(), ignored -> new java.util.ArrayList<>()).add(leadItem);
-        }
     }
 
     private void notifyReceiverOfCancel(Player sender, DeliveryDrone drone) {
@@ -708,7 +682,6 @@ public final class DroneManager {
                     "<owner>", socket.ownerName());
         }
         drone.clearItems();
-        returnAnimalsToStart(drone);
         destroyDrone(drone, false);
         if (!items.isEmpty()) {
             socketPendingReturns.addReturns(socket.ownerId(), items);

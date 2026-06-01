@@ -90,7 +90,7 @@ public class DroneMenuGUI {
             }
         }
         
-        int size = Math.max(menuSettings.size(), Math.min(54, ((onlinePlayers.size() + 8) / 9) * 9));
+        int size = menuSettings.size();
         DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("player_selection");
         Inventory menu = sender.getServer().createInventory(holder, size, 
             MINI_MESSAGE.deserialize(menuSettings.title()));
@@ -99,11 +99,15 @@ public class DroneMenuGUI {
         // First, fill all slots with fill item if configured
         fillInventory(menu, menuSettings, size);
         
-        // Add player heads (this will override fill items)
-        for (int i = 0; i < onlinePlayers.size() && i < size; i++) {
-            org.bukkit.entity.Player target = onlinePlayers.get(i);
-            ItemStack headItem = createPlayerHead(target);
-            menu.setItem(i, headItem);
+        // Add player heads using available slots
+        List<Integer> availableSlots = getAvailableSlots(menuSettings, size);
+        for (int i = 0; i < onlinePlayers.size() && i < availableSlots.size(); i++) {
+            int slot = availableSlots.get(i);
+            if (slot >= 0 && slot < size) {
+                org.bukkit.entity.Player target = onlinePlayers.get(i);
+                ItemStack headItem = createPlayerHead(target);
+                menu.setItem(slot, headItem);
+            }
         }
         
         // Add back button if configured (this will override fill items and player heads if conflict)
@@ -117,36 +121,8 @@ public class DroneMenuGUI {
     }
     
     private ItemStack createMenuItem(GuiItem item) {
-        return createMenuItem(item.material(), item.name(), item.lore(), item.headTexture());
-    }
-
-    private ItemStack createMenuItem(Material material, String name, List<String> lore) {
-        return createMenuItem(material, name, lore, null);
-    }
-
-    private ItemStack createMenuItem(Material material, String name, List<String> lore, String headTexture) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.displayName(MINI_MESSAGE.deserialize(name));
-            List<Component> loreComponents = new ArrayList<>();
-            for (String line : lore) {
-                loreComponents.add(MINI_MESSAGE.deserialize(line));
-            }
-            meta.lore(loreComponents);
-
-            if (material == Material.PLAYER_HEAD && headTexture != null && meta instanceof SkullMeta skullMeta) {
-                SkullTextureUtils.applyTexture(skullMeta, headTexture);
-                meta = skullMeta;
-            }
-
-            // Mark this item as a GUI item to prevent manipulation
-            PersistentDataContainer pdc = meta.getPersistentDataContainer();
-            pdc.set(guiItemKey, PersistentDataType.BYTE, (byte) 1);
-
-            item.setItemMeta(meta);
-        }
-        return item;
+        return GuiItemStacks.create(item, meta ->
+                meta.getPersistentDataContainer().set(guiItemKey, PersistentDataType.BYTE, (byte) 1));
     }
     
     private ItemStack createPlayerHead(org.bukkit.entity.Player player) {
@@ -171,7 +147,12 @@ public class DroneMenuGUI {
 
             // Set player head texture
             if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
-                skullMeta.setOwningPlayer(player);
+                String customTexture = droneSettings.guiConfig().playerHeadTexture();
+                if (customTexture != null) {
+                    SkullTextureUtils.applyTexture(skullMeta, customTexture);
+                } else {
+                    skullMeta.setOwningPlayer(player);
+                }
             }
 
             head.setItemMeta(meta);
@@ -203,7 +184,12 @@ public class DroneMenuGUI {
 
             // Set player head texture
             if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
-                skullMeta.setOwningPlayer(player);
+                String customTexture = droneSettings.guiConfig().playerHeadTexture();
+                if (customTexture != null) {
+                    SkullTextureUtils.applyTexture(skullMeta, customTexture);
+                } else {
+                    skullMeta.setOwningPlayer(player);
+                }
             }
 
             head.setItemMeta(meta);
@@ -231,7 +217,12 @@ public class DroneMenuGUI {
             }
 
             if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
-                skullMeta.setOwningPlayer(player);
+                String customTexture = droneSettings.guiConfig().trustPlayerHeadTexture();
+                if (customTexture != null) {
+                    SkullTextureUtils.applyTexture(skullMeta, customTexture);
+                } else {
+                    skullMeta.setOwningPlayer(player);
+                }
             }
 
             head.setItemMeta(meta);
@@ -260,7 +251,12 @@ public class DroneMenuGUI {
                     uuid.toString());
 
             if (meta instanceof SkullMeta skullMeta) {
-                skullMeta.setOwningPlayer(player);
+                String customTexture = droneSettings.guiConfig().untrustPlayerHeadTexture();
+                if (customTexture != null) {
+                    SkullTextureUtils.applyTexture(skullMeta, customTexture);
+                } else {
+                    skullMeta.setOwningPlayer(player);
+                }
             }
 
             head.setItemMeta(meta);
@@ -293,7 +289,7 @@ public class DroneMenuGUI {
     public void openSocketSelectionMenu(Player player) {
         GuiSettings menuSettings = droneSettings.guiConfig().socketSelection();
         List<DeliverySocket> allSockets = socketRepository.getAllSockets();
-        int size = Math.max(menuSettings.size(), Math.min(54, ((allSockets.size() + 8) / 9) * 9));
+        int size = menuSettings.size();
 
         DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("socket_selection");
         Inventory menu = player.getServer().createInventory(holder, size,
@@ -302,11 +298,15 @@ public class DroneMenuGUI {
 
         fillInventory(menu, menuSettings, size);
 
-        // Add socket items (this will override fill items)
-        for (int i = 0; i < allSockets.size() && i < size; i++) {
-            DeliverySocket socket = allSockets.get(i);
-            ItemStack socketItem = createSocketItem(socket);
-            menu.setItem(i, socketItem);
+        // Add socket items using available slots
+        List<Integer> availableSlots = getAvailableSlots(menuSettings, size);
+        for (int i = 0; i < allSockets.size() && i < availableSlots.size(); i++) {
+            int slot = availableSlots.get(i);
+            if (slot >= 0 && slot < size) {
+                DeliverySocket socket = allSockets.get(i);
+                ItemStack socketItem = createSocketItem(socket);
+                menu.setItem(slot, socketItem);
+            }
         }
 
         // Add back button if configured (this will override fill items and socket items if conflict)
@@ -323,6 +323,12 @@ public class DroneMenuGUI {
         ItemStack item = new ItemStack(droneSettings.guiConfig().socketItemMaterial());
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
+            String headTexture = droneSettings.guiConfig().socketItemHeadTexture();
+            if (item.getType() == Material.PLAYER_HEAD && headTexture != null && meta instanceof SkullMeta skullMeta) {
+                SkullTextureUtils.applyTexture(skullMeta, headTexture);
+                meta = skullMeta;
+            }
+
             // Store the actual socket name in persistent data for identification
             if (meta.getPersistentDataContainer() != null) {
                 NamespacedKey socketNameKey = new NamespacedKey(plugin, "socket_name");
@@ -368,7 +374,7 @@ public class DroneMenuGUI {
     public void openSocketManagementMenu(Player player) {
         GuiSettings menuSettings = droneSettings.guiConfig().socketManagement();
         List<DeliverySocket> playerSockets = socketRepository.getSocketsByOwner(player.getUniqueId());
-        int size = Math.max(menuSettings.size(), Math.min(54, ((playerSockets.size() + 8) / 9) * 9));
+        int size = menuSettings.size();
 
         DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("socket_management");
         Inventory menu = player.getServer().createInventory(holder, size,
@@ -378,10 +384,14 @@ public class DroneMenuGUI {
         fillInventory(menu, menuSettings, size);
 
         // Add socket items
-        for (int i = 0; i < playerSockets.size() && i < size; i++) {
-            DeliverySocket socket = playerSockets.get(i);
-            ItemStack socketItem = createSocketManagementItem(socket);
-            menu.setItem(i, socketItem);
+        List<Integer> availableSlots = getAvailableSlots(menuSettings, size);
+        for (int i = 0; i < playerSockets.size() && i < availableSlots.size(); i++) {
+            int slot = availableSlots.get(i);
+            if (slot >= 0 && slot < size) {
+                DeliverySocket socket = playerSockets.get(i);
+                ItemStack socketItem = createSocketManagementItem(socket);
+                menu.setItem(slot, socketItem);
+            }
         }
 
         // If no sockets, show "no-sockets" item
@@ -407,6 +417,12 @@ public class DroneMenuGUI {
         ItemStack item = new ItemStack(droneSettings.guiConfig().socketManagementItemMaterial());
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
+            String headTexture = droneSettings.guiConfig().socketManagementItemHeadTexture();
+            if (item.getType() == Material.PLAYER_HEAD && headTexture != null && meta instanceof SkullMeta skullMeta) {
+                SkullTextureUtils.applyTexture(skullMeta, headTexture);
+                meta = skullMeta;
+            }
+
             // Store the actual socket name in persistent data for identification
             if (meta.getPersistentDataContainer() != null) {
                 NamespacedKey socketNameKey = new NamespacedKey(plugin, "socket_name");
@@ -529,7 +545,7 @@ public class DroneMenuGUI {
                 }
             }
 
-            size = Math.max(menuSettings.size(), Math.min(54, ((candidates.size() + 8) / 9) * 9));
+            size = menuSettings.size();
             DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("trust_selection:" + socketName + ":" + isTrust);
             menu = player.getServer().createInventory(holder, size,
                 MINI_MESSAGE.deserialize(menuSettings.title()));
@@ -538,17 +554,21 @@ public class DroneMenuGUI {
             fillInventory(menu, menuSettings, size);
 
             // Add player heads
-            for (int i = 0; i < candidates.size() && i < size; i++) {
-                org.bukkit.OfflinePlayer target = candidates.get(i);
-                ItemStack headItem = createTrustPlayerHead(target);
-                menu.setItem(i, headItem);
+            List<Integer> availableSlots = getAvailableSlots(menuSettings, size);
+            for (int i = 0; i < candidates.size() && i < availableSlots.size(); i++) {
+                int slot = availableSlots.get(i);
+                if (slot >= 0 && slot < size) {
+                    org.bukkit.OfflinePlayer target = candidates.get(i);
+                    ItemStack headItem = createTrustPlayerHead(target);
+                    menu.setItem(slot, headItem);
+                }
             }
         } else {
             // Untrust mode: show only trusted players (with their UUIDs stored)
             DeliverySocket socket = socketRepository.getSocket(player.getUniqueId(), socketName);
             List<UUID> trustedPlayerUUIDs = socket != null ? socket.trustedPlayers() : new ArrayList<>();
 
-            size = Math.max(menuSettings.size(), Math.min(54, ((trustedPlayerUUIDs.size() + 8) / 9) * 9));
+            size = menuSettings.size();
             DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder("trust_selection:" + socketName + ":" + isTrust);
             menu = player.getServer().createInventory(holder, size,
                 MINI_MESSAGE.deserialize(menuSettings.title()));
@@ -556,17 +576,21 @@ public class DroneMenuGUI {
 
             fillInventory(menu, menuSettings, size);
 
-            int slot = 0;
+            List<Integer> availableSlots = getAvailableSlots(menuSettings, size);
+            int slotIndex = 0;
             for (UUID trustedUuid : trustedPlayerUUIDs) {
-                if (slot >= size) {
+                if (slotIndex >= availableSlots.size()) {
                     break;
                 }
-                org.bukkit.entity.Player trustedPlayer = org.bukkit.Bukkit.getPlayer(trustedUuid);
-                OfflinePlayer offline = Bukkit.getOfflinePlayer(trustedUuid);
-                ItemStack headItem = trustedPlayer != null
-                        ? createUntrustPlayerHeadWithUUID(trustedPlayer, trustedUuid)
-                        : createUntrustPlayerHeadWithUUID(offline, trustedUuid);
-                menu.setItem(slot++, headItem);
+                int slot = availableSlots.get(slotIndex++);
+                if (slot >= 0 && slot < size) {
+                    org.bukkit.entity.Player trustedPlayer = org.bukkit.Bukkit.getPlayer(trustedUuid);
+                    OfflinePlayer offline = Bukkit.getOfflinePlayer(trustedUuid);
+                    ItemStack headItem = trustedPlayer != null
+                            ? createUntrustPlayerHeadWithUUID(trustedPlayer, trustedUuid)
+                            : createUntrustPlayerHeadWithUUID(offline, trustedUuid);
+                    menu.setItem(slot, headItem);
+                }
             }
         }
 
@@ -651,33 +675,41 @@ public class DroneMenuGUI {
                 }
             }
 
-            size = Math.max(menuSettings.size(), Math.min(54, ((candidates.size() + 8) / 9) * 9));
+            size = menuSettings.size();
             DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder(menuType);
             menu = player.getServer().createInventory(holder, size, MINI_MESSAGE.deserialize(menuSettings.title()));
             holder.setInventory(menu);
             fillMenu(menu, menuSettings, size);
 
-            int slot = 0;
+            List<Integer> availableSlots = getAvailableSlots(menuSettings, size);
+            int slotIndex = 0;
             for (OfflinePlayer target : candidates) {
-                if (slot >= size) {
+                if (slotIndex >= availableSlots.size()) {
                     break;
                 }
-                menu.setItem(slot++, createBlacklistAddPlayerHead(target, socketName));
+                int slot = availableSlots.get(slotIndex++);
+                if (slot >= 0 && slot < size) {
+                    menu.setItem(slot, createBlacklistAddPlayerHead(target, socketName));
+                }
             }
         } else {
-            size = Math.max(menuSettings.size(), Math.min(54, ((blockedOrExisting.size() + 8) / 9) * 9));
+            size = menuSettings.size();
             DroneMenuHandler.DroneMenuHolder holder = new DroneMenuHandler.DroneMenuHolder(menuType);
             menu = player.getServer().createInventory(holder, size, MINI_MESSAGE.deserialize(menuSettings.title()));
             holder.setInventory(menu);
             fillMenu(menu, menuSettings, size);
 
-            int slot = 0;
+            List<Integer> availableSlots = getAvailableSlots(menuSettings, size);
+            int slotIndex = 0;
             for (UUID blockedUuid : blockedOrExisting) {
-                if (slot >= size) {
+                if (slotIndex >= availableSlots.size()) {
                     break;
                 }
-                OfflinePlayer offline = Bukkit.getOfflinePlayer(blockedUuid);
-                menu.setItem(slot++, createBlacklistRemovePlayerHead(offline, blockedUuid, socketName));
+                int slot = availableSlots.get(slotIndex++);
+                if (slot >= 0 && slot < size) {
+                    OfflinePlayer offline = Bukkit.getOfflinePlayer(blockedUuid);
+                    menu.setItem(slot, createBlacklistRemovePlayerHead(offline, blockedUuid, socketName));
+                }
             }
         }
 
@@ -703,64 +735,72 @@ public class DroneMenuGUI {
         }
     }
 
+    private List<Integer> getAvailableSlots(GuiSettings menuSettings, int size) {
+        List<Integer> slots = menuSettings.contentSlots();
+        if (slots != null && !slots.isEmpty()) {
+            return slots;
+        }
+        List<Integer> available = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            final int currentSlot = i;
+            boolean isFixed = menuSettings.items().values().stream()
+                    .anyMatch(item -> item.position() == currentSlot);
+            if (!isFixed) {
+                available.add(i);
+            }
+        }
+        return available;
+    }
+
     private ItemStack createBlacklistAddPlayerHead(OfflinePlayer target, String socketName) {
-        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
-        ItemMeta meta = head.getItemMeta();
-        if (meta == null) {
-            return head;
-        }
-
-        String playerName = target.getName() != null ? target.getName() : "Unknown";
-        String socketLabel = socketName != null ? socketName : "";
-        String nameFormat = droneSettings.guiConfig().blacklistAddPlayerHeadNameFormat()
-                .replace("<player>", playerName)
-                .replace("<socket>", socketLabel);
-        meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
-
-        List<Component> loreComponents = new ArrayList<>();
-        for (String line : droneSettings.guiConfig().blacklistAddPlayerHeadLore()) {
-            loreComponents.add(MINI_MESSAGE.deserialize(line
-                    .replace("<player>", playerName)
-                    .replace("<socket>", socketLabel)));
-        }
-        meta.lore(loreComponents);
-        if (playerUuidKey != null) {
-            meta.getPersistentDataContainer().set(playerUuidKey, org.bukkit.persistence.PersistentDataType.STRING, target.getUniqueId().toString());
-        }
-
-        if (meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
-            skullMeta.setOwningPlayer(target);
-        }
-        head.setItemMeta(meta);
-        return head;
+        PlayerHeadItemConfig headConfig = socketName != null
+                ? droneSettings.guiConfig().blacklistSocketAddHead()
+                : droneSettings.guiConfig().blacklistPlayerAddHead();
+        return createConfiguredPlayerHead(target, target.getUniqueId(), socketName, headConfig);
     }
 
     private ItemStack createBlacklistRemovePlayerHead(OfflinePlayer offline, UUID uuid, String socketName) {
+        PlayerHeadItemConfig headConfig = socketName != null
+                ? droneSettings.guiConfig().blacklistSocketRemoveHead()
+                : droneSettings.guiConfig().blacklistPlayerRemoveHead();
+        return createConfiguredPlayerHead(offline, uuid, socketName, headConfig);
+    }
+
+    private ItemStack createConfiguredPlayerHead(
+            OfflinePlayer target,
+            UUID uuid,
+            String socketName,
+            PlayerHeadItemConfig headConfig
+    ) {
         ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         ItemMeta meta = head.getItemMeta();
         if (meta == null) {
             return head;
         }
 
-        String playerName = offline.getName() != null ? offline.getName() : uuid.toString();
+        String playerName = target.getName() != null ? target.getName() : uuid.toString();
         String socketLabel = socketName != null ? socketName : "";
-        String nameFormat = droneSettings.guiConfig().blacklistRemovePlayerHeadNameFormat()
+        String nameFormat = headConfig.nameFormat()
                 .replace("<player>", playerName)
                 .replace("<socket>", socketLabel);
         meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
 
         List<Component> loreComponents = new ArrayList<>();
-        for (String line : droneSettings.guiConfig().blacklistRemovePlayerHeadLore()) {
+        for (String line : headConfig.lore()) {
             loreComponents.add(MINI_MESSAGE.deserialize(line
                     .replace("<player>", playerName)
                     .replace("<socket>", socketLabel)));
         }
         meta.lore(loreComponents);
-
         meta.getPersistentDataContainer().set(playerUuidKey, PersistentDataType.STRING, uuid.toString());
 
         if (meta instanceof SkullMeta skullMeta) {
-            skullMeta.setOwningPlayer(offline);
+            String customTexture = headConfig.texture();
+            if (customTexture != null) {
+                SkullTextureUtils.applyTexture(skullMeta, customTexture);
+            } else {
+                skullMeta.setOwningPlayer(target);
+            }
         }
         head.setItemMeta(meta);
         return head;

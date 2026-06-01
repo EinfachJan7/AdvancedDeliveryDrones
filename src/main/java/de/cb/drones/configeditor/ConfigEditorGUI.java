@@ -2,7 +2,7 @@ package de.cb.drones.configeditor;
 
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
 import de.cb.drones.drone.GuiItem;
-import de.cb.drones.util.SkullTextureUtils;
+import de.cb.drones.gui.GuiItemStacks;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
@@ -12,7 +12,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
@@ -193,42 +192,27 @@ public final class ConfigEditorGUI {
                 .replace("<pages>", String.valueOf(totalPages))
                 .replace("<count>", String.valueOf(totalEntries));
 
-        List<Component> lore = new ArrayList<>();
+        List<String> processedLore = new ArrayList<>();
         for (String line : template.lore()) {
-            lore.add(MINI_MESSAGE.deserialize(line
+            processedLore.add(line
                     .replace("<page>", String.valueOf(page + 1))
                     .replace("<pages>", String.valueOf(totalPages))
-                    .replace("<count>", String.valueOf(totalEntries))));
+                    .replace("<count>", String.valueOf(totalEntries)));
         }
 
-        ItemStack item = new ItemStack(template.material());
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            applyHeadTexture(meta, template);
-            meta.displayName(MINI_MESSAGE.deserialize(name));
-            if (!lore.isEmpty()) {
-                meta.lore(lore);
-            }
+        return GuiItemStacks.create(new GuiItem(template.position(), template.material(), name, processedLore, template.headTexture()), meta -> {
             meta.getPersistentDataContainer().set(navActionKey, PersistentDataType.STRING, action);
             if ("back".equals(action) && !categories) {
                 meta.getPersistentDataContainer().set(categoryIdKey, PersistentDataType.STRING, "options-back");
             }
-            item.setItemMeta(meta);
-        }
-        return item;
+        });
     }
 
     private void fill(Inventory inventory, int size, GuiItem fillItem) {
         if (fillItem == null) {
             return;
         }
-        ItemStack filler = new ItemStack(fillItem.material());
-        ItemMeta meta = filler.getItemMeta();
-        if (meta != null) {
-            applyHeadTexture(meta, fillItem);
-            meta.displayName(MINI_MESSAGE.deserialize(fillItem.name()));
-            filler.setItemMeta(meta);
-        }
+        ItemStack filler = GuiItemStacks.create(fillItem);
         for (int i = 0; i < size; i++) {
             inventory.setItem(i, filler);
         }
@@ -271,10 +255,4 @@ public final class ConfigEditorGUI {
         return guiSettings;
     }
 
-    private static void applyHeadTexture(ItemMeta meta, GuiItem item) {
-        if (item.headTexture() == null || item.material() != Material.PLAYER_HEAD || !(meta instanceof SkullMeta skullMeta)) {
-            return;
-        }
-        SkullTextureUtils.applyTexture(skullMeta, item.headTexture());
-    }
 }

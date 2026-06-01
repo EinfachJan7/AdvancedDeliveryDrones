@@ -5,7 +5,10 @@ import de.cb.drones.config.PlayerBlacklistRepository;
 import de.cb.drones.config.PlayerSettingsRepository;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
+import de.cb.drones.drone.GuiItem;
+import de.cb.drones.drone.GuiSettings;
 import de.cb.drones.gui.DroneMenuHandler;
+import de.cb.drones.gui.GuiItemStacks;
 import de.cb.drones.socket.DeliverySocket;
 import de.cb.drones.socket.SocketRepository;
 import java.util.ArrayList;
@@ -1068,7 +1071,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             droneManager.sendMessage(player, "preview-unavailable");
             return true;
         }
-        int previewSize = drone.animalsOnlyDelivery() ? 9 : drone.inventory().getSize();
+        int previewSize = drone.animalsOnlyDelivery()
+                ? droneManager.settings().guiConfig().sendMode().size()
+                : drone.inventory().getSize();
         Inventory preview = Bukkit.createInventory(
                 new PreviewInventoryHolder(drone.droneId(), player.getUniqueId()),
                 previewSize,
@@ -1298,17 +1303,16 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return;
         }
         
-        // Cache config items to avoid multiple lookups
         var sendModeItems = droneManager.settings().guiConfig().sendMode().items();
-        Material animalsMaterial = sendModeItems.get("animals").material();
-        Material itemsMaterial = sendModeItems.get("items").material();
-        Material clickedType = clicked.getType();
-        
-        if (clickedType == animalsMaterial) {
+        int slot = event.getSlot();
+        GuiItem animalsItem = sendModeItems.get("animals");
+        GuiItem itemsItem = sendModeItems.get("items");
+
+        if (animalsItem != null && slot == animalsItem.position()) {
             Bukkit.getScheduler().runTask(plugin, () -> sendAnimalsOnly(sender, holder));
             return;
         }
-        if (clickedType == itemsMaterial) {
+        if (itemsItem != null && slot == itemsItem.position()) {
             openComposeInventory(sender, holder.receiverId(), holder.fixedTarget(), false);
         }
     }
@@ -1368,6 +1372,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                     droneManager.sendMessage(sender, "too-many-leashed-animals", "<max>", String.valueOf(maxAnimals));
                     return;
                 }
+                GuiSettings sendMode = droneManager.settings().guiConfig().sendMode();
                 Inventory selector = Bukkit.createInventory(
                         new SendModeInventoryHolder(
                                 sender.getUniqueId(),
@@ -1378,19 +1383,17 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                                 exactSocketTarget,
                                 socketName
                         ),
-                        9,
-                        MINI_MESSAGE.deserialize(droneManager.settings().guiConfig().sendMode().title())
+                        sendMode.size(),
+                        MINI_MESSAGE.deserialize(sendMode.title())
                 );
-                selector.setItem(3, createModeItem(
-                        droneManager.settings().guiConfig().sendMode().items().get("animals").material(),
-                        droneManager.settings().guiConfig().sendMode().items().get("animals").name(),
-                        droneManager.settings().guiConfig().sendMode().items().get("animals").lore()
-                ));
-                selector.setItem(5, createModeItem(
-                        droneManager.settings().guiConfig().sendMode().items().get("items").material(),
-                        droneManager.settings().guiConfig().sendMode().items().get("items").name(),
-                        droneManager.settings().guiConfig().sendMode().items().get("items").lore()
-                ));
+                if (sendMode.fillItem() != null) {
+                    ItemStack filler = GuiItemStacks.create(sendMode.fillItem());
+                    for (int slot = 0; slot < sendMode.size(); slot++) {
+                        selector.setItem(slot, filler);
+                    }
+                }
+                placeSendModeItem(selector, sendMode, "animals");
+                placeSendModeItem(selector, sendMode, "items");
                 sender.openInventory(selector);
                 return;
             }
@@ -1428,21 +1431,12 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
     }
 
-    private ItemStack createModeItem(Material material, String title, List<String> loreLines) {
-        ItemStack stack = new ItemStack(material);
-        ItemMeta meta = stack.getItemMeta();
-        if (meta != null) {
-            meta.displayName(MINI_MESSAGE.deserialize(title));
-            if (loreLines != null && !loreLines.isEmpty()) {
-                List<Component> lore = new ArrayList<>();
-                for (String line : loreLines) {
-                    lore.add(MINI_MESSAGE.deserialize(line));
-                }
-                meta.lore(lore);
-            }
-            stack.setItemMeta(meta);
+    private static void placeSendModeItem(Inventory inventory, GuiSettings sendMode, String itemKey) {
+        GuiItem item = sendMode.items().get(itemKey);
+        if (item == null || item.position() < 0 || item.position() >= sendMode.size()) {
+            return;
         }
-        return stack;
+        inventory.setItem(item.position(), GuiItemStacks.create(item));
     }
 
     private Component getComponentMessageWithoutPrefix(String key, String placeholder, String value) {
