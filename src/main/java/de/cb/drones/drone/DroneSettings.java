@@ -29,6 +29,7 @@ public record DroneSettings(
         String skullTexture,
         int maxActivePerSender,
         boolean carryLeashedAnimals,
+        AnimalReturnMode animalReturnMode,
         int maxLeashedAnimalsPerDrone,
         int maxSocketsPerPlayer,
         boolean socketsEnabled,
@@ -83,6 +84,7 @@ public record DroneSettings(
         String texture = cfg.getString(section + "skull-texture", "");
         int maxActive = Math.max(1, cfg.getInt(section + "max-active-per-sender", 1));
         boolean carryLeashedAnimals = cfg.getBoolean(section + "carry-leashed-animals", false);
+        AnimalReturnMode animalReturnMode = AnimalReturnMode.fromName(cfg.getString(section + "animal-return-mode", "FLY"));
         int maxLeashedAnimalsPerDrone = Math.max(0, cfg.getInt(section + "max-leashed-animals-per-drone", 1));
         int maxSocketsPerPlayer = Math.max(1, cfg.getInt(section + "max-sockets-per-player", 3));
         boolean socketsEnabled = cfg.getBoolean(section + "sockets-enabled", true);
@@ -144,6 +146,7 @@ public record DroneSettings(
                 texture,
                 maxActive,
                 carryLeashedAnimals,
+                animalReturnMode,
                 maxLeashedAnimalsPerDrone,
                 maxSocketsPerPlayer,
                 socketsEnabled,
@@ -265,6 +268,19 @@ public record DroneSettings(
                 }
             }
             return COLLECT;
+        }
+    }
+
+    /** How aborted animal deliveries return to the sender's launch point. */
+    public enum AnimalReturnMode {
+        FLY,
+        TELEPORT;
+
+        public static AnimalReturnMode fromName(String value) {
+            if (value != null && value.equalsIgnoreCase("TELEPORT")) {
+                return TELEPORT;
+            }
+            return FLY;
         }
     }
 

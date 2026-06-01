@@ -31,6 +31,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
@@ -47,6 +48,7 @@ public final class DroneManager {
     private final Map<Inventory, DeliveryDrone> byInventory = new HashMap<>();
     private final Map<UUID, Integer> activeBySender = new HashMap<>();
     private final Map<UUID, List<ItemStack>> pendingReturns = new HashMap<>();
+    private final Map<UUID, Runnable> pendingAnimalReturnCallbacks = new HashMap<>();
     private DroneSettings settings;
     private BukkitTask cleanupTask;
     private DronePersistence persistence;
@@ -332,11 +334,8 @@ public final class DroneManager {
         if (!drone.animalsOnlyDelivery() || drone.attachedAnimalTypes().isEmpty()) {
             return;
         }
-        
         int leashCount = drone.attachedAnimalTypes().size();
         Location dropLocation = drone.currentLocation();
-        
-        // Try to find socket location for drops
         if (drone.socketName() != null) {
             for (de.cb.drones.socket.DeliverySocket s : socketRepository.getAllSockets()) {
                 if (s.name().equals(drone.socketName())) {
@@ -345,10 +344,55 @@ public final class DroneManager {
                 }
             }
         }
-        
-        // Drop leashes at the location
-        ItemStack leadItem = new ItemStack(org.bukkit.Material.LEAD, leashCount);
+        ItemStack leadItem = new ItemStack(Material.LEAD, leashCount);
         dropLocation.getWorld().dropItemNaturally(dropLocation, leadItem);
+    }
+
+    public void returnLeadsToSender(DeliveryDrone drone) {
+        if (!settings.carryLeashedAnimals() || drone.attachedAnimalTypes().isEmpty()) {
+            return;
+        }
+        int leashCount = drone.attachedAnimalTypes().size();
+        giveItemsOrPending(drone.senderId(), List.of(new ItemStack(Material.LEAD, leashCount)));
+    }
+
+    public boolean shouldReturnAnimalsToSender(DeliveryDrone drone) {
+        return settings.carryLeashedAnimals()
+                && !drone.attachedAnimalTypes().isEmpty()
+                && !drone.wasOpenedByReceiver();
+    }
+
+    public void onDroneReturnedToSender(DeliveryDrone drone) {
+        if (!activeDrones.containsKey(drone.droneId())) {
+            return;
+        }
+        respawnAttachedAnimalsAtSender(drone);
+        returnLeadsToSender(drone);
+        Player sender = Bukkit.getPlayer(drone.senderId());
+        if (sender != null && sender.isOnline()) {
+            sendMessage(sender, "animal-return-arrived");
+        }
+        Runnable callback = pendingAnimalReturnCallbacks.remove(drone.droneId());
+        if (callback != null) {
+            callback.run();
+        }
+    }
+
+    private void abortDelivery(DeliveryDrone drone, Runnable returnItemsAction) {
+        if (!shouldReturnAnimalsToSender(drone)) {
+            returnItemsAction.run();
+            destroyDroneAfterReturn(drone);
+            return;
+        }
+        pendingAnimalReturnCallbacks.put(drone.droneId(), () -> {
+            returnItemsAction.run();
+            destroyDroneAfterReturn(drone);
+        });
+        if (settings.animalReturnMode() == DroneSettings.AnimalReturnMode.TELEPORT) {
+            drone.teleportReturnToSender(this);
+        } else {
+            drone.beginReturnFlight(this);
+        }
     }
 
     public boolean canSenderLaunch(UUID senderId) {
@@ -531,8 +575,7 @@ public final class DroneManager {
             if (sender != null) {
                 discordWebhookManager.sendDeliveryDeclined(sender, receiver, drone);
             }
-            returnItemsToSender(drone);
-            destroyDroneAfterReturn(drone);
+            abortDelivery(drone, () -> returnItemsToSender(drone));
         }
         return incoming.size();
     }
@@ -546,8 +589,7 @@ public final class DroneManager {
         }
         for (DeliveryDrone drone : outgoing) {
             notifyReceiverOfCancel(sender, drone);
-            returnItemsToSenderOnCancel(drone);
-            destroyDroneAfterReturn(drone);
+            abortDelivery(drone, () -> returnItemsToSenderOnCancel(drone));
         }
         return outgoing.size();
     }
@@ -568,11 +610,10 @@ public final class DroneManager {
                 cancelAbandonedSocketDrone(drone, socket);
             } else if (drone.receiverId().equals(playerId)) {
                 if (dimensionChange) {
-                    returnItemsToSenderDimensionChange(drone);
+                    abortDelivery(drone, () -> returnItemsToSenderDimensionChange(drone));
                 } else {
-                    returnItemsToSenderOffline(drone);
+                    abortDelivery(drone, () -> returnItemsToSenderOffline(drone));
                 }
-                destroyDroneAfterReturn(drone);
             }
         }
     }
@@ -612,6 +653,18 @@ public final class DroneManager {
                 overflow.values().forEach(item -> player.getWorld().dropItemNaturally(player.getLocation(), item));
             }
         }
+    }
+
+    private void giveItemsOrPending(UUID playerId, List<ItemStack> items) {
+        if (items.isEmpty()) {
+            return;
+        }
+        Player player = Bukkit.getPlayer(playerId);
+        if (player != null && player.isOnline()) {
+            giveItems(player, items);
+            return;
+        }
+        pendingReturns.computeIfAbsent(playerId, ignored -> new ArrayList<>()).addAll(items);
     }
 
     private void destroyDroneAfterReturn(DeliveryDrone drone) {
@@ -674,18 +727,36 @@ public final class DroneManager {
         if (!activeDrones.containsKey(drone.droneId())) {
             return;
         }
-        List<ItemStack> items = drone.snapshotItems();
         Player sender = Bukkit.getPlayer(drone.senderId());
         if (sender != null && sender.isOnline()) {
             sendMessage(sender, "socket-abandoned-sender-notify",
                     "<socket>", socket.name(),
                     "<owner>", socket.ownerName());
         }
+        if (shouldReturnAnimalsToSender(drone)) {
+            abortDelivery(drone, () -> returnItemsForAbandonedSocket(drone, socket));
+            return;
+        }
+        List<ItemStack> items = drone.snapshotItems();
         drone.clearItems();
         destroyDrone(drone, false);
         if (!items.isEmpty()) {
             socketPendingReturns.addReturns(socket.ownerId(), items);
         }
+    }
+
+    private void returnItemsForAbandonedSocket(DeliveryDrone drone, DeliverySocket socket) {
+        List<ItemStack> items = drone.snapshotItems();
+        drone.clearItems();
+        if (items.isEmpty()) {
+            return;
+        }
+        Player sender = Bukkit.getPlayer(drone.senderId());
+        if (sender != null && sender.isOnline()) {
+            giveItems(sender, items);
+            return;
+        }
+        socketPendingReturns.addReturns(socket.ownerId(), items);
     }
 
     private void returnItemsToSender(DeliveryDrone drone) {
@@ -826,15 +897,27 @@ public final class DroneManager {
             return;
         }
         for (DeliveryDrone drone : toRemove) {
-            // Send Discord notification for expired drone
             Player sender = Bukkit.getPlayer(drone.senderId());
             Player receiver = Bukkit.getPlayer(drone.receiverId());
             if (sender != null && receiver != null) {
                 discordWebhookManager.sendDeliveryExpired(sender, receiver, drone);
             }
-            
-            destroyDrone(drone, false);
+            abortDelivery(drone, () -> returnExpiredItems(drone));
         }
+    }
+
+    private void returnExpiredItems(DeliveryDrone drone) {
+        boolean shouldReturnItems = settings.despawnMode() == DroneSettings.DespawnMode.COLLECT
+                || (settings.despawnMode() == DroneSettings.DespawnMode.DELETE && !drone.wasOpenedByReceiver());
+        if (!shouldReturnItems) {
+            return;
+        }
+        List<ItemStack> items = drone.snapshotItems();
+        if (items.isEmpty()) {
+            return;
+        }
+        giveItemsOrPending(drone.senderId(), items);
+        drone.clearItems();
     }
 
     private long currentTick() {
@@ -977,23 +1060,24 @@ public final class DroneManager {
         sendMessage(sender, "restart-return-items", "<player>", drone.receiverName());
     }
     
+    public void respawnAttachedAnimalsAtSender(DeliveryDrone drone) {
+        returnAnimalsToOriginalLocation(drone);
+    }
+
     private void returnAnimalsToOriginalLocation(DeliveryDrone drone) {
-        // Get the start location from the drone
         Location originalLocation = drone.startLocation();
-        if (originalLocation == null || originalLocation.getWorld() == null) {
+        if (originalLocation.getWorld() == null) {
             return;
         }
-        
-        // Ensure chunk is loaded at original location
-        if (!originalLocation.getWorld().isChunkLoaded(originalLocation.getBlockX() >> 4, originalLocation.getBlockZ() >> 4)) {
-            originalLocation.getWorld().getChunkAt(originalLocation.getBlockX() >> 4, originalLocation.getBlockZ() >> 4).load();
+
+        World world = originalLocation.getWorld();
+        if (!world.isChunkLoaded(originalLocation.getBlockX() >> 4, originalLocation.getBlockZ() >> 4)) {
+            world.getChunkAt(originalLocation.getBlockX() >> 4, originalLocation.getBlockZ() >> 4).load();
         }
-        
-        // Find safe spawn location with fall protection
+
         Location safeLocation = findSafeSpawnLocation(originalLocation);
-        
-        // Remove spawned animals and respawn them safely at original location
-        for (UUID animalId : drone.getSpawnedTransportAnimalIds()) {
+
+        for (UUID animalId : new ArrayList<>(drone.getSpawnedTransportAnimalIds())) {
             Entity entity = Bukkit.getEntity(animalId);
             if (entity instanceof LivingEntity animal && !animal.isDead()) {
                 // Store animal properties before removal
@@ -1046,10 +1130,30 @@ public final class DroneManager {
                 }
             }
         }
-        
-        plugin.getLogger().info("Safely returned " + drone.getSpawnedTransportAnimalIds().size() + " animals to original location");
+
+        List<UUID> spawnedIds = drone.getSpawnedTransportAnimalIds();
+        if (spawnedIds.isEmpty() && !drone.attachedAnimalTypes().isEmpty()) {
+            int index = 0;
+            for (EntityType type : drone.attachedAnimalTypes()) {
+                if (!type.isAlive() || type == EntityType.PLAYER || type == EntityType.ARMOR_STAND) {
+                    continue;
+                }
+                Location spawnAt = safeLocation.clone().add((index % 3) * 0.6, 0.0, (index / 3) * 0.6);
+                try {
+                    Entity entity = world.spawnEntity(spawnAt, type);
+                    if (entity instanceof LivingEntity living) {
+                        applyFallProtection(living);
+                    } else {
+                        entity.remove();
+                    }
+                } catch (Exception e) {
+                    plugin.getLogger().warning("Failed to respawn transported animal " + type + ": " + e.getMessage());
+                }
+                index++;
+            }
+        }
     }
-    
+
     private Location findSafeSpawnLocation(Location originalLocation) {
         World world = originalLocation.getWorld();
         int x = originalLocation.getBlockX();

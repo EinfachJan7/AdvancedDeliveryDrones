@@ -41,6 +41,9 @@ settings:
     despawn-mode: "DELETE"
     max-active-per-sender: 1
     carry-leashed-animals: true
+    # When a delivery with animals is aborted (offline, cancel, decline, …):
+    # FLY = drone flies back to the send point; TELEPORT = instant return to send point
+    animal-return-mode: FLY
     max-leashed-animals-per-drone: 1
     max-sockets-per-player: 1
     # Send cooldown settings (in seconds)

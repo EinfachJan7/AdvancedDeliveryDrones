@@ -19,6 +19,34 @@ global:
       - "<!italic><gray>  Zurück"
 
 # =============================================================================
+# COMPOSE HUB - Load items (left) or launch drone (right) before sending
+# =============================================================================
+compose-hub:
+  title: "<!italic><dark_gray>✦ <gold>ᴘᴀᴋᴇᴛ ᴠᴏʀʙᴇʀᴇɪᴛᴇɴ</gold> <dark_gray>✦"
+  size: 27
+  items:
+    load-items:
+      position: 11
+      material: "CHEST"
+      name: "<!italic><green><bold>📦 ɪᴛᴇᴍs ᴇɪɴʟᴇɢᴇɴ</bold></green>"
+      lore:
+        - "<!italic><gray>┌────────────────────┐"
+        - "<!italic><gray>  ᴏ̈ғғɴᴇᴛ ᴅᴀs"
+        - "<!italic><gray>  ᴘᴀᴋᴇᴛ-ɪɴᴠᴇɴᴛᴀʀ"
+        - "<!italic><gray>└────────────────────┘"
+        - "<!italic><green>⬥ <italic>ᴋʟɪᴄᴋ ᴛᴏ ᴏ̈ғғɴᴇɴ</italic>"
+    launch:
+      position: 15
+      material: "NETHER_STAR"
+      name: "<!italic><yellow><bold>✈ ᴅʀᴏʜɴᴇ ᴀʙsᴄʜɪᴄᴋᴇɴ</bold></yellow>"
+      lore:
+        - "<!italic><gray>┌────────────────────┐"
+        - "<!italic><gray>  sᴇɴᴅᴇᴛ ᴅɪᴇ"
+        - "<!italic><gray>  ᴅʀᴏʜɴᴇ ᴀʙ"
+        - "<!italic><gray>└────────────────────┘"
+        - "<!italic><yellow>⬥ <italic>ᴋʟɪᴄᴋ ᴛᴏ sᴇɴᴅᴇɴ</italic>"
+
+# =============================================================================
 # SEND MODE GUI - Choose between sending animals or items
 # =============================================================================
 send-mode:

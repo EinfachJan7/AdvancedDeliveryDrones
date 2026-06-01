@@ -114,6 +114,9 @@ public final class DeliveryDrone {
     private UUID socketPickupPlayerId;
     private String socketPickupSocketName;
     private boolean notificationsSent;
+
+    /** Flying back to the sender after an aborted delivery that included animals. */
+    private boolean returningToSender;
     
     public DeliveryDrone(
             UUID droneId,
@@ -314,9 +317,101 @@ public final class DeliveryDrone {
     public List<EntityType> attachedAnimalTypes() {
         return attachedAnimalTypes;
     }
-    
+
+    public boolean isReturningToSender() {
+        return returningToSender;
+    }
+
+    public void beginReturnFlight(DroneManager manager) {
+        if (returningToSender || attachedAnimalTypes.isEmpty()) {
+            return;
+        }
+        Location sendPoint = startLocation.clone();
+        if (sendPoint.getWorld() == null) {
+            return;
+        }
+        returningToSender = true;
+        landed = false;
+        landingNotified = false;
+        standParked = false;
+        pendingLanding = null;
+        smoothLanding = false;
+        smoothLandingStart = null;
+        smoothLandingEnd = null;
+        wasGlidingFollowed = false;
+        wasAirborneFollowed = false;
+        allowGlideFollow = false;
+        allowAirborneFollow = false;
+        containerIntegrationAborted = true;
+
+        if (beaconTicker != null) {
+            beaconTicker.cancel();
+            beaconTicker = null;
+        }
+
+        for (UUID animalId : new ArrayList<>(spawnedTransportAnimalIds)) {
+            Entity entity = Bukkit.getEntity(animalId);
+            if (entity != null) {
+                entity.remove();
+            }
+        }
+        spawnedTransportAnimalIds.clear();
+        releaseLeashedAnimal();
+
+        if (isStandAlive()) {
+            Location current = stand.getLocation();
+            startLocation.setWorld(current.getWorld());
+            startLocation.setX(current.getX());
+            startLocation.setY(current.getY());
+            startLocation.setZ(current.getZ());
+            startLocation.setYaw(current.getYaw());
+            startLocation.setPitch(current.getPitch());
+        }
+        fixedTarget.setWorld(sendPoint.getWorld());
+        fixedTarget.setX(sendPoint.getX());
+        fixedTarget.setY(sendPoint.getY());
+        fixedTarget.setZ(sendPoint.getZ());
+        fixedTarget.setYaw(sendPoint.getYaw());
+        fixedTarget.setPitch(sendPoint.getPitch());
+
+        long nowTick = Bukkit.getCurrentTick();
+        flightStartTick = nowTick;
+        deliveryFlightStartTick = nowTick;
+        approachPhaseStartTick = -1L;
+        distanceAtApproachStart = -1.0;
+        invalidateFlightPath();
+        recomputeFlightPath();
+        invalidateLandingCache();
+
+        Player sender = Bukkit.getPlayer(senderId);
+        if (sender != null && sender.isOnline()) {
+            manager.sendMessage(sender, "animal-return-flying");
+        }
+    }
+
+    public void teleportReturnToSender(DroneManager manager) {
+        if (attachedAnimalTypes.isEmpty() || startLocation.getWorld() == null) {
+            return;
+        }
+        returningToSender = true;
+        Location landing = startLocation.clone();
+        if (beaconTicker != null) {
+            beaconTicker.cancel();
+            beaconTicker = null;
+        }
+        for (UUID animalId : new ArrayList<>(spawnedTransportAnimalIds)) {
+            Entity entity = Bukkit.getEntity(animalId);
+            if (entity != null) {
+                entity.remove();
+            }
+        }
+        spawnedTransportAnimalIds.clear();
+        releaseLeashedAnimal();
+        landAt(manager, landing);
+    }
+
     public Location startLocation() {
-        return startLocation;
+        return startLocation.clone();
     }
     
     public List<UUID> getSpawnedTransportAnimalIds() {
@@ -618,7 +713,7 @@ public final class DeliveryDrone {
         // Elytra follow — dynamic step each tick; full route is rebuilt after follow ends
         boolean isGlidingTarget = false;
         boolean isAirFollowTarget = false;
-        if (!exactSocketTarget && settings.followGlidingPlayer() && allowGlideFollow) {
+        if (!returningToSender && !exactSocketTarget && settings.followGlidingPlayer() && allowGlideFollow) {
             Player receiver = Bukkit.getPlayer(receiverId);
             if (receiver != null && receiver.isOnline()) {
                 if (receiver.getWorld().equals(fixedTarget.getWorld())) {
@@ -658,7 +753,8 @@ public final class DeliveryDrone {
         }
 
         // Airborne follow (major falls) — relocate on first ground contact, then land
-        if (!exactSocketTarget
+        if (!returningToSender
+                && !exactSocketTarget
                 && !isGlidingTarget
                 && !landed
                 && settings.followAirbornePlayerBeforeLanding()) {
@@ -760,7 +856,7 @@ public final class DeliveryDrone {
                         pendingLanding = null;
                         smoothLanding = false;
                         smoothLandingEnd = null;
-                        if (!landingNotified) {
+                        if (!landingNotified && !returningToSender) {
                             landingNotified = true;
                             Player receiver = Bukkit.getPlayer(receiverId);
                             if (receiver != null && receiver.isOnline()) {
@@ -930,6 +1026,10 @@ public final class DeliveryDrone {
         this.distanceAtApproachStart = -1.0;
         // Start despawn timer on landing
         this.lastInteractionTick = Bukkit.getCurrentTick();
+        if (returningToSender) {
+            manager.onDroneReturnedToSender(this);
+            return;
+        }
         spawnTransportedAnimalsAtLanding();
         updateHologram(Bukkit.getCurrentTick(), manager);
         initBossbar(manager);

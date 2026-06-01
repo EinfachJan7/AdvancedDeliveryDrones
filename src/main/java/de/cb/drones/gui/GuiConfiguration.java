@@ -24,6 +24,7 @@ public class GuiConfiguration {
             "player-head-item", "socket-management-item"
     );
     
+    private final GuiSettings composeHub;
     private final GuiSettings sendMode;
     private final GuiSettings mainMenu;
     private final GuiSettings playerSelection;
@@ -69,6 +70,7 @@ public class GuiConfiguration {
     private final String signRenameTitleLine;
     
     public GuiConfiguration(FileConfiguration guiConfig) {
+        this.composeHub = parseGuiSettings(guiConfig, "compose-hub.", createDefaultComposeHubItems());
         this.sendMode = parseGuiSettings(guiConfig, "send-mode.", createDefaultSendModeItems());
         this.mainMenu = parseGuiSettings(guiConfig, "main-menu.", createDefaultMainMenuItems());
         this.playerSelection = parseGuiSettings(guiConfig, "player-selection.", createDefaultPlayerSelectionItems());
@@ -164,6 +166,7 @@ public class GuiConfiguration {
         this.signRenameTitleLine = guiConfig.getString("sign-rename.title-line", "Neuer Name:");
     }
     
+    public GuiSettings composeHub() { return composeHub; }
     public GuiSettings sendMode() { return sendMode; }
     public GuiSettings mainMenu() { return mainMenu; }
     public GuiSettings playerSelection() { return playerSelection; }
@@ -335,6 +338,13 @@ public class GuiConfiguration {
         return GuiYamlParser.parseMaterial(value, fallback);
     }
     
+    private static Map<String, GuiItem> createDefaultComposeHubItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        items.put("load-items", new GuiItem(11, Material.CHEST, "<green>Items einlegen", List.of("<gray>Öffnet das Paket-Inventar")));
+        items.put("launch", new GuiItem(15, Material.NETHER_STAR, "<yellow>Drohne abschicken", List.of("<gray>Sendet die Drohne ab")));
+        return items;
+    }
+
     private static Map<String, GuiItem> createDefaultSendModeItems() {
         Map<String, GuiItem> items = new HashMap<>();
         items.put("animals", new GuiItem(11, Material.LEAD, "<gold>Tiere senden", List.of("<gray>Sendet nur angeleinte Tiere")));

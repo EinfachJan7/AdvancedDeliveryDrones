@@ -66,6 +66,8 @@ public final class ConfigEditorRegistry {
                 "Tiere transportieren", "Angeleinte Tiere mitnehmen");
         register("max-leashed-animals", "settings.drone.max-leashed-animals-per-drone", ConfigOptionType.INT, "gameplay", Material.LEAD,
                 "Max. Tiere", "Tiere pro Drohne");
+        register("animal-return-mode", "settings.drone.animal-return-mode", ConfigOptionType.STRING, "gameplay", Material.LEAD,
+                "Tier-Rückkehr", "FLY oder TELEPORT bei Abbruch");
         register("send-cooldown-player", "settings.drone.send-cooldown-seconds-player", ConfigOptionType.INT, "gameplay", Material.CLOCK,
                 "Cooldown Spieler", "Sekunden zwischen Spieler-Sends");
         register("send-cooldown-socket", "settings.drone.send-cooldown-seconds-socket", ConfigOptionType.INT, "gameplay", Material.CLOCK,
