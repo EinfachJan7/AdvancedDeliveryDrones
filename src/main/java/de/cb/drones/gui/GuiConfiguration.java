@@ -189,8 +189,8 @@ public class GuiConfiguration {
             return new GuiItem(
                     base.position(),
                     Material.BARRIER,
-                    "<red>Items gesperrt",
-                    List.of("<gray>Im Nur-Tiere-Modus keine Items"),
+                    "<red>Items locked",
+                    List.of("<gray>No items in animals-only mode"),
                     null,
                     false
             );

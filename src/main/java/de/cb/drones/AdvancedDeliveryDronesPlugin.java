@@ -109,6 +109,9 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (droneCommand != null) {
+            droneCommand.saveComposeDrafts();
+        }
         if (droneManager != null) {
             droneManager.shutdown();
         }

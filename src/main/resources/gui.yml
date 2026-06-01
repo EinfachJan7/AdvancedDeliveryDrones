@@ -16,65 +16,64 @@ global:
     material: "ARROW"
     name: "<!italic><yellow>⟵ ʙᴀᴄᴋ</yellow>"
     lore:
-      - "<!italic><gray>  Zurück"
+      - "<!italic><gray>  Back"
 
 # =============================================================================
 # COMPOSE HUB - Load items (left) or launch drone (right) before sending
 # =============================================================================
 compose-hub:
-  title: "<!italic><dark_gray>✦ <gold>ᴘᴀᴋᴇᴛ ᴠᴏʀʙᴇʀᴇɪᴛᴇɴ</gold> <dark_gray>✦"
+  title: "<!italic><dark_gray>✦ <gold>ᴘʀᴇᴘᴀʀᴇ ᴘᴀᴄᴋᴀɢᴇ</gold> <dark_gray>✦"
   size: 27
   items:
     load-items:
       position: 11
       material: "CHEST"
-      name: "<!italic><green><bold>📦 ɪᴛᴇᴍs ᴇɪɴʟᴇɢᴇɴ</bold></green>"
+      name: "<!italic><green><bold>📦 ᴘᴀᴄᴋ ɪᴛᴇᴍs</bold></green>"
       lore:
         - "<!italic><gray>┌────────────────────┐"
-        - "<!italic><gray>  ᴏ̈ғғɴᴇᴛ ᴅᴀs"
-        - "<!italic><gray>  ᴘᴀᴋᴇᴛ-ɪɴᴠᴇɴᴛᴀʀ"
+        - "<!italic><gray>  ᴏᴘᴇɴs ᴛʜᴇ"
+        - "<!italic><gray>  ᴘᴀᴄᴋᴀɢᴇ ɪɴᴠᴇɴᴛᴏʀʏ"
         - "<!italic><gray>└────────────────────┘"
-        - "<!italic><green>⬥ <italic>ᴋʟɪᴄᴋ ᴛᴏ ᴏ̈ғғɴᴇɴ</italic>"
+        - "<!italic><green>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴏᴘᴇɴ</italic>"
       when-locked:
         material: "BARRIER"
-        name: "<!italic><red><bold>📦 ɪᴛᴇᴍs ɢᴇsᴘᴇʀʀᴛ</bold></red>"
+        name: "<!italic><red><bold>📦 ɪᴛᴇᴍs ʟᴏᴄᴋᴇᴅ</bold></red>"
         lore:
           - "<!italic><gray>┌────────────────────┐"
-          - "<!italic><gray>  ɪᴍ ɴᴜʀ-ᴛɪᴇʀᴇ-ᴍᴏᴅᴜs"
-          - "<!italic><gray>  ᴋᴇɪɴᴇ ɪᴛᴇᴍs"
+          - "<!italic><gray>  ɪɴ ᴀɴɪᴍᴀʟs-ᴏɴʟʏ ᴍᴏᴅᴇ"
+          - "<!italic><gray>  ɴᴏ ɪᴛᴇᴍs ᴀʟʟᴏᴡᴇᴅ"
           - "<!italic><gray>└────────────────────┘"
-          - "<!italic><red>⬥ <italic>ɴɪᴄʜᴛ ᴠᴇʀғüɢʙᴀʀ</italic>"
+          - "<!italic><red>⬥ <italic>ɴᴏᴛ ᴀᴠᴀɪʟᴀʙʟᴇ</italic>"
     launch:
       position: 15
       material: "NETHER_STAR"
-      name: "<!italic><yellow><bold>✈ ᴅʀᴏʜɴᴇ ᴀʙsᴄʜɪᴄᴋᴇɴ</bold></yellow>"
+      name: "<!italic><yellow><bold>✈ ʟᴀᴜɴᴄʜ ᴅʀᴏɴᴇ</bold></yellow>"
       lore:
         - "<!italic><gray>┌────────────────────┐"
-        - "<!italic><gray>  sᴇɴᴅᴇᴛ ᴅɪᴇ"
-        - "<!italic><gray>  ᴅʀᴏʜɴᴇ ᴀʙ"
+        - "<!italic><gray>  sᴇɴᴅs ᴛʜᴇ"
+        - "<!italic><gray>  ᴅʀᴏɴᴇ ᴏғғ"
         - "<!italic><gray>└────────────────────┘"
-        - "<!italic><yellow>⬥ <italic>ᴋʟɪᴄᴋ ᴛᴏ sᴇɴᴅᴇɴ</italic>"
+        - "<!italic><yellow>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ sᴇɴᴅ</italic>"
     send-animals:
       position: 13
       material: "LEAD"
-      name: "<!italic><gold><bold>🐾 ɴᴜʀ ᴀnɪᴍᴀʟs</bold></gold>"
+      name: "<!italic><gold><bold>🐾 ᴀɴɪᴍᴀʟs ᴏɴʟʏ</bold></gold>"
       lore:
         - "<!italic><gray>┌────────────────────┐"
-        - "<!italic><gray>  sᴄʜᴀʟᴛᴇᴛ ᴜᴍ:"
-        - "<!italic><gray>  ɴᴜʀ ᴀnɢᴇʟᴇɪɴᴛᴇ"
-        - "<!italic><gray>  ᴛɪᴇʀᴇ sᴇɴᴅᴇɴ"
-        - "<!italic><gray>  (ᴋᴇɪɴᴇ ɪᴛᴇᴍs)"
+        - "<!italic><gray>  ᴛᴏɢɢʟᴇ:"
+        - "<!italic><gray>  sᴇɴᴅ ᴏɴʟʏ ʟᴇᴀsʜᴇᴅ"
+        - "<!italic><gray>  ᴀɴɪᴍᴀʟs (ɴᴏ ɪᴛᴇᴍs)"
         - "<!italic><gray>└────────────────────┘"
-        - "<!italic><gold>⬥ <italic>ᴋʟɪᴄᴋ ᴛᴏ ᴛᴏɢɢʟᴇ</italic>"
+        - "<!italic><gold>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴛᴏɢɢʟᴇ</italic>"
       when-active:
         enchanted: true
-        name: "<!italic><aqua><bold>🐾 ɴᴜʀ ᴀnɪᴍᴀʟs ✓</bold></aqua>"
+        name: "<!italic><aqua><bold>🐾 ᴀɴɪᴍᴀʟs ᴏɴʟʏ ✓</bold></aqua>"
         lore:
           - "<!italic><gray>┌────────────────────┐"
-          - "<!italic><aqua>  ᴀᴋᴛɪᴠ – ɴᴜʀ ᴛɪᴇʀᴇ"
-          - "<!italic><gray>  ᴋᴇɪɴᴇ ɪᴛᴇᴍs ᴍöɢʟɪᴄʜ"
+          - "<!italic><aqua>  ᴀᴄᴛɪᴠᴇ – ᴀɴɪᴍᴀʟs ᴏɴʟʏ"
+          - "<!italic><gray>  ɴᴏ ɪᴛᴇᴍs ᴀʟʟᴏᴡᴇᴅ"
           - "<!italic><gray>└────────────────────┘"
-          - "<!italic><aqua>⬥ <italic>ᴋʟɪᴄᴋ ᴛᴏ ᴅᴇᴀᴋᴛɪᴠɪᴇʀᴇɴ</italic>"
+          - "<!italic><aqua>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴅɪsᴀʙʟᴇ</italic>"
 
 # =============================================================================
 # SEND MODE GUI - Choose between sending animals or items

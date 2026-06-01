@@ -655,6 +655,13 @@ public final class DroneManager {
         }
     }
 
+    public void giveItemsToPlayer(Player player, List<ItemStack> items) {
+        if (player == null || items == null || items.isEmpty()) {
+            return;
+        }
+        giveItemsOrPending(player.getUniqueId(), items);
+    }
+
     private void giveItemsOrPending(UUID playerId, List<ItemStack> items) {
         if (items.isEmpty()) {
             return;
