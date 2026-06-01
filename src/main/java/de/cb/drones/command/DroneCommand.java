@@ -579,6 +579,24 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         };
     }
 
+    private boolean isValidSocketName(String name) {
+        if (droneSettings.socketNameUseAllowedList()) {
+            for (char c : name.toCharArray()) {
+                if (droneSettings.socketNameAllowedChars().indexOf(c) == -1) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            for (char c : name.toCharArray()) {
+                if (droneSettings.socketNameProhibitedChars().indexOf(c) != -1) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+
     private boolean executeSocketPlace(Player player, String[] args) {
         if (!player.hasPermission("drone.socket.place")) {
             droneManager.sendMessage(player, "no-permission");
@@ -591,6 +609,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         String socketName = args[2];
         if (socketName.length() > 32) {
             droneManager.sendMessage(player, "socket-name-too-long");
+            return true;
+        }
+        if (!isValidSocketName(socketName)) {
+            droneManager.sendMessage(player, "socket-name-invalid");
             return true;
         }
 
@@ -692,6 +714,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         
         if (newName.length() > 32) {
             droneManager.sendMessage(player, "socket-name-too-long");
+            return true;
+        }
+        if (!isValidSocketName(newName)) {
+            droneManager.sendMessage(player, "socket-name-invalid");
             return true;
         }
 

@@ -65,6 +65,11 @@ settings:
       particle: "HAPPY_VILLAGER"
     # TRUE: Enable Sockets (delivery stations)
     sockets-enabled: true
+    socket-name-validation:
+      # If true, ONLY allowed-characters can be used. If false, ANY character EXCEPT prohibited-characters can be used.
+      use-allowed-list: false
+      allowed-characters: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+      prohibited-characters: " !@#$%^&*()+={}[]|\\:;\"'<>,.?/"
     # Container integration (automatically unload to containers like Hoppers/Chests near socket)
     container-integration:
       enabled: true

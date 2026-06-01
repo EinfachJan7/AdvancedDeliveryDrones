@@ -59,7 +59,10 @@ public record DroneSettings(
         ParticleEffect locateParticle,
         String customModelProvider,
         String customModelItemId,
-        boolean glowingEnabled
+        boolean glowingEnabled,
+        boolean socketNameUseAllowedList,
+        String socketNameAllowedChars,
+        String socketNameProhibitedChars
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg, FileConfiguration guiConfig) {
         String section = "settings.drone.";
@@ -116,6 +119,10 @@ public record DroneSettings(
         String customModelItemId = cfg.getString(section + "custom-model.item-id", "drone_item");
         boolean glowingEnabled = cfg.getBoolean(section + "glowing-enabled", true);
 
+        boolean socketNameUseAllowedList = cfg.getBoolean(section + "socket-name-validation.use-allowed-list", false);
+        String socketNameAllowedChars = cfg.getString(section + "socket-name-validation.allowed-characters", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-");
+        String socketNameProhibitedChars = cfg.getString(section + "socket-name-validation.prohibited-characters", " !@#$%^&*()+={}[]|\\:;\"'<>,.?/");
+
         // Create GUI configuration from separate file
         GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
 
@@ -167,7 +174,10 @@ public record DroneSettings(
                 locateParticle,
                 customModelProvider,
                 customModelItemId,
-                glowingEnabled
+                glowingEnabled,
+                socketNameUseAllowedList,
+                socketNameAllowedChars,
+                socketNameProhibitedChars
         );
     }
 
