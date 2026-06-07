@@ -48,6 +48,7 @@ settings:
       enabled: false
       radius: 10.0
       leashable-only: true
+      persist-nbt-data: true
     max-leashed-animals-per-drone: 1
     max-sockets-per-player: 1
     # Send cooldown settings (in seconds)

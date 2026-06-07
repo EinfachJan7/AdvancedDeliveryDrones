@@ -66,7 +66,8 @@ public record DroneSettings(
         String socketNameProhibitedChars,
         boolean animalSelectionEnabled,
         double animalSelectionRadius,
-        boolean animalSelectionLeashableOnly
+        boolean animalSelectionLeashableOnly,
+        boolean animalSelectionPersistNbtData
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg, FileConfiguration guiConfig) {
         String section = "settings.drone.";
@@ -131,6 +132,7 @@ public record DroneSettings(
         boolean animalSelectionEnabled = cfg.getBoolean(section + "mob-sending.enabled", false);
         double animalSelectionRadius = cfg.getDouble(section + "mob-sending.radius", 10.0D);
         boolean animalSelectionLeashableOnly = cfg.getBoolean(section + "mob-sending.leashable-only", true);
+        boolean animalSelectionPersistNbtData = cfg.getBoolean(section + "mob-sending.persist-nbt-data", true);
 
         // Create GUI configuration from separate file
         GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
@@ -190,7 +192,8 @@ public record DroneSettings(
                 socketNameProhibitedChars,
                 animalSelectionEnabled,
                 animalSelectionRadius,
-                animalSelectionLeashableOnly
+                animalSelectionLeashableOnly,
+                animalSelectionPersistNbtData
         );
     }
 
