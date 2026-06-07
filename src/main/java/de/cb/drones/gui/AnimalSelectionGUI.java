@@ -242,7 +242,12 @@ public class AnimalSelectionGUI implements Listener {
         if (holder.getMenuType().equals("selection")) {
             GuiItem backItem = droneManager.settings().guiConfig().animalSelection().items().get("back");
             if (backItem != null && slot == backItem.position()) {
-                cleanupAndClose();
+                int count = getSelectedCount();
+                if (count > 0) {
+                    Bukkit.getScheduler().runTask(plugin, this::openConfirmMenu);
+                } else {
+                    cleanupAndClose();
+                }
                 return;
             }
 
