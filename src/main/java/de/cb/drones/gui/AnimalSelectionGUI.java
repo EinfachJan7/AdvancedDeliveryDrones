@@ -190,13 +190,51 @@ public class AnimalSelectionGUI implements Listener {
                 }
             }
             String color = null;
-            if (animal instanceof org.bukkit.entity.Sheep s && s.getColor() != null) {
-                color = s.getColor().name();
-            } else if (animal instanceof org.bukkit.entity.Wolf w && w.getCollarColor() != null) {
-                color = w.getCollarColor().name();
-            } else if (animal instanceof org.bukkit.entity.Cat c && c.getCollarColor() != null) {
-                color = c.getCollarColor().name();
+            if (animal instanceof org.bukkit.entity.Sheep s && s.getColor() != null) color = s.getColor().name();
+            else if (animal instanceof org.bukkit.entity.Wolf w && w.getCollarColor() != null) color = w.getCollarColor().name();
+            else if (animal instanceof org.bukkit.entity.Cat c && c.getCollarColor() != null) color = c.getCollarColor().name();
+
+            String variant = null;
+            if (animal instanceof org.bukkit.entity.Axolotl ax) variant = ax.getVariant().name();
+            else if (animal instanceof org.bukkit.entity.Fox f) variant = f.getFoxType().name();
+            else if (animal instanceof org.bukkit.entity.Frog fr) variant = fr.getVariant().name();
+            else if (animal instanceof org.bukkit.entity.Llama l) variant = l.getColor().name();
+            else if (animal instanceof org.bukkit.entity.MushroomCow mc) variant = mc.getVariant().name();
+            else if (animal instanceof org.bukkit.entity.Parrot p) variant = p.getVariant().name();
+            else if (animal instanceof org.bukkit.entity.Rabbit r) variant = r.getRabbitType().name();
+            else if (animal instanceof org.bukkit.entity.Horse h) variant = h.getColor().name() + " " + h.getStyle().name();
+
+            String speed = "";
+            try {
+                speed = String.format("%.2f", animal.getAttribute(org.bukkit.attribute.Attribute.valueOf("GENERIC_MOVEMENT_SPEED")).getValue());
+            } catch (Exception e) {
+                try {
+                    speed = String.format("%.2f", animal.getAttribute(org.bukkit.attribute.Attribute.valueOf("MOVEMENT_SPEED")).getValue());
+                } catch (Exception e2) {
+                    speed = "0.2";
+                }
             }
+
+            String jump = null;
+            if (animal instanceof org.bukkit.entity.AbstractHorse) {
+                try {
+                    jump = String.format("%.2f", animal.getAttribute(org.bukkit.attribute.Attribute.valueOf("GENERIC_JUMP_STRENGTH")).getValue());
+                } catch (Exception e) {
+                    try {
+                        jump = String.format("%.2f", animal.getAttribute(org.bukkit.attribute.Attribute.valueOf("HORSE_JUMP_STRENGTH")).getValue());
+                    } catch (Exception e2) {}
+                }
+            }
+            
+            String size = animal instanceof org.bukkit.entity.Slime s ? String.valueOf(s.getSize()) : null;
+            String sheared = animal instanceof org.bukkit.entity.Sheep s && s.isSheared() ? "Yes" : null;
+            String sitting = animal instanceof org.bukkit.entity.Sittable s && s.isSitting() ? "Yes" : null;
+            String anger = animal instanceof org.bukkit.entity.Bee b && b.getAnger() > 0 ? "Angry" : (animal instanceof org.bukkit.entity.Wolf w && w.isAngry() ? "Angry" : null);
+
+            String saddled = null;
+            if (animal instanceof org.bukkit.entity.Pig p) saddled = p.hasSaddle() ? "Yes" : null;
+            else if (animal instanceof org.bukkit.entity.AbstractHorse h) saddled = h.getInventory().getSaddle() != null ? "Yes" : null;
+            else if (animal instanceof org.bukkit.entity.Strider st) saddled = st.hasSaddle() ? "Yes" : null;
 
             List<Component> lore = new ArrayList<>();
             for (String line : loreFormat) {
@@ -205,6 +243,14 @@ public class AnimalSelectionGUI implements Listener {
                 if (line.contains("<age>") && age == null) continue;
                 if (line.contains("<owner>") && owner == null) continue;
                 if (line.contains("<color>") && color == null) continue;
+                if (line.contains("<variant>") && variant == null) continue;
+                if (line.contains("<speed>") && speed == null) continue;
+                if (line.contains("<jump>") && jump == null) continue;
+                if (line.contains("<size>") && size == null) continue;
+                if (line.contains("<sheared>") && sheared == null) continue;
+                if (line.contains("<sitting>") && sitting == null) continue;
+                if (line.contains("<anger>") && anger == null) continue;
+                if (line.contains("<saddled>") && saddled == null) continue;
 
                 String replaced = line.replace("<type>", typeName);
                 if (customName != null) replaced = replaced.replace("<custom-name>", customName);
@@ -214,6 +260,14 @@ public class AnimalSelectionGUI implements Listener {
                 if (health != null) replaced = replaced.replace("<health>", health);
                 if (maxHealth != null) replaced = replaced.replace("<max-health>", maxHealth);
                 if (color != null) replaced = replaced.replace("<color>", color);
+                if (variant != null) replaced = replaced.replace("<variant>", variant);
+                if (speed != null) replaced = replaced.replace("<speed>", speed);
+                if (jump != null) replaced = replaced.replace("<jump>", jump);
+                if (size != null) replaced = replaced.replace("<size>", size);
+                if (sheared != null) replaced = replaced.replace("<sheared>", sheared);
+                if (sitting != null) replaced = replaced.replace("<sitting>", sitting);
+                if (anger != null) replaced = replaced.replace("<anger>", anger);
+                if (saddled != null) replaced = replaced.replace("<saddled>", saddled);
                 
                 lore.add(MINI_MESSAGE.deserialize(replaced));
             }

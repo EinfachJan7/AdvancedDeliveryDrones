@@ -574,6 +574,14 @@ config-editor:
 # <color>       : Wool/Collar color (if applicable)
 # <health>      : Current health value
 # <max-health>  : Maximum health value
+# <variant>     : Breed/Variant (Axolotl, Fox, Llama, Parrot, Rabbit, etc)
+# <speed>       : Movement speed
+# <jump>        : Jump strength (Horses)
+# <size>        : Slime size
+# <sheared>     : Sheared status
+# <sitting>     : Sitting status
+# <anger>       : Anger status
+# <saddled>     : Saddled status
 #
 # Note: Lines containing placeholders for data the animal doesn't have 
 # (e.g. <profession> on a pig) will be automatically hidden!
@@ -592,6 +600,14 @@ mob-sending:
       - "<!italic><gray>  ᴀɢᴇ: <white><age>"
       - "<!italic><gray>  ᴏᴡɴᴇʀ: <white><owner>"
       - "<!italic><gray>  ᴄᴏʟᴏʀ: <white><color>"
+      - "<!italic><gray>  ᴠᴀʀɪᴀɴᴛ: <white><variant>"
+      - "<!italic><gray>  sᴘᴇᴇᴅ: <white><speed>"
+      - "<!italic><gray>  ᴊᴜᴍᴘ: <white><jump>"
+      - "<!italic><gray>  sɪᴢᴇ: <white><size>"
+      - "<!italic><gray>  sʜᴇᴀʀᴇᴅ: <white><sheared>"
+      - "<!italic><gray>  sɪᴛᴛɪɴɢ: <white><sitting>"
+      - "<!italic><gray>  ᴀɴɢᴇʀ: <red><anger>"
+      - "<!italic><gray>  sᴀᴅᴅʟᴇᴅ: <white><saddled>"
       - "<!italic><gray>  ʜᴇᴀʟᴛʜ: <red><health></red> <gray>/ <red><max-health></red> ❤"
       - "<!italic><gray>  sᴇʟᴇᴄᴛ ᴛʜɪs ᴀɴɪᴍᴀʟ"
       - "<!italic><gray>  ғᴏʀ ᴛʀᴀɴsᴘᴏʀᴛ."
@@ -605,6 +621,14 @@ mob-sending:
       - "<!italic><gray>  ᴀɢᴇ: <white><age>"
       - "<!italic><gray>  ᴏᴡɴᴇʀ: <white><owner>"
       - "<!italic><gray>  ᴄᴏʟᴏʀ: <white><color>"
+      - "<!italic><gray>  ᴠᴀʀɪᴀɴᴛ: <white><variant>"
+      - "<!italic><gray>  sᴘᴇᴇᴅ: <white><speed>"
+      - "<!italic><gray>  ᴊᴜᴍᴘ: <white><jump>"
+      - "<!italic><gray>  sɪᴢᴇ: <white><size>"
+      - "<!italic><gray>  sʜᴇᴀʀᴇᴅ: <white><sheared>"
+      - "<!italic><gray>  sɪᴛᴛɪɴɢ: <white><sitting>"
+      - "<!italic><gray>  ᴀɴɢᴇʀ: <red><anger>"
+      - "<!italic><gray>  sᴀᴅᴅʟᴇᴅ: <white><saddled>"
       - "<!italic><gray>  ʜᴇᴀʟᴛʜ: <red><health></red> <gray>/ <red><max-health></red> ❤"
       - "<!italic><green>  sᴇʟᴇᴄᴛᴇᴅ ғᴏʀ"
       - "<!italic><green>  ᴛʀᴀɴsᴘᴏʀᴛ!"
