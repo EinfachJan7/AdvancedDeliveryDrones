@@ -254,6 +254,18 @@ public class AnimalSelectionGUI implements Listener {
             String zombieBaby = animal instanceof org.bukkit.entity.Zombie z && z.isBaby() ? "Yes" : null;
             String villagerType = animal instanceof org.bukkit.entity.Villager v ? v.getVillagerType().name() : (animal instanceof org.bukkit.entity.ZombieVillager zv ? zv.getVillagerType().name() : null);
             String canBreed = animal instanceof org.bukkit.entity.Breedable br && br.canBreed() ? "Yes" : null;
+            String crouching = animal instanceof org.bukkit.entity.Fox f && f.isCrouching() ? "Yes" : null;
+            String sleeping = animal instanceof org.bukkit.entity.Fox f && f.isSleeping() ? "Yes" : null;
+            String domestication = animal instanceof org.bukkit.entity.AbstractHorse ah ? String.valueOf(ah.getDomestication()) : null;
+            String maxDomestication = animal instanceof org.bukkit.entity.AbstractHorse ah ? String.valueOf(ah.getMaxDomestication()) : null;
+            String angerLevel = null;
+            try {
+                if (animal instanceof org.bukkit.entity.Warden w) angerLevel = w.getAngerLevel().name();
+            } catch (NoClassDefFoundError | NoSuchMethodError e) {
+                // Ignore for older versions
+            }
+            String immuneToZombification = animal instanceof org.bukkit.entity.PiglinAbstract p && p.isImmuneToZombification() ? "Yes" : null;
+            String patrolLeader = animal instanceof org.bukkit.entity.Raider r && r.isPatrolLeader() ? "Yes" : null;
 
             List<Component> lore = new ArrayList<>();
             for (String line : loreFormat) {
@@ -288,6 +300,13 @@ public class AnimalSelectionGUI implements Listener {
                 if (line.contains("<zombie-baby>") && zombieBaby == null) continue;
                 if (line.contains("<villager-type>") && villagerType == null) continue;
                 if (line.contains("<can-breed>") && canBreed == null) continue;
+                if (line.contains("<crouching>") && crouching == null) continue;
+                if (line.contains("<sleeping>") && sleeping == null) continue;
+                if (line.contains("<domestication>") && domestication == null) continue;
+                if (line.contains("<max-domestication>") && maxDomestication == null) continue;
+                if (line.contains("<anger-level>") && angerLevel == null) continue;
+                if (line.contains("<immune-to-zombification>") && immuneToZombification == null) continue;
+                if (line.contains("<patrol-leader>") && patrolLeader == null) continue;
 
                 String replaced = line.replace("<type>", typeName);
                 if (customName != null) replaced = replaced.replace("<custom-name>", customName);
@@ -323,6 +342,13 @@ public class AnimalSelectionGUI implements Listener {
                 if (zombieBaby != null) replaced = replaced.replace("<zombie-baby>", zombieBaby);
                 if (villagerType != null) replaced = replaced.replace("<villager-type>", villagerType);
                 if (canBreed != null) replaced = replaced.replace("<can-breed>", canBreed);
+                if (crouching != null) replaced = replaced.replace("<crouching>", crouching);
+                if (sleeping != null) replaced = replaced.replace("<sleeping>", sleeping);
+                if (domestication != null) replaced = replaced.replace("<domestication>", domestication);
+                if (maxDomestication != null) replaced = replaced.replace("<max-domestication>", maxDomestication);
+                if (angerLevel != null) replaced = replaced.replace("<anger-level>", angerLevel);
+                if (immuneToZombification != null) replaced = replaced.replace("<immune-to-zombification>", immuneToZombification);
+                if (patrolLeader != null) replaced = replaced.replace("<patrol-leader>", patrolLeader);
                 
                 lore.add(MINI_MESSAGE.deserialize(replaced));
             }

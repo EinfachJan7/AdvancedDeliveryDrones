@@ -600,6 +600,13 @@ config-editor:
 # <zombie-baby>       : Zombie baby status
 # <villager-type>     : Villager/ZombieVillager biome type
 # <can-breed>         : Breedable status
+# <crouching>         : Fox crouching status
+# <sleeping>          : Fox sleeping status
+# <domestication>     : Horse domestication
+# <max-domestication> : Horse max domestication
+# <anger-level>       : Warden anger level
+# <immune-to-zombification> : Piglin/Hoglin immunity
+# <patrol-leader>     : Raider patrol leader status
 #
 # Note: Lines containing placeholders for data the animal doesn't have 
 # (e.g. <profession> on a pig) will be automatically hidden!
@@ -644,6 +651,12 @@ mob-sending:
       - "<!italic><gray>  ᴢᴏᴍʙɪᴇ-ʙᴀʙʏ: <white><zombie-baby>"
       - "<!italic><gray>  ᴠɪʟʟᴀɢᴇʀ-ᴛʏᴘᴇ: <white><villager-type>"
       - "<!italic><gray>  ᴄᴀɴ-ʙʀᴇᴇᴅ: <white><can-breed>"
+      - "<!italic><gray>  ᴄʀᴏᴜᴄʜɪɴɢ: <white><crouching>"
+      - "<!italic><gray>  sʟᴇᴇᴘɪɴɢ: <white><sleeping>"
+      - "<!italic><gray>  ᴅᴏᴍᴇsᴛɪᴄᴀᴛɪᴏɴ: <white><domestication> / <max-domestication>"
+      - "<!italic><gray>  ᴀɴɢᴇʀ-ʟᴇᴠᴇʟ: <red><anger-level>"
+      - "<!italic><gray>  ɪᴍᴍᴜɴᴇ: <white><immune-to-zombification>"
+      - "<!italic><gray>  ᴘᴀᴛʀᴏʟ-ʟᴇᴀᴅᴇʀ: <white><patrol-leader>"
       - "<!italic><gray>  ʜᴇᴀʟᴛʜ: <red><health></red> <gray>/ <red><max-health></red> ❤"
       - "<!italic><gray>  sᴇʟᴇᴄᴛ ᴛʜɪs ᴀɴɪᴍᴀʟ"
       - "<!italic><gray>  ғᴏʀ ᴛʀᴀɴsᴘᴏʀᴛ."
@@ -683,6 +696,12 @@ mob-sending:
       - "<!italic><gray>  ᴢᴏᴍʙɪᴇ-ʙᴀʙʏ: <white><zombie-baby>"
       - "<!italic><gray>  ᴠɪʟʟᴀɢᴇʀ-ᴛʏᴘᴇ: <white><villager-type>"
       - "<!italic><gray>  ᴄᴀɴ-ʙʀᴇᴇᴅ: <white><can-breed>"
+      - "<!italic><gray>  ᴄʀᴏᴜᴄʜɪɴɢ: <white><crouching>"
+      - "<!italic><gray>  sʟᴇᴇᴘɪɴɢ: <white><sleeping>"
+      - "<!italic><gray>  ᴅᴏᴍᴇsᴛɪᴄᴀᴛɪᴏɴ: <white><domestication> / <max-domestication>"
+      - "<!italic><gray>  ᴀɴɢᴇʀ-ʟᴇᴠᴇʟ: <red><anger-level>"
+      - "<!italic><gray>  ɪᴍᴍᴜɴᴇ: <white><immune-to-zombification>"
+      - "<!italic><gray>  ᴘᴀᴛʀᴏʟ-ʟᴇᴀᴅᴇʀ: <white><patrol-leader>"
       - "<!italic><gray>  ʜᴇᴀʟᴛʜ: <red><health></red> <gray>/ <red><max-health></red> ❤"
       - "<!italic><green>  sᴇʟᴇᴄᴛᴇᴅ ғᴏʀ"
       - "<!italic><green>  ᴛʀᴀɴsᴘᴏʀᴛ!"
