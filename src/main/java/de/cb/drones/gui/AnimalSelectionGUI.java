@@ -174,9 +174,25 @@ public class AnimalSelectionGUI implements Listener {
                 ? droneManager.settings().guiConfig().animalSelectionItemSelectedLore()
                 : droneManager.settings().guiConfig().animalSelectionItemLore();
             
+            String customName = animal.customName() != null ? PlainTextComponentSerializer.plainText().serialize(animal.customName()) : null;
+            String profession = animal instanceof org.bukkit.entity.Villager v ? v.getProfession().name() : null;
+            String age = animal instanceof org.bukkit.entity.Ageable a ? (a.isAdult() ? "Adult" : "Baby") : null;
+            String owner = animal instanceof org.bukkit.entity.Tameable t && t.isTamed() && t.getOwner() != null && t.getOwner().getName() != null ? t.getOwner().getName() : null;
+
             List<Component> lore = new ArrayList<>();
             for (String line : loreFormat) {
-                lore.add(MINI_MESSAGE.deserialize(line.replace("<type>", typeName)));
+                if (line.contains("<custom-name>") && customName == null) continue;
+                if (line.contains("<profession>") && profession == null) continue;
+                if (line.contains("<age>") && age == null) continue;
+                if (line.contains("<owner>") && owner == null) continue;
+
+                String replaced = line.replace("<type>", typeName);
+                if (customName != null) replaced = replaced.replace("<custom-name>", customName);
+                if (profession != null) replaced = replaced.replace("<profession>", profession);
+                if (age != null) replaced = replaced.replace("<age>", age);
+                if (owner != null) replaced = replaced.replace("<owner>", owner);
+                
+                lore.add(MINI_MESSAGE.deserialize(replaced));
             }
             meta.lore(lore);
 

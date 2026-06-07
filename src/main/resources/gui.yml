@@ -617,6 +617,10 @@ mob-sending:
     name-format: "<!italic><yellow><bold><type></bold></yellow>"
     lore:
       - "<!italic><gray>┌────────────────────┐"
+      - "<!italic><gray>  ɴᴀᴍᴇ: <white><custom-name>"
+      - "<!italic><gray>  ᴘʀᴏғᴇssɪᴏɴ: <white><profession>"
+      - "<!italic><gray>  ᴀɢᴇ: <white><age>"
+      - "<!italic><gray>  ᴏᴡɴᴇʀ: <white><owner>"
       - "<!italic><gray>  sᴇʟᴇᴄᴛ ᴛʜɪs ᴀɴɪᴍᴀʟ"
       - "<!italic><gray>  ғᴏʀ ᴛʀᴀɴsᴘᴏʀᴛ."
       - "<!italic><gray>└────────────────────┘"
@@ -624,6 +628,10 @@ mob-sending:
     selected-name-format: "<!italic><green><bold><type></bold></green>"
     selected-lore:
       - "<!italic><gray>┌────────────────────┐"
+      - "<!italic><gray>  ɴᴀᴍᴇ: <white><custom-name>"
+      - "<!italic><gray>  ᴘʀᴏғᴇssɪᴏɴ: <white><profession>"
+      - "<!italic><gray>  ᴀɢᴇ: <white><age>"
+      - "<!italic><gray>  ᴏᴡɴᴇʀ: <white><owner>"
       - "<!italic><green>  sᴇʟᴇᴄᴛᴇᴅ ғᴏʀ"
       - "<!italic><green>  ᴛʀᴀɴsᴘᴏʀᴛ!"
       - "<!italic><gray>└────────────────────┘"
