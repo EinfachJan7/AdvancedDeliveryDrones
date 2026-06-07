@@ -55,6 +55,12 @@ public class AnimalSelectionGUI implements Listener {
 
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
 
+        if (composeHolder.selectedAnimalIds() != null) {
+            for (UUID id : composeHolder.selectedAnimalIds()) {
+                selectedAnimals.put(id, true);
+            }
+        }
+        
         loadAvailableAnimals();
     }
 

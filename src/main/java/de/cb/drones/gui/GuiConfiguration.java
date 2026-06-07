@@ -191,37 +191,6 @@ public class GuiConfiguration {
         if (base == null) {
             return null;
         }
-        if (!animalsOnlyMode) {
-            return base;
-        }
-        if ("load-items".equals(itemKey)) {
-            GuiItem locked = composeHubItemVariants.get(itemKey + ":locked");
-            if (locked != null) {
-                return locked;
-            }
-            return new GuiItem(
-                    base.position(),
-                    Material.BARRIER,
-                    "<red>Items locked",
-                    List.of("<gray>No items in animals-only mode"),
-                    null,
-                    false
-            );
-        }
-        if ("send-animals".equals(itemKey)) {
-            GuiItem active = composeHubItemVariants.get(itemKey + ":active");
-            if (active != null) {
-                return base.mergeOverlay(active);
-            }
-            return base.mergeOverlay(new GuiItem(
-                    base.position(),
-                    base.material(),
-                    base.name(),
-                    base.lore(),
-                    base.headTexture(),
-                    true
-            ));
-        }
         return base;
     }
     public GuiSettings sendMode() { return sendMode; }
