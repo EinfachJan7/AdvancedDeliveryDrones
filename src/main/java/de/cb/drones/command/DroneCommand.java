@@ -1851,11 +1851,31 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             }
             if (!useLeashed) {
                 int count = attachedAnimals.size();
-                if (!hasEnoughLeads(sender, count)) {
+                int has = 0;
+                for (org.bukkit.inventory.ItemStack item : sender.getInventory().getContents()) {
+                    if (item != null && item.getType() == org.bukkit.Material.LEAD) {
+                        has += item.getAmount();
+                    }
+                }
+                if (has < count) {
                     droneManager.sendMessage(sender, "not-enough-leads", "<count>", String.valueOf(count));
                     return;
                 }
-                removeLeads(sender, count);
+                int needed = count;
+                org.bukkit.inventory.ItemStack[] invContents = sender.getInventory().getContents();
+                for (int i = 0; i < invContents.length; i++) {
+                    org.bukkit.inventory.ItemStack item = invContents[i];
+                    if (item != null && item.getType() == org.bukkit.Material.LEAD) {
+                        if (item.getAmount() <= needed) {
+                            needed -= item.getAmount();
+                            sender.getInventory().setItem(i, null);
+                        } else {
+                            item.setAmount(item.getAmount() - needed);
+                            needed = 0;
+                        }
+                        if (needed == 0) break;
+                    }
+                }
             }
         } else if (!hasItems) {
             droneManager.sendMessage(sender, "compose-hub-empty");
@@ -1887,34 +1907,6 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return;
         }
         clearComposeDraftMemory(sender.getUniqueId());
-    }
-
-    private boolean hasEnoughLeads(Player player, int count) {
-        int has = 0;
-        for (ItemStack item : player.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.LEAD) {
-                has += item.getAmount();
-            }
-        }
-        return has >= count;
-    }
-
-    private void removeLeads(Player player, int count) {
-        int needed = count;
-        ItemStack[] contents = player.getInventory().getContents();
-        for (int i = 0; i < contents.length; i++) {
-            ItemStack item = contents[i];
-            if (item != null && item.getType() == Material.LEAD) {
-                if (item.getAmount() <= needed) {
-                    needed -= item.getAmount();
-                    player.getInventory().setItem(i, null);
-                } else {
-                    item.setAmount(item.getAmount() - needed);
-                    needed = 0;
-                }
-                if (needed == 0) break;
-            }
-        }
     }
 
     private static void placeSendModeItem(Inventory inventory, GuiSettings sendMode, String itemKey) {

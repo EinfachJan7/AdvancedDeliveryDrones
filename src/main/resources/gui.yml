@@ -628,4 +628,29 @@ animal-selection:
       - "<!italic><green>  ᴛʀᴀɴsᴘᴏʀᴛ!"
       - "<!italic><gray>└────────────────────┘"
       - "<!italic><green>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴅᴇsᴇʟᴇᴄᴛ</italic>"
-
+
+# =============================================================================
+# ANIMAL SELECTION CONFIRM GUI
+# =============================================================================
+animal-selection-confirm:
+  title: "<!italic><dark_gray>🐾 <green>ᴄᴏɴғɪʀᴍ ᴛʀᴀɴsᴘᴏʀᴛ</green>"
+  size: 27
+  items:
+    confirm:
+      position: 11
+      material: "LIME_DYE"
+      name: "<!italic><green><bold>✓ ᴄᴏɴғɪʀᴍ (<count> ᴀɴɪᴍᴀʟs)</bold></green>"
+      lore:
+        - "<!italic><gray>┌────────────────────┐"
+        - "<!italic><gray>  ᴄᴏsᴛ: <count>x ʟᴇᴀᴅ"
+        - "<!italic><gray>└────────────────────┘"
+        - "<!italic><green>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴄᴏɴғɪʀᴍ</italic>"
+    cancel:
+      position: 15
+      material: "RED_DYE"
+      name: "<!italic><red><bold>✖ ᴄᴀɴᴄᴇʟ</bold></red>"
+      lore:
+        - "<!italic><gray>┌────────────────────┐"
+        - "<!italic><gray>  ᴀʙᴏʀᴛ ᴛʀᴀɴsᴘᴏʀᴛ."
+        - "<!italic><gray>└────────────────────┘"
+        - "<!italic><red>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴄᴀɴᴄᴇʟ</italic>"

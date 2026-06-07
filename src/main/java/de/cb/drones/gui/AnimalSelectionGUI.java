@@ -111,51 +111,7 @@ public class AnimalSelectionGUI implements Listener {
         isTransitioning = false;
     }
     
-    public void openConfirmMenu() {
-        GuiSettings settings = droneManager.settings().guiConfig().animalSelectionConfirm();
-        int size = settings.size();
-        
-        Inventory menu = Bukkit.createInventory(new AnimalSelectionHolder("confirm"), size, MINI_MESSAGE.deserialize(settings.title()));
-        
-        if (settings.fillItem() != null) {
-            ItemStack filler = GuiItemStacks.create(settings.fillItem());
-            for (int i = 0; i < size; i++) {
-                menu.setItem(i, filler);
-            }
-        }
 
-        int count = getSelectedCount();
-        
-        for (Map.Entry<String, GuiItem> entry : settings.items().entrySet()) {
-            GuiItem item = entry.getValue();
-            if (item.position() >= 0 && item.position() < size) {
-                ItemStack stack = GuiItemStacks.create(item);
-                ItemMeta meta = stack.getItemMeta();
-                if (meta != null) {
-                    if (meta.hasDisplayName()) {
-                        String nameStr = PlainTextComponentSerializer.plainText().serialize(meta.displayName());
-                        // Replace count placeholder in the original unparsed string from config, but since we only have parsed ItemMeta here, 
-                        // we must replace in the GUI configuration strings directly.
-                        String nameFormat = item.name().replace("<count>", String.valueOf(count));
-                        meta.displayName(MINI_MESSAGE.deserialize(nameFormat));
-                    }
-                    if (meta.hasLore() && item.lore() != null) {
-                        List<Component> newLore = new ArrayList<>();
-                        for (String line : item.lore()) {
-                            newLore.add(MINI_MESSAGE.deserialize(line.replace("<count>", String.valueOf(count))));
-                        }
-                        meta.lore(newLore);
-                    }
-                    stack.setItemMeta(meta);
-                }
-                menu.setItem(item.position(), stack);
-            }
-        }
-
-        isTransitioning = true;
-        sender.openInventory(menu);
-        isTransitioning = false;
-    }
 
     private int getSelectedCount() {
         int count = 0;
@@ -246,9 +202,8 @@ public class AnimalSelectionGUI implements Listener {
         int slot = event.getSlot();
 
         if (holder.getMenuType().equals("selection")) {
-            GuiItem backItem = droneManager.settings().guiConfig().animalSelection().items().get("back");
             if (backItem != null && slot == backItem.position()) {
-                saveAndClose();
+                handleSelectionFinished();
                 return;
             }
 
@@ -258,6 +213,15 @@ public class AnimalSelectionGUI implements Listener {
                 if (uuidStr != null) {
                     UUID animalId = UUID.fromString(uuidStr);
                     boolean current = selectedAnimals.getOrDefault(animalId, false);
+                    
+                    if (!current) {
+                        int maxAnimals = droneManager.maxLeashedAnimalsFor(sender);
+                        if (maxAnimals > 0 && getSelectedCount() >= maxAnimals) {
+                            droneManager.sendMessage(sender, "too-many-leashed-animals", "<max>", String.valueOf(maxAnimals));
+                            return;
+                        }
+                    }
+                    
                     selectedAnimals.put(animalId, !current);
                     
                     // Re-render item
@@ -273,7 +237,28 @@ public class AnimalSelectionGUI implements Listener {
                     }
                 }
             }
+
+    }
+    
+    private void handleSelectionFinished() {
+        List<UUID> finalSelection = new ArrayList<>();
+        for (Map.Entry<UUID, Boolean> entry : selectedAnimals.entrySet()) {
+            if (entry.getValue()) {
+                finalSelection.add(entry.getKey());
+            }
         }
+        
+        InventoryDragEvent.getHandlerList().unregister(this);
+        InventoryClickEvent.getHandlerList().unregister(this);
+        InventoryCloseEvent.getHandlerList().unregister(this);
+        
+        isTransitioning = true;
+        sender.closeInventory();
+        isTransitioning = false;
+        
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            plugin.getDroneCommand().finishAnimalSelectionLaunch(sender, composeHolder, finalSelection);
+        });
     }
 
     @EventHandler
@@ -292,12 +277,12 @@ public class AnimalSelectionGUI implements Listener {
             if (isTransitioning) return;
             
             if (holder.getMenuType().equals("selection")) {
-                saveAndClose();
+                handleSelectionFinished();
             }
         }
     }
     
-    private void saveAndClose() {
+    private void cleanupAndClose() {
         InventoryDragEvent.getHandlerList().unregister(this);
         InventoryClickEvent.getHandlerList().unregister(this);
         InventoryCloseEvent.getHandlerList().unregister(this);
@@ -305,16 +290,9 @@ public class AnimalSelectionGUI implements Listener {
         isTransitioning = true;
         sender.closeInventory();
         isTransitioning = false;
-
-        List<UUID> finalSelection = new ArrayList<>();
-        for (Map.Entry<UUID, Boolean> entry : selectedAnimals.entrySet()) {
-            if (entry.getValue()) {
-                finalSelection.add(entry.getKey());
-            }
-        }
         
         Bukkit.getScheduler().runTask(plugin, () -> {
-            plugin.getDroneCommand().finishAnimalSelectionLaunch(sender, composeHolder, finalSelection);
+            plugin.getDroneCommand().reopenComposeHub(sender, composeHolder);
         });
     }
 
