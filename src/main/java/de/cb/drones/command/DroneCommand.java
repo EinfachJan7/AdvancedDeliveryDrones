@@ -1537,7 +1537,15 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 true
         );
         
-        launchDroneFromComposeHub(sender, updatedHolder);
+        openComposeHub(
+                sender,
+                Bukkit.getPlayer(updatedHolder.receiverId()),
+                updatedHolder.fixedTarget(),
+                updatedHolder.exactSocketTarget(),
+                updatedHolder.socketName(),
+                updatedHolder.selectedAnimalIds(),
+                true
+        );
     }
 
     @EventHandler
@@ -1732,20 +1740,37 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 menu.setItem(slot, filler);
             }
         }
-        placeComposeHubButton(menu, "load-items", animalsOnlyMode);
+        placeComposeHubButton(menu, "load-items", animalsOnlyMode, 0);
         if (hub.items().containsKey("send-animals")) {
-            placeComposeHubButton(menu, "send-animals", animalsOnlyMode);
+            placeComposeHubButton(menu, "send-animals", animalsOnlyMode, holder.selectedAnimalIds().size());
         }
-        placeComposeHubButton(menu, "launch", animalsOnlyMode);
+        placeComposeHubButton(menu, "launch", animalsOnlyMode, 0);
         sender.openInventory(menu);
     }
 
-    private void placeComposeHubButton(Inventory inventory, String itemKey, boolean animalsOnlyMode) {
+    private void placeComposeHubButton(Inventory inventory, String itemKey, boolean animalsOnlyMode, int animalCount) {
         GuiItem item = droneManager.settings().guiConfig().resolveComposeHubItem(itemKey, animalsOnlyMode);
         if (item == null || item.position() < 0 || item.position() >= inventory.getSize()) {
             return;
         }
-        inventory.setItem(item.position(), GuiItemStacks.create(item));
+        ItemStack stack = GuiItemStacks.create(item);
+        if ("send-animals".equals(itemKey) && animalsOnlyMode) {
+            ItemMeta meta = stack.getItemMeta();
+            if (meta != null) {
+                if (meta.hasDisplayName()) {
+                    meta.displayName(MINI_MESSAGE.deserialize(item.name().replace("<count>", String.valueOf(animalCount))));
+                }
+                if (meta.hasLore() && item.lore() != null) {
+                    List<Component> newLore = new java.util.ArrayList<>();
+                    for (String line : item.lore()) {
+                        newLore.add(MINI_MESSAGE.deserialize(line.replace("<count>", String.valueOf(animalCount))));
+                    }
+                    meta.lore(newLore);
+                }
+                stack.setItemMeta(meta);
+            }
+        }
+        inventory.setItem(item.position(), stack);
     }
 
     private void openComposeInventory(Player sender, ComposeHubInventoryHolder hubHolder) {

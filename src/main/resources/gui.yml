@@ -61,13 +61,13 @@ compose-hub:
       lore:
         - "<!italic><gray>┌────────────────────┐"
         - "<!italic><gray>  ᴛᴏɢɢʟᴇ:"
-        - "<!italic><gray>  sᴇɴᴅ ᴏɴʟʏ ʟᴇᴀsʜᴇᴅ"
-        - "<!italic><gray>  ᴀɴɪᴍᴀʟs (ɴᴏ ɪᴛᴇᴍs)"
+        - "<!italic><gray>  sᴇɴᴅ ᴀɴɪᴍᴀʟs"
+        - "<!italic><gray>  (ɴᴏ ɪᴛᴇᴍs)"
         - "<!italic><gray>└────────────────────┘"
         - "<!italic><gold>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴛᴏɢɢʟᴇ</italic>"
       when-active:
         enchanted: true
-        name: "<!italic><aqua><bold>🐾 ᴀɴɪᴍᴀʟs ᴏɴʟʏ ✓</bold></aqua>"
+        name: "<!italic><aqua><bold>🐾 ᴀɴɪᴍᴀʟs (<count>) ✓</bold></aqua>"
         lore:
           - "<!italic><gray>┌────────────────────┐"
           - "<!italic><aqua>  ᴀᴄᴛɪᴠᴇ – ᴀɴɪᴍᴀʟs ᴏɴʟʏ"
