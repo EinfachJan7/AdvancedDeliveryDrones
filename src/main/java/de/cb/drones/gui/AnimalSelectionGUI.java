@@ -43,6 +43,7 @@ public class AnimalSelectionGUI implements Listener {
     private final NamespacedKey animalUuidKey;
     private final Map<UUID, Boolean> selectedAnimals = new HashMap<>();
     private final List<LivingEntity> availableAnimals = new ArrayList<>();
+    private int currentPage = 0;
     
     private boolean isTransitioning = false; // Prevents triggering the close event when explicitly transitioning
 
@@ -100,16 +101,40 @@ public class AnimalSelectionGUI implements Listener {
         }
 
         List<Integer> availableSlots = getAvailableSlots(settings, size);
-        for (int i = 0; i < availableAnimals.size() && i < availableSlots.size(); i++) {
+        int maxPerPage = availableSlots.size();
+        if (maxPerPage <= 0) maxPerPage = 1;
+        
+        int totalPages = (int) Math.ceil((double) availableAnimals.size() / maxPerPage);
+        if (currentPage >= totalPages && totalPages > 0) {
+            currentPage = totalPages - 1;
+        }
+
+        int startIndex = currentPage * maxPerPage;
+        for (int i = 0; i < maxPerPage; i++) {
+            int dataIndex = startIndex + i;
             int slot = availableSlots.get(i);
-            LivingEntity animal = availableAnimals.get(i);
-            boolean isSelected = selectedAnimals.getOrDefault(animal.getUniqueId(), false);
-            menu.setItem(slot, createAnimalItem(animal, isSelected));
+            if (dataIndex < availableAnimals.size()) {
+                LivingEntity animal = availableAnimals.get(dataIndex);
+                boolean isSelected = selectedAnimals.getOrDefault(animal.getUniqueId(), false);
+                menu.setItem(slot, createAnimalItem(animal, isSelected));
+            } else {
+                menu.setItem(slot, settings.fillItem() != null ? GuiItemStacks.create(settings.fillItem()) : new ItemStack(Material.AIR));
+            }
         }
 
         GuiItem backItem = settings.items().get("back");
         if (backItem != null && backItem.position() >= 0 && backItem.position() < size) {
             menu.setItem(backItem.position(), GuiItemStacks.create(backItem));
+        }
+
+        GuiItem prevPage = settings.items().get("previous-page");
+        if (currentPage > 0 && prevPage != null && prevPage.position() >= 0 && prevPage.position() < size) {
+            menu.setItem(prevPage.position(), GuiItemStacks.create(prevPage));
+        }
+
+        GuiItem nextPage = settings.items().get("next-page");
+        if (currentPage < totalPages - 1 && nextPage != null && nextPage.position() >= 0 && nextPage.position() < size) {
+            menu.setItem(nextPage.position(), GuiItemStacks.create(nextPage));
         }
 
         isTransitioning = true;
@@ -208,9 +233,31 @@ public class AnimalSelectionGUI implements Listener {
         int slot = event.getSlot();
 
         if (holder.getMenuType().equals("selection")) {
-            GuiItem backItem = droneManager.settings().guiConfig().animalSelection().items().get("back");
+            GuiSettings settings = droneManager.settings().guiConfig().animalSelection();
+            GuiItem backItem = settings.items().get("back");
             if (backItem != null && slot == backItem.position()) {
                 handleSelectionFinished();
+                return;
+            }
+
+            GuiItem prevPage = settings.items().get("previous-page");
+            if (prevPage != null && slot == prevPage.position()) {
+                if (currentPage > 0) {
+                    currentPage--;
+                    openSelectionMenu();
+                }
+                return;
+            }
+
+            GuiItem nextPage = settings.items().get("next-page");
+            if (nextPage != null && slot == nextPage.position()) {
+                List<Integer> availableSlots = getAvailableSlots(settings, settings.size());
+                int maxPerPage = availableSlots.size();
+                int totalPages = (int) Math.ceil((double) availableAnimals.size() / maxPerPage);
+                if (currentPage < totalPages - 1) {
+                    currentPage++;
+                    openSelectionMenu();
+                }
                 return;
             }
 
