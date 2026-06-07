@@ -607,7 +607,7 @@ config-editor:
 # =============================================================================
 # ANIMAL SELECTION GUI
 # =============================================================================
-animal-selection:
+mob-sending:
   title: "<!italic><dark_gray>🐾 <gold>sᴇʟᴇᴄᴛ ᴀɴɪᴍᴀʟs</gold>"
   size: 54
   back-item:

@@ -95,7 +95,7 @@ public class GuiConfiguration {
         this.blacklistPlayerRemoveSelection = parseGuiSettings(guiConfig, "blacklist-player-remove-selection.", createDefaultPlayerSelectionItems());
         this.blacklistSocketAddSelection = parseGuiSettings(guiConfig, "blacklist-socket-add-selection.", createDefaultPlayerSelectionItems());
         this.blacklistSocketRemoveSelection = parseGuiSettings(guiConfig, "blacklist-socket-remove-selection.", createDefaultPlayerSelectionItems());
-        this.animalSelection = parseGuiSettings(guiConfig, "animal-selection.", createDefaultAnimalSelectionItems());
+        this.animalSelection = parseGuiSettings(guiConfig, "mob-sending.", createDefaultAnimalSelectionItems());
 
         // Socket item format
         this.socketItemNameFormat = guiConfig.getString("socket-item-format.name-format", "<!italic><white><name></white>");
@@ -162,10 +162,10 @@ public class GuiConfiguration {
                 "<!italic><green><bold><player></bold></green>",
                 List.of("<!italic><gray>Klicke um die Sperre aufzuheben</gray>"));
 
-        this.animalSelectionItemNameFormat = guiConfig.getString("animal-selection.animal-item.name-format", "<!italic><yellow><bold><type></bold></yellow>");
-        this.animalSelectionItemLore = guiConfig.getStringList("animal-selection.animal-item.lore");
-        this.animalSelectionItemSelectedNameFormat = guiConfig.getString("animal-selection.animal-item.selected-name-format", "<!italic><green><bold><type></bold></green>");
-        this.animalSelectionItemSelectedLore = guiConfig.getStringList("animal-selection.animal-item.selected-lore");
+        this.animalSelectionItemNameFormat = guiConfig.getString("mob-sending.animal-item.name-format", "<!italic><yellow><bold><type></bold></yellow>");
+        this.animalSelectionItemLore = guiConfig.getStringList("mob-sending.animal-item.lore");
+        this.animalSelectionItemSelectedNameFormat = guiConfig.getString("mob-sending.animal-item.selected-name-format", "<!italic><green><bold><type></bold></green>");
+        this.animalSelectionItemSelectedLore = guiConfig.getStringList("mob-sending.animal-item.selected-lore");
         
         // Socket management item format
         this.socketManagementItemNameFormat = guiConfig.getString("socket-management.socket-management-item.name-format", "<!italic><white><name></white>");

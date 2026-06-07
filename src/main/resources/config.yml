@@ -44,7 +44,7 @@ settings:
     # When a delivery with animals is aborted (offline, cancel, decline, …):
     # FLY = drone flies back to the send point; TELEPORT = instant return to send point
     animal-return-mode: FLY
-    animal-selection:
+    mob-sending:
       enabled: false
       radius: 10.0
       leashable-only: true

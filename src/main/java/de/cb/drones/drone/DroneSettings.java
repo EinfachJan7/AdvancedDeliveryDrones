@@ -128,9 +128,9 @@ public record DroneSettings(
         String socketNameAllowedChars = cfg.getString(section + "socket-name-validation.allowed-characters", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-");
         String socketNameProhibitedChars = cfg.getString(section + "socket-name-validation.prohibited-characters", " !@#$%^&*()+={}[]|\\:;\"'<>,.?/");
 
-        boolean animalSelectionEnabled = cfg.getBoolean(section + "animal-selection.enabled", false);
-        double animalSelectionRadius = cfg.getDouble(section + "animal-selection.radius", 10.0D);
-        boolean animalSelectionLeashableOnly = cfg.getBoolean(section + "animal-selection.leashable-only", true);
+        boolean animalSelectionEnabled = cfg.getBoolean(section + "mob-sending.enabled", false);
+        double animalSelectionRadius = cfg.getDouble(section + "mob-sending.radius", 10.0D);
+        boolean animalSelectionLeashableOnly = cfg.getBoolean(section + "mob-sending.leashable-only", true);
 
         // Create GUI configuration from separate file
         GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
