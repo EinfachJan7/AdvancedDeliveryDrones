@@ -72,8 +72,14 @@ public class AnimalSelectionGUI implements Listener {
             if (!(entity instanceof LivingEntity living) || entity instanceof Player || entity.isDead()) {
                 continue;
             }
-            if (leashableOnly && !(living instanceof Mob)) {
-                continue;
+            if (leashableOnly) {
+                boolean isLeashable = living instanceof org.bukkit.entity.Animals ||
+                                      living instanceof org.bukkit.entity.WaterMob ||
+                                      living instanceof org.bukkit.entity.Golem ||
+                                      living instanceof org.bukkit.entity.WanderingTrader;
+                if (!isLeashable) {
+                    continue;
+                }
             }
             availableAnimals.add(living);
         }
