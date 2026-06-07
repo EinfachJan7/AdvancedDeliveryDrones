@@ -244,6 +244,16 @@ public class AnimalSelectionGUI implements Listener {
             String derp = animal instanceof org.bukkit.entity.Snowman sm && sm.isDerp() ? "Yes" : null;
             String leftHorn = animal instanceof org.bukkit.entity.Goat g && g.hasLeftHorn() ? "Yes" : null;
             String rightHorn = animal instanceof org.bukkit.entity.Goat g && g.hasRightHorn() ? "Yes" : null;
+            String tropicalPattern = animal instanceof org.bukkit.entity.TropicalFish tf ? tf.getPattern().name() : null;
+            String tropicalBodyColor = animal instanceof org.bukkit.entity.TropicalFish tf ? tf.getBodyColor().name() : null;
+            String tropicalPatternColor = animal instanceof org.bukkit.entity.TropicalFish tf ? tf.getPatternColor().name() : null;
+            String powered = animal instanceof org.bukkit.entity.Creeper c && c.isPowered() ? "Yes" : null;
+            String awake = animal instanceof org.bukkit.entity.Bat b && b.isAwake() ? "Yes" : null;
+            String trusting = animal instanceof org.bukkit.entity.Ocelot o && o.isTrusting() ? "Yes" : null;
+            String puffState = animal instanceof org.bukkit.entity.PufferFish pf ? String.valueOf(pf.getPuffState()) : null;
+            String zombieBaby = animal instanceof org.bukkit.entity.Zombie z && z.isBaby() ? "Yes" : null;
+            String villagerType = animal instanceof org.bukkit.entity.Villager v ? v.getVillagerType().name() : (animal instanceof org.bukkit.entity.ZombieVillager zv ? zv.getVillagerType().name() : null);
+            String canBreed = animal instanceof org.bukkit.entity.Breedable br && br.canBreed() ? "Yes" : null;
 
             List<Component> lore = new ArrayList<>();
             for (String line : loreFormat) {
@@ -268,6 +278,16 @@ public class AnimalSelectionGUI implements Listener {
                 if (line.contains("<derp>") && derp == null) continue;
                 if (line.contains("<left-horn>") && leftHorn == null) continue;
                 if (line.contains("<right-horn>") && rightHorn == null) continue;
+                if (line.contains("<tropical-pattern>") && tropicalPattern == null) continue;
+                if (line.contains("<tropical-body-color>") && tropicalBodyColor == null) continue;
+                if (line.contains("<tropical-pattern-color>") && tropicalPatternColor == null) continue;
+                if (line.contains("<powered>") && powered == null) continue;
+                if (line.contains("<awake>") && awake == null) continue;
+                if (line.contains("<trusting>") && trusting == null) continue;
+                if (line.contains("<puff-state>") && puffState == null) continue;
+                if (line.contains("<zombie-baby>") && zombieBaby == null) continue;
+                if (line.contains("<villager-type>") && villagerType == null) continue;
+                if (line.contains("<can-breed>") && canBreed == null) continue;
 
                 String replaced = line.replace("<type>", typeName);
                 if (customName != null) replaced = replaced.replace("<custom-name>", customName);
@@ -293,6 +313,16 @@ public class AnimalSelectionGUI implements Listener {
                 if (derp != null) replaced = replaced.replace("<derp>", derp);
                 if (leftHorn != null) replaced = replaced.replace("<left-horn>", leftHorn);
                 if (rightHorn != null) replaced = replaced.replace("<right-horn>", rightHorn);
+                if (tropicalPattern != null) replaced = replaced.replace("<tropical-pattern>", tropicalPattern);
+                if (tropicalBodyColor != null) replaced = replaced.replace("<tropical-body-color>", tropicalBodyColor);
+                if (tropicalPatternColor != null) replaced = replaced.replace("<tropical-pattern-color>", tropicalPatternColor);
+                if (powered != null) replaced = replaced.replace("<powered>", powered);
+                if (awake != null) replaced = replaced.replace("<awake>", awake);
+                if (trusting != null) replaced = replaced.replace("<trusting>", trusting);
+                if (puffState != null) replaced = replaced.replace("<puff-state>", puffState);
+                if (zombieBaby != null) replaced = replaced.replace("<zombie-baby>", zombieBaby);
+                if (villagerType != null) replaced = replaced.replace("<villager-type>", villagerType);
+                if (canBreed != null) replaced = replaced.replace("<can-breed>", canBreed);
                 
                 lore.add(MINI_MESSAGE.deserialize(replaced));
             }
