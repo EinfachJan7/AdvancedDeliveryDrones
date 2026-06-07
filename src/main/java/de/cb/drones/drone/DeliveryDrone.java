@@ -39,6 +39,7 @@ public final class DeliveryDrone {
     private long deliveryFlightStartTick = -1L;
     private final Inventory inventory;
     private final List<EntityType> attachedAnimalTypes;
+    private final List<String> attachedAnimalSnapshots;
     private final boolean animalsOnlyDelivery;
     private final boolean forceTargetChunkLoad;
     private final boolean exactSocketTarget;
@@ -128,6 +129,7 @@ public final class DeliveryDrone {
             Location fixedTarget,
             Inventory inventory,
             List<EntityType> attachedAnimalTypes,
+            List<String> attachedAnimalSnapshots,
             boolean animalsOnlyDelivery,
             boolean forceTargetChunkLoad,
             boolean exactSocketTarget,
@@ -144,6 +146,7 @@ public final class DeliveryDrone {
         this.flightStartTick = createdTick;
         this.inventory = inventory;
         this.attachedAnimalTypes = attachedAnimalTypes == null ? List.of() : List.copyOf(attachedAnimalTypes);
+        this.attachedAnimalSnapshots = attachedAnimalSnapshots == null ? List.of() : List.copyOf(attachedAnimalSnapshots);
         this.animalsOnlyDelivery = animalsOnlyDelivery;
         this.forceTargetChunkLoad = forceTargetChunkLoad;
         this.exactSocketTarget = exactSocketTarget;
@@ -320,6 +323,10 @@ public final class DeliveryDrone {
 
     public List<EntityType> attachedAnimalTypes() {
         return attachedAnimalTypes;
+    }
+
+    public List<String> attachedAnimalSnapshots() {
+        return attachedAnimalSnapshots;
     }
 
     public boolean isReturningToSender() {
@@ -2091,20 +2098,37 @@ public final class DeliveryDrone {
         if (!animalsOnlyDelivery || stand == null || stand.isDead()) {
             return;
         }
-        if (attachedAnimalTypes.isEmpty()) {
+        if (attachedAnimalTypes.isEmpty() && attachedAnimalSnapshots.isEmpty()) {
             return;
         }
         if (spawnedTransportAnimalIds.isEmpty()) {
-            for (EntityType type : attachedAnimalTypes) {
-                if (!type.isAlive() || type == EntityType.PLAYER || type == EntityType.ARMOR_STAND) {
-                    continue;
+            if (!attachedAnimalSnapshots.isEmpty()) {
+                for (String snapshotStr : attachedAnimalSnapshots) {
+                    try {
+                        org.bukkit.entity.EntitySnapshot snapshot = Bukkit.getServer().getEntityFactory().createEntitySnapshot(snapshotStr);
+                        Entity entity = snapshot.createEntity(stand.getLocation().clone().add(0.0, 0.2, 0.0));
+                        if (entity instanceof LivingEntity living) {
+                            living.setInvulnerable(true);
+                            spawnedTransportAnimalIds.add(living.getUniqueId());
+                        } else {
+                            entity.remove();
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
-                Entity entity = stand.getWorld().spawnEntity(stand.getLocation().clone().add(0.0, 0.2, 0.0), type);
-                if (entity instanceof LivingEntity living) {
-                    living.setInvulnerable(true);
-                    spawnedTransportAnimalIds.add(living.getUniqueId());
-                } else {
-                    entity.remove();
+            } else {
+                for (EntityType type : attachedAnimalTypes) {
+                    if (!type.isAlive() || type == EntityType.PLAYER || type == EntityType.ARMOR_STAND) {
+                        continue;
+                    }
+                    Entity entity = stand.getWorld().spawnEntity(stand.getLocation().clone().add(0.0, 0.2, 0.0), type);
+                    if (entity instanceof LivingEntity living) {
+                        living.setInvulnerable(true);
+                        spawnedTransportAnimalIds.add(living.getUniqueId());
+                    } else {
+                        entity.remove();
+                    }
                 }
             }
         }
@@ -2138,7 +2162,7 @@ public final class DeliveryDrone {
     public static DeliveryDrone fromPersistentData(
             UUID droneId, UUID senderId, UUID receiverId, String receiverName,
             Location fixedTarget, Location startLocation, Location lastKnownLocation,
-            long flightStartTick, long deliveryFlightStartTick, ItemStack[] inventoryContents, List<EntityType> attachedAnimalTypes,
+            long flightStartTick, long deliveryFlightStartTick, ItemStack[] inventoryContents, List<EntityType> attachedAnimalTypes, List<String> attachedAnimalSnapshots,
             boolean animalsOnlyDelivery, boolean forceTargetChunkLoad, boolean exactSocketTarget,
             String socketName, boolean landed, boolean openedByReceiver,
             long lastInteractionTick, boolean standParked, DroneManager manager
@@ -2150,7 +2174,7 @@ public final class DeliveryDrone {
         // Temporarily null stand, we'll restore it
         DeliveryDrone drone = new DeliveryDrone(
                 droneId, senderId, receiverId, receiverName, fixedTarget,
-                inv, attachedAnimalTypes, animalsOnlyDelivery, forceTargetChunkLoad,
+                inv, attachedAnimalTypes, attachedAnimalSnapshots, animalsOnlyDelivery, forceTargetChunkLoad,
                 exactSocketTarget, socketName, manager.settings(), null, flightStartTick
         );
         

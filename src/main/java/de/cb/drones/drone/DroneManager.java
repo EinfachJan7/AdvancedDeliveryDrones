@@ -185,8 +185,19 @@ public final class DroneManager {
         List<EntityType> attachedAnimalTypes = attachedAnimals == null
                 ? List.of()
                 : attachedAnimals.stream().map(LivingEntity::getType).toList();
+        List<String> attachedAnimalSnapshots = new ArrayList<>();
         if (attachedAnimals != null) {
             for (LivingEntity animal : attachedAnimals) {
+                if (settings.animalSelectionPersistNbtData()) {
+                    try {
+                        org.bukkit.entity.EntitySnapshot snapshot = animal.createSnapshot();
+                        if (snapshot != null) {
+                            attachedAnimalSnapshots.add(snapshot.getAsString());
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
                 try {
                     if (animal.isLeashed()) {
                         animal.setLeashHolder(null);
@@ -206,6 +217,7 @@ public final class DroneManager {
                 fixedTarget,
                 inventory,
                 attachedAnimalTypes,
+                attachedAnimalSnapshots,
                 animalsOnlyDelivery,
                 forceTargetChunkLoad,
                 exactSocketTarget,
@@ -1139,24 +1151,42 @@ public final class DroneManager {
         }
 
         List<UUID> spawnedIds = drone.getSpawnedTransportAnimalIds();
-        if (spawnedIds.isEmpty() && !drone.attachedAnimalTypes().isEmpty()) {
+        if (spawnedIds.isEmpty()) {
             int index = 0;
-            for (EntityType type : drone.attachedAnimalTypes()) {
-                if (!type.isAlive() || type == EntityType.PLAYER || type == EntityType.ARMOR_STAND) {
-                    continue;
-                }
-                Location spawnAt = safeLocation.clone().add((index % 3) * 0.6, 0.0, (index / 3) * 0.6);
-                try {
-                    Entity entity = world.spawnEntity(spawnAt, type);
-                    if (entity instanceof LivingEntity living) {
-                        applyFallProtection(living);
-                    } else {
-                        entity.remove();
+            if (drone.attachedAnimalSnapshots() != null && !drone.attachedAnimalSnapshots().isEmpty()) {
+                for (String snapshotStr : drone.attachedAnimalSnapshots()) {
+                    Location spawnAt = safeLocation.clone().add((index % 3) * 0.6, 0.0, (index / 3) * 0.6);
+                    try {
+                        org.bukkit.entity.EntitySnapshot snapshot = Bukkit.getServer().getEntityFactory().createEntitySnapshot(snapshotStr);
+                        Entity entity = snapshot.createEntity(spawnAt);
+                        if (entity instanceof LivingEntity living) {
+                            applyFallProtection(living);
+                        } else {
+                            entity.remove();
+                        }
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("Failed to respawn transported animal from snapshot: " + e.getMessage());
                     }
-                } catch (Exception e) {
-                    plugin.getLogger().warning("Failed to respawn transported animal " + type + ": " + e.getMessage());
+                    index++;
                 }
-                index++;
+            } else if (!drone.attachedAnimalTypes().isEmpty()) {
+                for (EntityType type : drone.attachedAnimalTypes()) {
+                    if (!type.isAlive() || type == EntityType.PLAYER || type == EntityType.ARMOR_STAND) {
+                        continue;
+                    }
+                    Location spawnAt = safeLocation.clone().add((index % 3) * 0.6, 0.0, (index / 3) * 0.6);
+                    try {
+                        Entity entity = world.spawnEntity(spawnAt, type);
+                        if (entity instanceof LivingEntity living) {
+                            applyFallProtection(living);
+                        } else {
+                            entity.remove();
+                        }
+                    } catch (Exception e) {
+                        plugin.getLogger().warning("Failed to respawn transported animal " + type + ": " + e.getMessage());
+                    }
+                    index++;
+                }
             }
         }
     }

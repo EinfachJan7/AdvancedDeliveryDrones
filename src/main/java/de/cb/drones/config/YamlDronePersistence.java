@@ -53,6 +53,9 @@ public class YamlDronePersistence implements DronePersistence {
             
             List<String> animalTypes = drone.attachedAnimalTypes().stream().map(EntityType::name).collect(Collectors.toList());
             config.set(path + ".attachedAnimalTypes", animalTypes);
+            if (drone.attachedAnimalSnapshots() != null && !drone.attachedAnimalSnapshots().isEmpty()) {
+                config.set(path + ".attachedAnimalSnapshots", drone.attachedAnimalSnapshots());
+            }
             config.set(path + ".animalsOnlyDelivery", drone.animalsOnlyDelivery());
             
             config.set(path + ".forceTargetChunkLoad", drone.isForceTargetChunkLoad());
@@ -121,6 +124,7 @@ public class YamlDronePersistence implements DronePersistence {
                 
                 List<String> animalTypesStr = config.getStringList(path + ".attachedAnimalTypes");
                 List<EntityType> attachedAnimalTypes = animalTypesStr.stream().map(EntityType::valueOf).collect(Collectors.toList());
+                List<String> attachedAnimalSnapshots = config.getStringList(path + ".attachedAnimalSnapshots");
                 boolean animalsOnlyDelivery = config.getBoolean(path + ".animalsOnlyDelivery");
                 
                 boolean forceTargetChunkLoad = config.getBoolean(path + ".forceTargetChunkLoad");
@@ -139,7 +143,7 @@ public class YamlDronePersistence implements DronePersistence {
                 
                 DeliveryDrone drone = DeliveryDrone.fromPersistentData(
                     droneId, senderId, receiverId, receiverName, fixedTarget, startLocation,
-                    lastKnownLocation, flightStartTick, deliveryFlightStartTick, items, attachedAnimalTypes,
+                    lastKnownLocation, flightStartTick, deliveryFlightStartTick, items, attachedAnimalTypes, attachedAnimalSnapshots,
                     animalsOnlyDelivery, forceTargetChunkLoad, exactSocketTarget, socketName,
                     landed, openedByReceiver, lastInteractionTick, standParked, droneManager
                 );
