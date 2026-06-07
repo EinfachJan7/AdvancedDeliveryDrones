@@ -1416,10 +1416,6 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         GuiItem launchItem = hub.items().get("launch");
         GuiItem animalsItem = hub.items().get("send-animals");
         if (loadItem != null && slot == loadItem.position()) {
-            if (holder.animalsOnlyMode()) {
-                droneManager.sendMessage(sender, "compose-hub-items-disabled");
-                return;
-            }
             Bukkit.getScheduler().runTask(plugin, () -> openComposeInventory(sender, holder));
             return;
         }
@@ -1429,8 +1425,6 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                     de.cb.drones.gui.AnimalSelectionGUI gui = new de.cb.drones.gui.AnimalSelectionGUI(plugin, droneManager, sender, holder);
                     gui.openSelectionMenu();
                 });
-            } else {
-                Bukkit.getScheduler().runTask(plugin, () -> toggleComposeHubAnimalsOnly(sender, holder));
             }
             return;
         }
@@ -1740,9 +1734,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 menu.setItem(slot, filler);
             }
         }
-        placeComposeHubButton(menu, "load-items", animalsOnlyMode, 0);
-        if (hub.items().containsKey("send-animals")) {
-            placeComposeHubButton(menu, "send-animals", animalsOnlyMode, holder.selectedAnimalIds().size());
+        placeComposeHubButton(menu, "load-items", false, 0);
+        if (hub.items().containsKey("send-animals") && droneManager.settings().animalSelectionEnabled()) {
+            placeComposeHubButton(menu, "send-animals", true, holder.selectedAnimalIds().size());
         }
         placeComposeHubButton(menu, "launch", animalsOnlyMode, 0);
         sender.openInventory(menu);
