@@ -43,7 +43,7 @@ public class GuiConfiguration {
     private final GuiSettings blacklistSocketAddSelection;
     private final GuiSettings blacklistSocketRemoveSelection;
     private final GuiSettings animalSelection;
-    private final GuiSettings animalSelectionConfirm;
+
     private final String socketItemNameFormat;
     private final String socketItemOwnerFormat;
     private final String socketItemClickHint;
@@ -96,7 +96,6 @@ public class GuiConfiguration {
         this.blacklistSocketAddSelection = parseGuiSettings(guiConfig, "blacklist-socket-add-selection.", createDefaultPlayerSelectionItems());
         this.blacklistSocketRemoveSelection = parseGuiSettings(guiConfig, "blacklist-socket-remove-selection.", createDefaultPlayerSelectionItems());
         this.animalSelection = parseGuiSettings(guiConfig, "animal-selection.", createDefaultAnimalSelectionItems());
-        this.animalSelectionConfirm = parseGuiSettings(guiConfig, "animal-selection-confirm.", createDefaultAnimalSelectionConfirmItems());
 
         // Socket item format
         this.socketItemNameFormat = guiConfig.getString("socket-item-format.name-format", "<!italic><white><name></white>");
@@ -120,14 +119,14 @@ public class GuiConfiguration {
 
         // Player head item format (trust)
         this.trustPlayerHeadNameFormat = guiConfig.getString("trust-player-selection.player-head-item.name-format", "<!italic><white><player></white>");
-        List<String> tempTrustPlayerHeadLore = guiConfig.getStringList("trust-player-selection.player-head-item.lore");
-        if (tempTrustPlayerHeadLore.isEmpty()) {
-            tempTrustPlayerHeadLore = List.of(
+        List<String> tempTrustTrustPlayerHeadLore = guiConfig.getStringList("trust-player-selection.player-head-item.lore");
+        if (tempTrustTrustPlayerHeadLore.isEmpty()) {
+            tempTrustTrustPlayerHeadLore = List.of(
                 "<!italic><gray>Klicke um den Spieler</gray>",
                 "<!italic><gray>zu <#4ade80>vertrauen</gray>"
             );
         }
-        this.trustPlayerHeadLore = tempTrustPlayerHeadLore;
+        this.trustPlayerHeadLore = tempTrustTrustPlayerHeadLore;
         this.trustPlayerHeadTexture = GuiYamlParser.parseHeadTexture(guiConfig, "trust-player-selection.player-head-item", Material.PLAYER_HEAD);
 
         // Player head item format (untrust)
@@ -210,7 +209,7 @@ public class GuiConfiguration {
     public GuiSettings blacklistSocketAddSelection() { return blacklistSocketAddSelection; }
     public GuiSettings blacklistSocketRemoveSelection() { return blacklistSocketRemoveSelection; }
     public GuiSettings animalSelection() { return animalSelection; }
-    public GuiSettings animalSelectionConfirm() { return animalSelectionConfirm; }
+
     public String socketItemNameFormat() { return socketItemNameFormat; }
     public String socketItemOwnerFormat() { return socketItemOwnerFormat; }
     public String socketItemClickHint() { return socketItemClickHint; }
@@ -476,13 +475,6 @@ public class GuiConfiguration {
 
     private static Map<String, GuiItem> createDefaultAnimalSelectionItems() {
         Map<String, GuiItem> items = new HashMap<>();
-        return items;
-    }
-
-    private static Map<String, GuiItem> createDefaultAnimalSelectionConfirmItems() {
-        Map<String, GuiItem> items = new HashMap<>();
-        items.put("confirm", new GuiItem(11, Material.LIME_DYE, "<green>Bestätigen", List.of("<gray>Tiere senden")));
-        items.put("cancel", new GuiItem(15, Material.RED_DYE, "<red>Abbrechen", List.of("<gray>Auswahl abbrechen")));
         return items;
     }
 }

@@ -202,6 +202,7 @@ public class AnimalSelectionGUI implements Listener {
         int slot = event.getSlot();
 
         if (holder.getMenuType().equals("selection")) {
+            GuiItem backItem = droneManager.settings().guiConfig().animalSelection().items().get("back");
             if (backItem != null && slot == backItem.position()) {
                 handleSelectionFinished();
                 return;
@@ -237,7 +238,7 @@ public class AnimalSelectionGUI implements Listener {
                     }
                 }
             }
-
+        }
     }
     
     private void handleSelectionFinished() {
