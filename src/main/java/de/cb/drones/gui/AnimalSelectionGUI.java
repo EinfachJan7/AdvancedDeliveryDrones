@@ -248,12 +248,7 @@ public class AnimalSelectionGUI implements Listener {
         if (holder.getMenuType().equals("selection")) {
             GuiItem backItem = droneManager.settings().guiConfig().animalSelection().items().get("back");
             if (backItem != null && slot == backItem.position()) {
-                int count = getSelectedCount();
-                if (count > 0) {
-                    Bukkit.getScheduler().runTask(plugin, this::openConfirmMenu);
-                } else {
-                    cleanupAndClose();
-                }
+                saveAndClose();
                 return;
             }
 
@@ -278,87 +273,6 @@ public class AnimalSelectionGUI implements Listener {
                     }
                 }
             }
-        } else if (holder.getMenuType().equals("confirm")) {
-            GuiSettings settings = droneManager.settings().guiConfig().animalSelectionConfirm();
-            GuiItem confirmItem = settings.items().get("confirm");
-            GuiItem cancelItem = settings.items().get("cancel");
-            
-            if (cancelItem != null && slot == cancelItem.position()) {
-                cleanupAndClose();
-                return;
-            }
-            if (confirmItem != null && slot == confirmItem.position()) {
-                int count = getSelectedCount();
-                if (count == 0) {
-                    cleanupAndClose();
-                    return;
-                }
-                
-                // Check if sender has enough leads
-                if (!hasEnoughLeads(count)) {
-                    droneManager.sendMessage(sender, "not-enough-leads", "<count>", String.valueOf(count));
-                    cleanupAndClose();
-                    return;
-                }
-                
-                removeLeads(count);
-                
-                List<UUID> finalSelection = new ArrayList<>();
-                for (Map.Entry<UUID, Boolean> entry : selectedAnimals.entrySet()) {
-                    if (entry.getValue()) {
-                        finalSelection.add(entry.getKey());
-                    }
-                }
-                
-                // Unregister listener
-                InventoryDragEvent.getHandlerList().unregister(this);
-                InventoryClickEvent.getHandlerList().unregister(this);
-                InventoryCloseEvent.getHandlerList().unregister(this);
-                
-                // Set ComposeHub back to animalsOnlyMode with our selection, then automatically launch or reopen
-                plugin.getCommand("drone").getExecutor().getClass(); // Just reference to get command executor
-                // The easiest way is to let the player run the command logic or invoke it directly.
-                // But DroneCommand handles all the complex logic of sending.
-                // I will store the selection in the DroneCommand.
-                
-                isTransitioning = true;
-                sender.closeInventory();
-                isTransitioning = false;
-                
-                // Instead of opening hub again, we can just trigger the launch directly via DroneCommand
-                // But wait, the DroneCommand needs to be called.
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    plugin.getDroneCommand().finishAnimalSelectionLaunch(sender, composeHolder, finalSelection);
-                });
-            }
-        }
-    }
-    
-    private boolean hasEnoughLeads(int count) {
-        int has = 0;
-        for (ItemStack item : sender.getInventory().getContents()) {
-            if (item != null && item.getType() == Material.LEAD) {
-                has += item.getAmount();
-            }
-        }
-        return has >= count;
-    }
-    
-    private void removeLeads(int count) {
-        int needed = count;
-        ItemStack[] contents = sender.getInventory().getContents();
-        for (int i = 0; i < contents.length; i++) {
-            ItemStack item = contents[i];
-            if (item != null && item.getType() == Material.LEAD) {
-                if (item.getAmount() <= needed) {
-                    needed -= item.getAmount();
-                    sender.getInventory().setItem(i, null);
-                } else {
-                    item.setAmount(item.getAmount() - needed);
-                    needed = 0;
-                }
-                if (needed == 0) break;
-            }
         }
     }
 
@@ -378,19 +292,12 @@ public class AnimalSelectionGUI implements Listener {
             if (isTransitioning) return;
             
             if (holder.getMenuType().equals("selection")) {
-                int count = getSelectedCount();
-                if (count > 0) {
-                    Bukkit.getScheduler().runTask(plugin, this::openConfirmMenu);
-                } else {
-                    cleanupAndClose();
-                }
-            } else if (holder.getMenuType().equals("confirm")) {
-                cleanupAndClose();
+                saveAndClose();
             }
         }
     }
     
-    private void cleanupAndClose() {
+    private void saveAndClose() {
         InventoryDragEvent.getHandlerList().unregister(this);
         InventoryClickEvent.getHandlerList().unregister(this);
         InventoryCloseEvent.getHandlerList().unregister(this);
@@ -398,9 +305,16 @@ public class AnimalSelectionGUI implements Listener {
         isTransitioning = true;
         sender.closeInventory();
         isTransitioning = false;
+
+        List<UUID> finalSelection = new ArrayList<>();
+        for (Map.Entry<UUID, Boolean> entry : selectedAnimals.entrySet()) {
+            if (entry.getValue()) {
+                finalSelection.add(entry.getKey());
+            }
+        }
         
         Bukkit.getScheduler().runTask(plugin, () -> {
-            plugin.getDroneCommand().reopenComposeHub(sender, composeHolder);
+            plugin.getDroneCommand().finishAnimalSelectionLaunch(sender, composeHolder, finalSelection);
         });
     }
 
