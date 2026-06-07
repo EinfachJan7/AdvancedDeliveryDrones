@@ -520,53 +520,11 @@ config-editor:
   categories:
     title: "<!italic><dark_gray>⚙ <gold>ᴄᴏɴꜰɪɢ ᴇᴅɪᴛᴏʀ</gold>"
     size: 54
-    content-slots:
-      - 10
-      - 11
-      - 12
-      - 13
-      - 14
-      - 15
-      - 16
-      - 19
-      - 20
-      - 21
-      - 22
-      - 23
-      - 24
-      - 25
+    content-slots: [10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25]
   options:
     title: "<!italic><dark_gray>⚙ <aqua><category></aqua>"
     size: 54
-    content-slots:
-      - 10
-      - 11
-      - 12
-      - 13
-      - 14
-      - 15
-      - 16
-      - 19
-      - 20
-      - 21
-      - 22
-      - 23
-      - 24
-      - 25
-      - 28
-      - 29
-      - 30
-      - 31
-      - 32
-      - 33
-      - 34
-      - 37
-      - 38
-      - 39
-      - 40
-      - 41
-      - 42
-      - 43
+    content-slots: [10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43]
   category-item:
     name-format: "<!italic><gold><bold><name></bold></gold>"
     lore:
@@ -607,6 +565,18 @@ config-editor:
 # =============================================================================
 # ANIMAL SELECTION GUI
 # =============================================================================
+# Available Placeholders in animal-item lore:
+# <type>        : Animal type name
+# <custom-name> : Name tag name (if set)
+# <profession>  : Villager profession (if villager)
+# <age>         : Adult or Baby
+# <owner>       : Owner name (if tamed)
+# <color>       : Wool/Collar color (if applicable)
+# <health>      : Current health value
+# <max-health>  : Maximum health value
+#
+# Note: Lines containing placeholders for data the animal doesn't have 
+# (e.g. <profession> on a pig) will be automatically hidden!
 mob-sending:
   title: "<!italic><dark_gray>🐾 <gold>sᴇʟᴇᴄᴛ ᴀɴɪᴍᴀʟs</gold>"
   size: 54
@@ -621,6 +591,8 @@ mob-sending:
       - "<!italic><gray>  ᴘʀᴏғᴇssɪᴏɴ: <white><profession>"
       - "<!italic><gray>  ᴀɢᴇ: <white><age>"
       - "<!italic><gray>  ᴏᴡɴᴇʀ: <white><owner>"
+      - "<!italic><gray>  ᴄᴏʟᴏʀ: <white><color>"
+      - "<!italic><gray>  ʜᴇᴀʟᴛʜ: <red><health></red> <gray>/ <red><max-health></red> ❤"
       - "<!italic><gray>  sᴇʟᴇᴄᴛ ᴛʜɪs ᴀɴɪᴍᴀʟ"
       - "<!italic><gray>  ғᴏʀ ᴛʀᴀɴsᴘᴏʀᴛ."
       - "<!italic><gray>└────────────────────┘"
@@ -632,6 +604,8 @@ mob-sending:
       - "<!italic><gray>  ᴘʀᴏғᴇssɪᴏɴ: <white><profession>"
       - "<!italic><gray>  ᴀɢᴇ: <white><age>"
       - "<!italic><gray>  ᴏᴡɴᴇʀ: <white><owner>"
+      - "<!italic><gray>  ᴄᴏʟᴏʀ: <white><color>"
+      - "<!italic><gray>  ʜᴇᴀʟᴛʜ: <red><health></red> <gray>/ <red><max-health></red> ❤"
       - "<!italic><green>  sᴇʟᴇᴄᴛᴇᴅ ғᴏʀ"
       - "<!italic><green>  ᴛʀᴀɴsᴘᴏʀᴛ!"
       - "<!italic><gray>└────────────────────┘"

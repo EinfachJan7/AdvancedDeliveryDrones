@@ -178,6 +178,25 @@ public class AnimalSelectionGUI implements Listener {
             String profession = animal instanceof org.bukkit.entity.Villager v ? v.getProfession().name() : null;
             String age = animal instanceof org.bukkit.entity.Ageable a ? (a.isAdult() ? "Adult" : "Baby") : null;
             String owner = animal instanceof org.bukkit.entity.Tameable t && t.isTamed() && t.getOwner() != null && t.getOwner().getName() != null ? t.getOwner().getName() : null;
+            String health = String.format("%.1f", animal.getHealth());
+            String maxHealth = "";
+            try {
+                maxHealth = String.format("%.1f", animal.getAttribute(org.bukkit.attribute.Attribute.valueOf("GENERIC_MAX_HEALTH")).getValue());
+            } catch (Exception e) {
+                try {
+                    maxHealth = String.format("%.1f", animal.getAttribute(org.bukkit.attribute.Attribute.valueOf("MAX_HEALTH")).getValue());
+                } catch (Exception e2) {
+                    maxHealth = String.format("%.1f", 20.0);
+                }
+            }
+            String color = null;
+            if (animal instanceof org.bukkit.entity.Sheep s && s.getColor() != null) {
+                color = s.getColor().name();
+            } else if (animal instanceof org.bukkit.entity.Wolf w && w.getCollarColor() != null) {
+                color = w.getCollarColor().name();
+            } else if (animal instanceof org.bukkit.entity.Cat c && c.getCollarColor() != null) {
+                color = c.getCollarColor().name();
+            }
 
             List<Component> lore = new ArrayList<>();
             for (String line : loreFormat) {
@@ -185,12 +204,16 @@ public class AnimalSelectionGUI implements Listener {
                 if (line.contains("<profession>") && profession == null) continue;
                 if (line.contains("<age>") && age == null) continue;
                 if (line.contains("<owner>") && owner == null) continue;
+                if (line.contains("<color>") && color == null) continue;
 
                 String replaced = line.replace("<type>", typeName);
                 if (customName != null) replaced = replaced.replace("<custom-name>", customName);
                 if (profession != null) replaced = replaced.replace("<profession>", profession);
                 if (age != null) replaced = replaced.replace("<age>", age);
                 if (owner != null) replaced = replaced.replace("<owner>", owner);
+                if (health != null) replaced = replaced.replace("<health>", health);
+                if (maxHealth != null) replaced = replaced.replace("<max-health>", maxHealth);
+                if (color != null) replaced = replaced.replace("<color>", color);
                 
                 lore.add(MINI_MESSAGE.deserialize(replaced));
             }
