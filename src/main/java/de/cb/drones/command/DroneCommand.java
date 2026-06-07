@@ -1013,10 +1013,6 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (!holder.senderId().equals(sender.getUniqueId())) {
             return;
         }
-        if (droneManager.settings().openInventoryOnSend()) {
-            handleLegacyComposeClose(sender, holder, inv);
-            return;
-        }
         if (suppressComposeHubReopen.remove(sender.getUniqueId())) {
             return;
         }
@@ -1048,9 +1044,6 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return;
         }
         if (!holder.senderId().equals(sender.getUniqueId())) {
-            return;
-        }
-        if (droneManager.settings().openInventoryOnSend()) {
             return;
         }
         saveComposeHubStateToMemory(sender, holder);
@@ -1608,14 +1601,6 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             }
         }
         restoreComposeDraftIfMatching(sender, receiver, fixedTarget, exactSocketTarget, socketName);
-        if (droneManager.settings().openInventoryOnSend()) {
-            if (!leashedAnimalIds.isEmpty()) {
-                openSendModeSelector(sender, receiver, fixedTarget, exactSocketTarget, socketName, leashedAnimalIds);
-            } else {
-                openComposeInventoryDirect(sender, receiver, fixedTarget, exactSocketTarget, socketName, List.of(), false);
-            }
-            return;
-        }
         boolean animalsOnly = composeHubAnimalsOnly.getOrDefault(sender.getUniqueId(), false);
         openComposeHub(sender, receiver, fixedTarget, exactSocketTarget, socketName, leashedAnimalIds, animalsOnly);
     }
