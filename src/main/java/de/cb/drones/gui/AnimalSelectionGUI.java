@@ -266,6 +266,17 @@ public class AnimalSelectionGUI implements Listener {
             }
             String immuneToZombification = animal instanceof org.bukkit.entity.PiglinAbstract p && p.isImmuneToZombification() ? "Yes" : null;
             String patrolLeader = animal instanceof org.bukkit.entity.Raider r && r.isPatrolLeader() ? "Yes" : null;
+            String canDuplicate = null;
+            try { if (animal instanceof org.bukkit.entity.Allay a && a.canDuplicate()) canDuplicate = "Yes"; } catch (NoClassDefFoundError | NoSuchMethodError e) {}
+            String snifferState = null;
+            try { if (animal instanceof org.bukkit.entity.Sniffer s) snifferState = s.getState().name(); } catch (NoClassDefFoundError | NoSuchMethodError e) {}
+            String shivering = animal instanceof org.bukkit.entity.Strider s && s.isShivering() ? "Yes" : null;
+            String drinkingPotion = animal instanceof org.bukkit.entity.Witch w && w.isDrinkingPotion() ? "Yes" : null;
+            String charged = animal instanceof org.bukkit.entity.Wither w && w.isCharged() ? "Yes" : null;
+            String dragonPhase = animal instanceof org.bukkit.entity.EnderDragon ed ? ed.getPhase().name() : null;
+            String ignited = animal instanceof org.bukkit.entity.Creeper c && c.isIgnited() ? "Yes" : null;
+            String villagerLevel = animal instanceof org.bukkit.entity.Villager v ? String.valueOf(v.getVillagerLevel()) : null;
+            String villagerExperience = animal instanceof org.bukkit.entity.Villager v ? String.valueOf(v.getVillagerExperience()) : null;
 
             List<Component> lore = new ArrayList<>();
             for (String line : loreFormat) {
@@ -307,6 +318,15 @@ public class AnimalSelectionGUI implements Listener {
                 if (line.contains("<anger-level>") && angerLevel == null) continue;
                 if (line.contains("<immune-to-zombification>") && immuneToZombification == null) continue;
                 if (line.contains("<patrol-leader>") && patrolLeader == null) continue;
+                if (line.contains("<can-duplicate>") && canDuplicate == null) continue;
+                if (line.contains("<sniffer-state>") && snifferState == null) continue;
+                if (line.contains("<shivering>") && shivering == null) continue;
+                if (line.contains("<drinking-potion>") && drinkingPotion == null) continue;
+                if (line.contains("<charged>") && charged == null) continue;
+                if (line.contains("<dragon-phase>") && dragonPhase == null) continue;
+                if (line.contains("<ignited>") && ignited == null) continue;
+                if (line.contains("<villager-level>") && villagerLevel == null) continue;
+                if (line.contains("<villager-experience>") && villagerExperience == null) continue;
 
                 String replaced = line.replace("<type>", typeName);
                 if (customName != null) replaced = replaced.replace("<custom-name>", customName);
@@ -349,6 +369,15 @@ public class AnimalSelectionGUI implements Listener {
                 if (angerLevel != null) replaced = replaced.replace("<anger-level>", angerLevel);
                 if (immuneToZombification != null) replaced = replaced.replace("<immune-to-zombification>", immuneToZombification);
                 if (patrolLeader != null) replaced = replaced.replace("<patrol-leader>", patrolLeader);
+                if (canDuplicate != null) replaced = replaced.replace("<can-duplicate>", canDuplicate);
+                if (snifferState != null) replaced = replaced.replace("<sniffer-state>", snifferState);
+                if (shivering != null) replaced = replaced.replace("<shivering>", shivering);
+                if (drinkingPotion != null) replaced = replaced.replace("<drinking-potion>", drinkingPotion);
+                if (charged != null) replaced = replaced.replace("<charged>", charged);
+                if (dragonPhase != null) replaced = replaced.replace("<dragon-phase>", dragonPhase);
+                if (ignited != null) replaced = replaced.replace("<ignited>", ignited);
+                if (villagerLevel != null) replaced = replaced.replace("<villager-level>", villagerLevel);
+                if (villagerExperience != null) replaced = replaced.replace("<villager-experience>", villagerExperience);
                 
                 lore.add(MINI_MESSAGE.deserialize(replaced));
             }

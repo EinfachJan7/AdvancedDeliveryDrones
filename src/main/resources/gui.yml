@@ -607,6 +607,15 @@ config-editor:
 # <anger-level>       : Warden anger level
 # <immune-to-zombification> : Piglin/Hoglin immunity
 # <patrol-leader>     : Raider patrol leader status
+# <can-duplicate>     : Allay duplication status
+# <sniffer-state>     : Sniffer state
+# <shivering>         : Strider shivering status
+# <drinking-potion>   : Witch drinking potion status
+# <charged>           : Wither charged status
+# <dragon-phase>      : Ender Dragon phase
+# <ignited>           : Creeper ignited status
+# <villager-level>    : Villager level
+# <villager-experience> : Villager experience
 #
 # Note: Lines containing placeholders for data the animal doesn't have 
 # (e.g. <profession> on a pig) will be automatically hidden!
@@ -702,6 +711,15 @@ mob-sending:
       - "<!italic><gray>  ᴀɴɢᴇʀ-ʟᴇᴠᴇʟ: <red><anger-level>"
       - "<!italic><gray>  ɪᴍᴍᴜɴᴇ: <white><immune-to-zombification>"
       - "<!italic><gray>  ᴘᴀᴛʀᴏʟ-ʟᴇᴀᴅᴇʀ: <white><patrol-leader>"
+      - "<!italic><gray>  ᴄᴀɴ-ᴅᴜᴘʟɪᴄᴀᴛᴇ: <white><can-duplicate>"
+      - "<!italic><gray>  sɴɪғғᴇʀ-sᴛᴀᴛᴇ: <white><sniffer-state>"
+      - "<!italic><gray>  sʜɪᴠᴇʀɪɴɢ: <white><shivering>"
+      - "<!italic><gray>  ᴅʀɪɴᴋɪɴɢ-ᴘᴏᴛɪᴏɴ: <white><drinking-potion>"
+      - "<!italic><gray>  ᴄʜᴀʀɢᴇᴅ: <white><charged>"
+      - "<!italic><gray>  ᴅʀᴀɢᴏɴ-ᴘʜᴀsᴇ: <white><dragon-phase>"
+      - "<!italic><gray>  ɪɢɴɪᴛᴇᴅ: <white><ignited>"
+      - "<!italic><gray>  ᴠɪʟʟᴀɢᴇʀ-ʟᴇᴠᴇʟ: <white><villager-level>"
+      - "<!italic><gray>  ᴠɪʟʟᴀɢᴇʀ-ᴇxᴘ: <white><villager-experience>"
       - "<!italic><gray>  ʜᴇᴀʟᴛʜ: <red><health></red> <gray>/ <red><max-health></red> ❤"
       - "<!italic><green>  sᴇʟᴇᴄᴛᴇᴅ ғᴏʀ"
       - "<!italic><green>  ᴛʀᴀɴsᴘᴏʀᴛ!"
