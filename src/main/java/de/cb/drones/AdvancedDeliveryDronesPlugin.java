@@ -235,6 +235,14 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         return playerSettings;
     }
 
+    public SocketPendingReturnsRepository getSocketPendingReturnsRepository() {
+        return socketPendingReturns;
+    }
+
+    public DroneCommand getDroneCommand() {
+        return droneCommand;
+    }
+
     public SocketRepository getSocketRepository() {
         return socketRepository;
     }

@@ -603,3 +603,54 @@ config-editor:
       name: "<!italic><white>ᴘᴀɢᴇ <page>/<pages>"
       lore:
         - "<!italic><gray>  <count> ᴇɴᴛʀɪᴇs"
+
+# =============================================================================
+# ANIMAL SELECTION GUI
+# =============================================================================
+animal-selection:
+  title: "<!italic><dark_gray>🐾 <gold>sᴇʟᴇᴄᴛ ᴀɴɪᴍᴀʟs</gold>"
+  size: 54
+  back-item:
+    lore:
+      - "<!italic><gray>  ᴄᴀɴᴄᴇʟ ᴀɴᴅ ʀᴇᴛᴜʀɴ"
+  animal-item:
+    name-format: "<!italic><yellow><bold><type></bold></yellow>"
+    lore:
+      - "<!italic><gray>┌────────────────────┐"
+      - "<!italic><gray>  sᴇʟᴇᴄᴛ ᴛʜɪs ᴀɴɪᴍᴀʟ"
+      - "<!italic><gray>  ғᴏʀ ᴛʀᴀɴsᴘᴏʀᴛ."
+      - "<!italic><gray>└────────────────────┘"
+      - "<!italic><yellow>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴛᴏɢɢʟᴇ</italic>"
+    selected-name-format: "<!italic><green><bold><type></bold></green>"
+    selected-lore:
+      - "<!italic><gray>┌────────────────────┐"
+      - "<!italic><green>  sᴇʟᴇᴄᴛᴇᴅ ғᴏʀ"
+      - "<!italic><green>  ᴛʀᴀɴsᴘᴏʀᴛ!"
+      - "<!italic><gray>└────────────────────┘"
+      - "<!italic><green>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴅᴇsᴇʟᴇᴄᴛ</italic>"
+
+# =============================================================================
+# ANIMAL SELECTION CONFIRM GUI
+# =============================================================================
+animal-selection-confirm:
+  title: "<!italic><dark_gray>🐾 <green>ᴄᴏɴғɪʀᴍ ᴛʀᴀɴsᴘᴏʀᴛ</green>"
+  size: 27
+  items:
+    confirm:
+      position: 11
+      material: "LIME_DYE"
+      name: "<!italic><green><bold>✓ ᴄᴏɴғɪʀᴍ (<count> ᴀɴɪᴍᴀʟs)</bold></green>"
+      lore:
+        - "<!italic><gray>┌────────────────────┐"
+        - "<!italic><gray>  ᴄᴏsᴛ: <count>x ʟᴇᴀᴅ"
+        - "<!italic><gray>└────────────────────┘"
+        - "<!italic><green>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴄᴏɴғɪʀᴍ</italic>"
+    cancel:
+      position: 15
+      material: "RED_DYE"
+      name: "<!italic><red><bold>✖ ᴄᴀɴᴄᴇʟ</bold></red>"
+      lore:
+        - "<!italic><gray>┌────────────────────┐"
+        - "<!italic><gray>  ᴀʙᴏʀᴛ ᴛʀᴀɴsᴘᴏʀᴛ."
+        - "<!italic><gray>└────────────────────┘"
+        - "<!italic><red>⬥ <italic>ᴄʟɪᴄᴋ ᴛᴏ ᴄᴀɴᴄᴇʟ</italic>"

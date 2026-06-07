@@ -64,7 +64,10 @@ public record DroneSettings(
         boolean glowingEnabled,
         boolean socketNameUseAllowedList,
         String socketNameAllowedChars,
-        String socketNameProhibitedChars
+        String socketNameProhibitedChars,
+        boolean animalSelectionEnabled,
+        double animalSelectionRadius,
+        boolean animalSelectionLeashableOnly
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg, FileConfiguration guiConfig) {
         String section = "settings.drone.";
@@ -127,6 +130,10 @@ public record DroneSettings(
         String socketNameAllowedChars = cfg.getString(section + "socket-name-validation.allowed-characters", "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-");
         String socketNameProhibitedChars = cfg.getString(section + "socket-name-validation.prohibited-characters", " !@#$%^&*()+={}[]|\\:;\"'<>,.?/");
 
+        boolean animalSelectionEnabled = cfg.getBoolean(section + "animal-selection.enabled", false);
+        double animalSelectionRadius = cfg.getDouble(section + "animal-selection.radius", 10.0D);
+        boolean animalSelectionLeashableOnly = cfg.getBoolean(section + "animal-selection.leashable-only", true);
+
         // Create GUI configuration from separate file
         GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
 
@@ -183,7 +190,10 @@ public record DroneSettings(
                 glowingEnabled,
                 socketNameUseAllowedList,
                 socketNameAllowedChars,
-                socketNameProhibitedChars
+                socketNameProhibitedChars,
+                animalSelectionEnabled,
+                animalSelectionRadius,
+                animalSelectionLeashableOnly
         );
     }
 

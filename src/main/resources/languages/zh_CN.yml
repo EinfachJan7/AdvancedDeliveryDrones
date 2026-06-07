@@ -178,3 +178,4 @@ config-editor-enum-cycled: "<green><option> 现在是 <white><value></white>。<
 config-editor-reloaded: "<green>配置已重载。</green>"
 config-editor-option-config-editor-messages-name: "编辑器消息"
 config-editor-option-config-editor-messages-desc: "在配置设置更改时显示通知"
+not-enough-leads: "<red>您的拴绳不足以拴住所有选中的动物！（需要：<count>）</red>"

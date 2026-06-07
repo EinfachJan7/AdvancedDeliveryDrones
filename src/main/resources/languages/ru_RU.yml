@@ -178,3 +178,4 @@ config-editor-enum-cycled: "<green><option> теперь <white><value></white>.
 config-editor-reloaded: "<green>Конфиг перезагружен.</green>"
 config-editor-option-config-editor-messages-name: "Сообщения редактора"
 config-editor-option-config-editor-messages-desc: "Показывать уведомления при изменении параметров конфигурации"
+not-enough-leads: "<red>У вас недостаточно поводков для всех выбранных животных! (нужно: <count>)</red>"

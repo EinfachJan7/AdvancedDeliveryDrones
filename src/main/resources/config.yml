@@ -47,6 +47,10 @@ settings:
     # false = compose-hub GUI (load / launch / leashed-only toggle); send-mode is ignored
     # true = open package inventory directly; closing sends the drone; send-mode when leashed animals nearby
     open-inventory-on-send: false
+    animal-selection:
+      enabled: false
+      radius: 10.0
+      leashable-only: true
     max-leashed-animals-per-drone: 1
     max-sockets-per-player: 1
     # Send cooldown settings (in seconds)

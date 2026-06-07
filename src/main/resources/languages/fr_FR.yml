@@ -178,3 +178,4 @@ config-editor-enum-cycled: "<green><option> est maintenant <white><value></white
 config-editor-reloaded: "<green>Config rechargee.</green>"
 config-editor-option-config-editor-messages-name: "Messages de l'éditeur"
 config-editor-option-config-editor-messages-desc: "Afficher les notifications lors du changement des paramètres de configuration"
+not-enough-leads: "<red>Vous n'avez pas assez de laisses pour tous les animaux sélectionnés ! (<count> requises)</red>"

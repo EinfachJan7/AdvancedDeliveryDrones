@@ -42,6 +42,8 @@ public class GuiConfiguration {
     private final GuiSettings blacklistPlayerRemoveSelection;
     private final GuiSettings blacklistSocketAddSelection;
     private final GuiSettings blacklistSocketRemoveSelection;
+    private final GuiSettings animalSelection;
+    private final GuiSettings animalSelectionConfirm;
     private final String socketItemNameFormat;
     private final String socketItemOwnerFormat;
     private final String socketItemClickHint;
@@ -61,6 +63,10 @@ public class GuiConfiguration {
     private final PlayerHeadItemConfig blacklistPlayerRemoveHead;
     private final PlayerHeadItemConfig blacklistSocketAddHead;
     private final PlayerHeadItemConfig blacklistSocketRemoveHead;
+    private final String animalSelectionItemNameFormat;
+    private final List<String> animalSelectionItemLore;
+    private final String animalSelectionItemSelectedNameFormat;
+    private final List<String> animalSelectionItemSelectedLore;
     private final String socketManagementItemNameFormat;
     private final String socketManagementItemLocationFormat;
     private final String socketManagementItemDeleteHint;
@@ -89,6 +95,8 @@ public class GuiConfiguration {
         this.blacklistPlayerRemoveSelection = parseGuiSettings(guiConfig, "blacklist-player-remove-selection.", createDefaultPlayerSelectionItems());
         this.blacklistSocketAddSelection = parseGuiSettings(guiConfig, "blacklist-socket-add-selection.", createDefaultPlayerSelectionItems());
         this.blacklistSocketRemoveSelection = parseGuiSettings(guiConfig, "blacklist-socket-remove-selection.", createDefaultPlayerSelectionItems());
+        this.animalSelection = parseGuiSettings(guiConfig, "animal-selection.", createDefaultAnimalSelectionItems());
+        this.animalSelectionConfirm = parseGuiSettings(guiConfig, "animal-selection-confirm.", createDefaultAnimalSelectionConfirmItems());
 
         // Socket item format
         this.socketItemNameFormat = guiConfig.getString("socket-item-format.name-format", "<!italic><white><name></white>");
@@ -154,6 +162,11 @@ public class GuiConfiguration {
                 "blacklist-socket-remove-selection.player-head-item",
                 "<!italic><green><bold><player></bold></green>",
                 List.of("<!italic><gray>Klicke um die Sperre aufzuheben</gray>"));
+
+        this.animalSelectionItemNameFormat = guiConfig.getString("animal-selection.animal-item.name-format", "<!italic><yellow><bold><type></bold></yellow>");
+        this.animalSelectionItemLore = guiConfig.getStringList("animal-selection.animal-item.lore");
+        this.animalSelectionItemSelectedNameFormat = guiConfig.getString("animal-selection.animal-item.selected-name-format", "<!italic><green><bold><type></bold></green>");
+        this.animalSelectionItemSelectedLore = guiConfig.getStringList("animal-selection.animal-item.selected-lore");
         
         // Socket management item format
         this.socketManagementItemNameFormat = guiConfig.getString("socket-management.socket-management-item.name-format", "<!italic><white><name></white>");
@@ -227,6 +240,8 @@ public class GuiConfiguration {
     public GuiSettings blacklistPlayerRemoveSelection() { return blacklistPlayerRemoveSelection; }
     public GuiSettings blacklistSocketAddSelection() { return blacklistSocketAddSelection; }
     public GuiSettings blacklistSocketRemoveSelection() { return blacklistSocketRemoveSelection; }
+    public GuiSettings animalSelection() { return animalSelection; }
+    public GuiSettings animalSelectionConfirm() { return animalSelectionConfirm; }
     public String socketItemNameFormat() { return socketItemNameFormat; }
     public String socketItemOwnerFormat() { return socketItemOwnerFormat; }
     public String socketItemClickHint() { return socketItemClickHint; }
@@ -246,6 +261,10 @@ public class GuiConfiguration {
     public PlayerHeadItemConfig blacklistPlayerRemoveHead() { return blacklistPlayerRemoveHead; }
     public PlayerHeadItemConfig blacklistSocketAddHead() { return blacklistSocketAddHead; }
     public PlayerHeadItemConfig blacklistSocketRemoveHead() { return blacklistSocketRemoveHead; }
+    public String animalSelectionItemNameFormat() { return animalSelectionItemNameFormat; }
+    public List<String> animalSelectionItemLore() { return animalSelectionItemLore; }
+    public String animalSelectionItemSelectedNameFormat() { return animalSelectionItemSelectedNameFormat; }
+    public List<String> animalSelectionItemSelectedLore() { return animalSelectionItemSelectedLore; }
     public String socketManagementItemNameFormat() { return socketManagementItemNameFormat; }
     public String socketManagementItemLocationFormat() { return socketManagementItemLocationFormat; }
     public String socketManagementItemDeleteHint() { return socketManagementItemDeleteHint; }
@@ -483,6 +502,18 @@ public class GuiConfiguration {
         items.put("blacklist-add", new GuiItem(11, Material.IRON_BARS, "<red>Spieler sperren", List.of("<gray>Spieler für diesen Socket sperren")));
         items.put("blacklist-remove", new GuiItem(15, Material.BARRIER, "<green>Sperre aufheben", List.of("<gray>Socket-Sperre entfernen")));
         items.put("back", new GuiItem(18, Material.ARROW, "<purple>Zurück", List.of("<gray>Zurück zum Socket-Editor")));
+        return items;
+    }
+
+    private static Map<String, GuiItem> createDefaultAnimalSelectionItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        return items;
+    }
+
+    private static Map<String, GuiItem> createDefaultAnimalSelectionConfirmItems() {
+        Map<String, GuiItem> items = new HashMap<>();
+        items.put("confirm", new GuiItem(11, Material.LIME_DYE, "<green>Bestätigen", List.of("<gray>Tiere senden")));
+        items.put("cancel", new GuiItem(15, Material.RED_DYE, "<red>Abbrechen", List.of("<gray>Auswahl abbrechen")));
         return items;
     }
 }

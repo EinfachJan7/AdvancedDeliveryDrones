@@ -1090,16 +1090,21 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return List.of();
         }
         List<LivingEntity> selected = new ArrayList<>();
+        boolean requiresLeash = !droneManager.settings().animalSelectionEnabled();
         for (UUID animalId : selectedAnimalIds) {
             Entity entity = Bukkit.getEntity(animalId);
             if (!(entity instanceof LivingEntity living) || living.isDead()) {
                 continue;
             }
-            if (!living.isLeashed()) {
-                continue;
-            }
-            Entity leashHolder = living.getLeashHolder();
-            if (leashHolder != null && leashHolder.getUniqueId().equals(senderId)) {
+            if (requiresLeash) {
+                if (!living.isLeashed()) {
+                    continue;
+                }
+                Entity leashHolder = living.getLeashHolder();
+                if (leashHolder != null && leashHolder.getUniqueId().equals(senderId)) {
+                    selected.add(living);
+                }
+            } else {
                 selected.add(living);
             }
         }
@@ -1426,7 +1431,14 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return;
         }
         if (animalsItem != null && slot == animalsItem.position()) {
-            Bukkit.getScheduler().runTask(plugin, () -> toggleComposeHubAnimalsOnly(sender, holder));
+            if (droneManager.settings().animalSelectionEnabled()) {
+                Bukkit.getScheduler().runTask(plugin, () -> {
+                    de.cb.drones.gui.AnimalSelectionGUI gui = new de.cb.drones.gui.AnimalSelectionGUI(plugin, droneManager, sender, holder);
+                    gui.openSelectionMenu();
+                });
+            } else {
+                Bukkit.getScheduler().runTask(plugin, () -> toggleComposeHubAnimalsOnly(sender, holder));
+            }
             return;
         }
         if (launchItem != null && slot == launchItem.position()) {
@@ -1493,6 +1505,46 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 enabled
         );
         suppressComposeHubReopen.remove(sender.getUniqueId());
+    }
+
+    public void reopenComposeHub(Player sender, ComposeHubInventoryHolder holder) {
+        Player receiver = Bukkit.getPlayer(holder.receiverId());
+        if (receiver == null || !receiver.isOnline()) {
+            droneManager.sendMessage(sender, "player-offline");
+            return;
+        }
+        openComposeHub(sender, receiver, holder.fixedTarget(), holder.exactSocketTarget(), holder.socketName(), holder.selectedAnimalIds(), holder.animalsOnlyMode());
+    }
+
+    public void finishAnimalSelectionLaunch(Player sender, ComposeHubInventoryHolder hubHolder, List<UUID> finalSelection) {
+        composeHubAnimalsOnly.put(sender.getUniqueId(), true);
+        returnComposeDraftItemsToPlayer(sender);
+        
+        PendingSendDraft emptyDraft = new PendingSendDraft(
+                hubHolder.senderId(),
+                hubHolder.receiverId(),
+                hubHolder.fixedTarget(),
+                hubHolder.adminSend(),
+                finalSelection,
+                hubHolder.exactSocketTarget(),
+                hubHolder.socketName(),
+                new ItemStack[droneManager.settings().inventorySize()],
+                true
+        );
+        storeComposeDraftInMemory(sender.getUniqueId(), emptyDraft, true);
+        
+        ComposeHubInventoryHolder updatedHolder = new ComposeHubInventoryHolder(
+                hubHolder.senderId(),
+                hubHolder.receiverId(),
+                hubHolder.fixedTarget(),
+                hubHolder.adminSend(),
+                finalSelection,
+                hubHolder.exactSocketTarget(),
+                hubHolder.socketName(),
+                true
+        );
+        
+        launchDroneFromComposeHub(sender, updatedHolder);
     }
 
     @EventHandler
@@ -1769,15 +1821,16 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 }
             }
         }
-        List<LivingEntity> nearbyLeashed = animalsOnlyMode ? listSenderLeashedAnimals(sender) : List.of();
-        if (animalsOnlyMode) {
+        boolean useLeashed = !droneManager.settings().animalSelectionEnabled();
+        List<LivingEntity> nearbyLeashed = animalsOnlyMode && useLeashed ? listSenderLeashedAnimals(sender) : List.of();
+        if (animalsOnlyMode && useLeashed) {
             int maxAnimals = droneManager.maxLeashedAnimalsFor(sender);
             if (maxAnimals > 0 && nearbyLeashed.size() > maxAnimals) {
                 droneManager.sendMessage(sender, "too-many-leashed-animals", "<max>", String.valueOf(maxAnimals));
                 return;
             }
         }
-        List<UUID> animalIds = animalsOnlyMode
+        List<UUID> animalIds = (animalsOnlyMode && useLeashed)
                 ? nearbyLeashed.stream().map(LivingEntity::getUniqueId).toList()
                 : hubHolder.selectedAnimalIds();
         List<LivingEntity> attachedAnimals = resolveSelectedAnimals(hubHolder.senderId(), animalIds);
@@ -2125,7 +2178,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     ) {
     }
 
-    private record ComposeHubInventoryHolder(
+    public record ComposeHubInventoryHolder(
             UUID senderId,
             UUID receiverId,
             Location fixedTarget,

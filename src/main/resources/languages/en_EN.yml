@@ -177,3 +177,4 @@ config-editor-enum-cycled: "<green><option> is now <white><value></white>.</gree
 config-editor-reloaded: "<green>Config reloaded.</green>"
 config-editor-option-config-editor-messages-name: "Editor Messages"
 config-editor-option-config-editor-messages-desc: "Show notifications when config settings change"
+not-enough-leads: "<red>You don't have enough leads for all selected animals! (<count> needed)</red>"
