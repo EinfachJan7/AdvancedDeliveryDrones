@@ -582,6 +582,14 @@ config-editor:
 # <sitting>     : Sitting status
 # <anger>       : Anger status
 # <saddled>     : Saddled status
+# <panda-main-gene>   : Panda main gene
+# <panda-hidden-gene> : Panda hidden gene
+# <has-egg>           : Turtle egg status
+# <carried-block>     : Enderman block
+# <player-created>    : Iron Golem player created status
+# <derp>              : Snowman derp status
+# <left-horn>         : Goat left horn status
+# <right-horn>        : Goat right horn status
 #
 # Note: Lines containing placeholders for data the animal doesn't have 
 # (e.g. <profession> on a pig) will be automatically hidden!
@@ -608,6 +616,14 @@ mob-sending:
       - "<!italic><gray>  sɪᴛᴛɪɴɢ: <white><sitting>"
       - "<!italic><gray>  ᴀɴɢᴇʀ: <red><anger>"
       - "<!italic><gray>  sᴀᴅᴅʟᴇᴅ: <white><saddled>"
+      - "<!italic><gray>  ᴘᴀɴᴅᴀ-ɢᴇɴᴇ-ᴍ: <white><panda-main-gene>"
+      - "<!italic><gray>  ᴘᴀɴᴅᴀ-ɢᴇɴᴇ-ʜ: <white><panda-hidden-gene>"
+      - "<!italic><gray>  ʜᴀs-ᴇɢɢ: <white><has-egg>"
+      - "<!italic><gray>  ᴄᴀʀʀɪᴇᴅ-ʙʟᴏᴄᴋ: <white><carried-block>"
+      - "<!italic><gray>  ᴘʟᴀʏᴇʀ-ᴄʀᴇᴀᴛᴇᴅ: <white><player-created>"
+      - "<!italic><gray>  ᴅᴇʀᴘ: <white><derp>"
+      - "<!italic><gray>  ʟ-ʜᴏʀɴ: <white><left-horn>"
+      - "<!italic><gray>  ʀ-ʜᴏʀɴ: <white><right-horn>"
       - "<!italic><gray>  ʜᴇᴀʟᴛʜ: <red><health></red> <gray>/ <red><max-health></red> ❤"
       - "<!italic><gray>  sᴇʟᴇᴄᴛ ᴛʜɪs ᴀɴɪᴍᴀʟ"
       - "<!italic><gray>  ғᴏʀ ᴛʀᴀɴsᴘᴏʀᴛ."
@@ -629,6 +645,14 @@ mob-sending:
       - "<!italic><gray>  sɪᴛᴛɪɴɢ: <white><sitting>"
       - "<!italic><gray>  ᴀɴɢᴇʀ: <red><anger>"
       - "<!italic><gray>  sᴀᴅᴅʟᴇᴅ: <white><saddled>"
+      - "<!italic><gray>  ᴘᴀɴᴅᴀ-ɢᴇɴᴇ-ᴍ: <white><panda-main-gene>"
+      - "<!italic><gray>  ᴘᴀɴᴅᴀ-ɢᴇɴᴇ-ʜ: <white><panda-hidden-gene>"
+      - "<!italic><gray>  ʜᴀs-ᴇɢɢ: <white><has-egg>"
+      - "<!italic><gray>  ᴄᴀʀʀɪᴇᴅ-ʙʟᴏᴄᴋ: <white><carried-block>"
+      - "<!italic><gray>  ᴘʟᴀʏᴇʀ-ᴄʀᴇᴀᴛᴇᴅ: <white><player-created>"
+      - "<!italic><gray>  ᴅᴇʀᴘ: <white><derp>"
+      - "<!italic><gray>  ʟ-ʜᴏʀɴ: <white><left-horn>"
+      - "<!italic><gray>  ʀ-ʜᴏʀɴ: <white><right-horn>"
       - "<!italic><gray>  ʜᴇᴀʟᴛʜ: <red><health></red> <gray>/ <red><max-health></red> ❤"
       - "<!italic><green>  sᴇʟᴇᴄᴛᴇᴅ ғᴏʀ"
       - "<!italic><green>  ᴛʀᴀɴsᴘᴏʀᴛ!"

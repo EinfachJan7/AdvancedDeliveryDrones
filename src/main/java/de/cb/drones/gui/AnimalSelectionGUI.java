@@ -236,6 +236,15 @@ public class AnimalSelectionGUI implements Listener {
             else if (animal instanceof org.bukkit.entity.AbstractHorse h) saddled = h.getInventory().getSaddle() != null ? "Yes" : null;
             else if (animal instanceof org.bukkit.entity.Strider st) saddled = st.hasSaddle() ? "Yes" : null;
 
+            String pandaMainGene = animal instanceof org.bukkit.entity.Panda p ? p.getMainGene().name() : null;
+            String pandaHiddenGene = animal instanceof org.bukkit.entity.Panda p ? p.getHiddenGene().name() : null;
+            String hasEgg = animal instanceof org.bukkit.entity.Turtle t && t.hasEgg() ? "Yes" : null;
+            String carriedBlock = animal instanceof org.bukkit.entity.Enderman e && e.getCarriedBlock() != null ? e.getCarriedBlock().getMaterial().name() : null;
+            String playerCreated = animal instanceof org.bukkit.entity.IronGolem ig && ig.isPlayerCreated() ? "Yes" : null;
+            String derp = animal instanceof org.bukkit.entity.Snowman sm && sm.isDerp() ? "Yes" : null;
+            String leftHorn = animal instanceof org.bukkit.entity.Goat g && g.hasLeftHorn() ? "Yes" : null;
+            String rightHorn = animal instanceof org.bukkit.entity.Goat g && g.hasRightHorn() ? "Yes" : null;
+
             List<Component> lore = new ArrayList<>();
             for (String line : loreFormat) {
                 if (line.contains("<custom-name>") && customName == null) continue;
@@ -251,6 +260,14 @@ public class AnimalSelectionGUI implements Listener {
                 if (line.contains("<sitting>") && sitting == null) continue;
                 if (line.contains("<anger>") && anger == null) continue;
                 if (line.contains("<saddled>") && saddled == null) continue;
+                if (line.contains("<panda-main-gene>") && pandaMainGene == null) continue;
+                if (line.contains("<panda-hidden-gene>") && pandaHiddenGene == null) continue;
+                if (line.contains("<has-egg>") && hasEgg == null) continue;
+                if (line.contains("<carried-block>") && carriedBlock == null) continue;
+                if (line.contains("<player-created>") && playerCreated == null) continue;
+                if (line.contains("<derp>") && derp == null) continue;
+                if (line.contains("<left-horn>") && leftHorn == null) continue;
+                if (line.contains("<right-horn>") && rightHorn == null) continue;
 
                 String replaced = line.replace("<type>", typeName);
                 if (customName != null) replaced = replaced.replace("<custom-name>", customName);
@@ -268,6 +285,14 @@ public class AnimalSelectionGUI implements Listener {
                 if (sitting != null) replaced = replaced.replace("<sitting>", sitting);
                 if (anger != null) replaced = replaced.replace("<anger>", anger);
                 if (saddled != null) replaced = replaced.replace("<saddled>", saddled);
+                if (pandaMainGene != null) replaced = replaced.replace("<panda-main-gene>", pandaMainGene);
+                if (pandaHiddenGene != null) replaced = replaced.replace("<panda-hidden-gene>", pandaHiddenGene);
+                if (hasEgg != null) replaced = replaced.replace("<has-egg>", hasEgg);
+                if (carriedBlock != null) replaced = replaced.replace("<carried-block>", carriedBlock);
+                if (playerCreated != null) replaced = replaced.replace("<player-created>", playerCreated);
+                if (derp != null) replaced = replaced.replace("<derp>", derp);
+                if (leftHorn != null) replaced = replaced.replace("<left-horn>", leftHorn);
+                if (rightHorn != null) replaced = replaced.replace("<right-horn>", rightHorn);
                 
                 lore.add(MINI_MESSAGE.deserialize(replaced));
             }
