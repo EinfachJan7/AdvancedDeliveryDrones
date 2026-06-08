@@ -1268,15 +1268,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         if (args.length == 2 && "send".equalsIgnoreCase(args[0]) && sender instanceof Player player) {
             if (!droneSettings.playersEnabled()) return List.of();
-            List<String> results = new ArrayList<>();
-            for (OfflinePlayer offline : Bukkit.getOfflinePlayers()) {
-                if ((offline.hasPlayedBefore() || offline.isOnline()) && !offline.getUniqueId().equals(player.getUniqueId())) {
-                    if (settingsRepository.canReceive(offline.getUniqueId()) && offline.getName() != null) {
-                        results.add(offline.getName());
-                    }
-                }
-            }
-            return results;
+            return getSendableOnlinePlayerNames(player);
         }
         if (args.length == 2 && "socket".equalsIgnoreCase(args[0])) {
             return List.of("place", "remove", "list", "send", "manage", "rename", "trust", "untrust", "blacklist");
@@ -1348,6 +1340,23 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                     results.add(offline.getName());
                 }
             }
+        }
+        return results;
+    }
+
+    private List<String> getSendableOnlinePlayerNames(Player sender) {
+        List<String> results = new ArrayList<>();
+        for (Player target : Bukkit.getOnlinePlayers()) {
+            if (target.equals(sender)) {
+                continue;
+            }
+            if (!settingsRepository.canReceive(target.getUniqueId())) {
+                continue;
+            }
+            if (blacklistRepository.isPlayerBlacklisted(target.getUniqueId(), sender.getUniqueId())) {
+                continue;
+            }
+            results.add(target.getName());
         }
         return results;
     }

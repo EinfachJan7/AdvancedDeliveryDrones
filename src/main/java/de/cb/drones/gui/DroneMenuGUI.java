@@ -85,9 +85,16 @@ public class DroneMenuGUI {
         GuiSettings menuSettings = droneSettings.guiConfig().playerSelection();
         List<org.bukkit.entity.Player> onlinePlayers = new ArrayList<>();
         for (org.bukkit.entity.Player player : sender.getServer().getOnlinePlayers()) {
-            if (settingsRepository.canReceive(player.getUniqueId()) && !player.equals(sender)) {
-                onlinePlayers.add(player);
+            if (!player.isOnline() || player.equals(sender)) {
+                continue;
             }
+            if (!settingsRepository.canReceive(player.getUniqueId())) {
+                continue;
+            }
+            if (blacklistRepository.isPlayerBlacklisted(player.getUniqueId(), sender.getUniqueId())) {
+                continue;
+            }
+            onlinePlayers.add(player);
         }
         
         int size = menuSettings.size();
@@ -151,7 +158,7 @@ public class DroneMenuGUI {
                 if (customTexture != null) {
                     SkullTextureUtils.applyTexture(skullMeta, customTexture);
                 } else {
-                    skullMeta.setOwningPlayer(player);
+                    SkullTextureUtils.applyOwningPlayer(skullMeta, player);
                 }
             }
 
@@ -188,7 +195,7 @@ public class DroneMenuGUI {
                 if (customTexture != null) {
                     SkullTextureUtils.applyTexture(skullMeta, customTexture);
                 } else {
-                    skullMeta.setOwningPlayer(player);
+                    SkullTextureUtils.applyOwningPlayer(skullMeta, player);
                 }
             }
 

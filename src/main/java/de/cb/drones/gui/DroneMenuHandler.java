@@ -369,9 +369,11 @@ public class DroneMenuHandler implements Listener {
 
         if (target != null && target.isOnline()) {
             player.closeInventory();
-            // Execute the send command
             player.performCommand("drone send " + target.getName());
+            return;
         }
+
+        droneManager.sendMessage(player, "player-offline");
     }
 
     private void handleTargetSelectionClick(Player player, ItemStack clicked, int slot) {
