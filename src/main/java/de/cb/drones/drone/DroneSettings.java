@@ -67,7 +67,8 @@ public record DroneSettings(
         boolean animalSelectionEnabled,
         double animalSelectionRadius,
         boolean animalSelectionLeashableOnly,
-        boolean animalSelectionPersistNbtData
+        boolean animalSelectionPersistNbtData,
+        List<String> mobSendingBlacklist
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg, FileConfiguration guiConfig) {
         String section = "settings.drone.";
@@ -133,6 +134,9 @@ public record DroneSettings(
         double animalSelectionRadius = cfg.getDouble(section + "mob-sending.radius", 10.0D);
         boolean animalSelectionLeashableOnly = cfg.getBoolean(section + "mob-sending.leashable-only", true);
         boolean animalSelectionPersistNbtData = cfg.getBoolean(section + "mob-sending.persist-nbt-data", true);
+        List<String> mobSendingBlacklist = cfg.getStringList(section + "mob-sending.blacklist").stream()
+                .map(String::toUpperCase)
+                .toList();
 
         // Create GUI configuration from separate file
         GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
@@ -193,7 +197,8 @@ public record DroneSettings(
                 animalSelectionEnabled,
                 animalSelectionRadius,
                 animalSelectionLeashableOnly,
-                animalSelectionPersistNbtData
+                animalSelectionPersistNbtData,
+                mobSendingBlacklist
         );
     }
 

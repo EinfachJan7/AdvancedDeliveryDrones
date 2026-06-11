@@ -68,9 +68,14 @@ public class AnimalSelectionGUI implements Listener {
     private void loadAvailableAnimals() {
         double radius = droneManager.settings().animalSelectionRadius();
         boolean leashableOnly = droneManager.settings().animalSelectionLeashableOnly();
+        List<String> blacklist = droneManager.settings().mobSendingBlacklist();
         
         for (Entity entity : sender.getNearbyEntities(radius, radius, radius)) {
             if (!(entity instanceof LivingEntity living) || entity instanceof Player || entity.isDead()) {
+                continue;
+            }
+            // Skip blacklisted mob types
+            if (blacklist.contains(entity.getType().name().toUpperCase())) {
                 continue;
             }
             if (leashableOnly) {

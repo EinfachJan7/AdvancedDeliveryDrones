@@ -1084,9 +1084,14 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
         List<LivingEntity> selected = new ArrayList<>();
         boolean requiresLeash = !droneManager.settings().animalSelectionEnabled();
+        List<String> blacklist = droneManager.settings().mobSendingBlacklist();
         for (UUID animalId : selectedAnimalIds) {
             Entity entity = Bukkit.getEntity(animalId);
             if (!(entity instanceof LivingEntity living) || living.isDead()) {
+                continue;
+            }
+            // Skip blacklisted mob types
+            if (blacklist.contains(entity.getType().name().toUpperCase())) {
                 continue;
             }
             if (requiresLeash) {

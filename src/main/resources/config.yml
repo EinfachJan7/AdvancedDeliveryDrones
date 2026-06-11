@@ -49,6 +49,8 @@ settings:
       radius: 10.0
       leashable-only: true
       persist-nbt-data: true
+      # Blacklisted mob types that cannot be sent via mob drones (entity type names, e.g. WARDEN, ENDER_DRAGON)
+      blacklist: []
     max-leashed-animals-per-drone: 1
     max-sockets-per-player: 1
     # Send cooldown settings (in seconds)
