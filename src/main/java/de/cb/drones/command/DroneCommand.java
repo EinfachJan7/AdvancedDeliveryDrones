@@ -1518,10 +1518,17 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     public void finishAnimalSelectionLaunch(Player sender, ComposeHubInventoryHolder hubHolder, List<UUID> finalSelection) {
-        composeHubAnimalsOnly.put(sender.getUniqueId(), true);
-        returnComposeDraftItemsToPlayer(sender);
+        boolean hasSelectedAnimals = !finalSelection.isEmpty();
+        composeHubAnimalsOnly.put(sender.getUniqueId(), hasSelectedAnimals);
         
-        PendingSendDraft emptyDraft = new PendingSendDraft(
+        if (hasSelectedAnimals) {
+            returnComposeDraftItemsToPlayer(sender);
+        }
+        
+        PendingSendDraft existingDraft = sendDrafts.get(sender.getUniqueId());
+        ItemStack[] items = (hasSelectedAnimals || existingDraft == null) ? new ItemStack[droneManager.settings().inventorySize()] : existingDraft.contents();
+
+        PendingSendDraft updatedDraft = new PendingSendDraft(
                 hubHolder.senderId(),
                 hubHolder.receiverId(),
                 hubHolder.fixedTarget(),
@@ -1529,10 +1536,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 finalSelection,
                 hubHolder.exactSocketTarget(),
                 hubHolder.socketName(),
-                new ItemStack[droneManager.settings().inventorySize()],
-                true
+                items,
+                hasSelectedAnimals
         );
-        storeComposeDraftInMemory(sender.getUniqueId(), emptyDraft, true);
+        storeComposeDraftInMemory(sender.getUniqueId(), updatedDraft, hasSelectedAnimals);
         
         ComposeHubInventoryHolder updatedHolder = new ComposeHubInventoryHolder(
                 hubHolder.senderId(),
@@ -1542,7 +1549,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 finalSelection,
                 hubHolder.exactSocketTarget(),
                 hubHolder.socketName(),
-                true
+                hasSelectedAnimals
         );
         
         openComposeHub(
@@ -1552,7 +1559,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 updatedHolder.exactSocketTarget(),
                 updatedHolder.socketName(),
                 updatedHolder.selectedAnimalIds(),
-                true
+                hasSelectedAnimals
         );
     }
 
