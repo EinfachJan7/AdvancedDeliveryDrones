@@ -46,7 +46,7 @@ socket-drone-pickedup-picker: "<gold>Vous avez récupéré un drone de <white><o
 preview-unavailable: "<red>Aucun aperçu disponible pour ce drone.</red>"
 too-many-leashed-animals: "<red>Vous avez trop d'animaux en laisse. Maximum par drone : <max>.</red>"
 compose-hub-empty: "<red>Ajoutez des objets ou attachez des animaux avant d'envoyer le drone.</red>"
-compose-hub-items-disabled: "<red>Vous avez sélectionné des animaux. Pour envoyer des objets, désélectionnez-les.</red>"
+compose-hub-items-disabled: "<red>Vous devez d'abord désélectionner tous les animaux avant de pouvoir emballer des objets.</red>"
 compose-hub-animals-only-on: "<gold>Mode animaux uniquement activé : seuls les animaux en laisse seront envoyés.</gold>"
 compose-hub-animals-only-off: "<green>Mode animaux uniquement désactivé : vous pouvez à nouveau ajouter des objets.</green>"
 compose-hub-no-leashed-animals: "<red>Vous n'avez aucun animal en laisse à proximité.</red>"

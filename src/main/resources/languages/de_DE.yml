@@ -47,7 +47,7 @@ preview-unavailable: "<red>Für diese Drohne ist keine Vorschau verfügbar.</red
 too-many-leashed-animals: "<red>Du hast zu viele angeleinte Tiere. Maximum pro Drohne: <max>.</red>"
 compose-hub-empty: "<red>Lege Items ein oder aktiviere Nur-Tiere mit angeleinten Tieren, bevor du abschickst.</red>"
 compose-hub-items-returned: "<green>Eingepackte Items wurden dir zurückgegeben.</green>"
-compose-hub-items-disabled: "<red>Du hast Tiere ausgewählt. Um Items zu versenden, wähle die Tiere ab.</red>"
+compose-hub-items-disabled: "<red>Du musst zuerst alle Tiere abwählen, bevor du Items einpacken kannst.</red>"
 compose-hub-animals-only-on: "<gold>Nur-Tiere-Modus aktiviert: Es werden nur angeleinte Tiere gesendet.</gold>"
 compose-hub-animals-only-off: "<green>Nur-Tiere-Modus deaktiviert: Items können wieder eingepackt werden.</green>"
 compose-hub-no-leashed-animals: "<red>Du hast keine angeleinten Tiere in der Nähe.</red>"
