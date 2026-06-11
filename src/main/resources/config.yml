@@ -51,6 +51,8 @@ settings:
       persist-nbt-data: true
       # Blacklisted mob types that cannot be sent via mob drones (entity type names, e.g. WARDEN, ENDER_DRAGON)
       blacklist: []
+    # Blacklisted items that cannot be placed into the compose menu (material names, e.g. BEDROCK, BARRIER)
+    compose-item-blacklist: []
     max-leashed-animals-per-drone: 1
     max-sockets-per-player: 1
     # Send cooldown settings (in seconds)

@@ -2415,4 +2415,65 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
 
         return path;
     }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onComposeInventoryClick(InventoryClickEvent event) {
+        if (!(event.getView().getTopInventory().getHolder() instanceof ComposeInventoryHolder)) {
+            return;
+        }
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+        if (droneManager.settings().composeItemBlacklist().isEmpty()) {
+            return;
+        }
+
+        ItemStack item = null;
+
+        if (event.getClickedInventory() != null && event.getClickedInventory().equals(event.getView().getTopInventory())) {
+            if (event.getAction() == org.bukkit.event.inventory.InventoryAction.HOTBAR_SWAP ||
+                event.getAction() == org.bukkit.event.inventory.InventoryAction.HOTBAR_MOVE_AND_READD) {
+                item = event.getView().getBottomInventory().getItem(event.getHotbarButton());
+            } else {
+                item = event.getCursor();
+            }
+        } else if (event.getClickedInventory() != null && event.getClickedInventory().equals(event.getView().getBottomInventory())) {
+            if (event.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+                item = event.getCurrentItem();
+            }
+        }
+
+        if (item != null && !item.getType().isAir()) {
+            if (droneManager.settings().composeItemBlacklist().contains(item.getType().name().toUpperCase())) {
+                event.setCancelled(true);
+                droneManager.sendMessage(player, "compose-item-blacklisted");
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onComposeInventoryDrag(InventoryDragEvent event) {
+        if (!(event.getView().getTopInventory().getHolder() instanceof ComposeInventoryHolder)) {
+            return;
+        }
+        if (!(event.getWhoClicked() instanceof Player player)) {
+            return;
+        }
+        if (droneManager.settings().composeItemBlacklist().isEmpty()) {
+            return;
+        }
+
+        ItemStack item = event.getOldCursor();
+        if (item != null && !item.getType().isAir()) {
+            if (droneManager.settings().composeItemBlacklist().contains(item.getType().name().toUpperCase())) {
+                for (int slot : event.getRawSlots()) {
+                    if (slot < event.getView().getTopInventory().getSize()) {
+                        event.setCancelled(true);
+                        droneManager.sendMessage(player, "compose-item-blacklisted");
+                        return;
+                    }
+                }
+            }
+        }
+    }
 }

@@ -68,7 +68,8 @@ public record DroneSettings(
         double animalSelectionRadius,
         boolean animalSelectionLeashableOnly,
         boolean animalSelectionPersistNbtData,
-        List<String> mobSendingBlacklist
+        List<String> mobSendingBlacklist,
+        List<String> composeItemBlacklist
 ) {
     public static DroneSettings fromConfig(FileConfiguration cfg, FileConfiguration guiConfig) {
         String section = "settings.drone.";
@@ -138,6 +139,10 @@ public record DroneSettings(
                 .map(String::toUpperCase)
                 .toList();
 
+        List<String> composeItemBlacklist = cfg.getStringList(section + "compose-item-blacklist").stream()
+                .map(String::toUpperCase)
+                .toList();
+
         // Create GUI configuration from separate file
         GuiConfiguration guiConfigObj = new GuiConfiguration(guiConfig);
 
@@ -198,7 +203,8 @@ public record DroneSettings(
                 animalSelectionRadius,
                 animalSelectionLeashableOnly,
                 animalSelectionPersistNbtData,
-                mobSendingBlacklist
+                mobSendingBlacklist,
+                composeItemBlacklist
         );
     }
 
