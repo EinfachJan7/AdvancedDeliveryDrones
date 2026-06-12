@@ -493,7 +493,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         // Initialize missing cancel IDs
         for (de.cb.drones.drone.DeliveryDrone d : outgoing) {
             if (d.getCancelId() <= 0) {
-                int maxId = outgoing.stream().mapToInt(de.cb.drones.drone.DeliveryDrone::getCancelId).max().orElse(0);
+                int maxId = outgoing.stream().mapToInt(de.cb.drones.drone.DeliveryDrone::getCancelId).filter(id -> id > 0).max().orElse(0);
                 d.setCancelId(maxId + 1);
             }
         }
@@ -1340,7 +1340,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             
             for (de.cb.drones.drone.DeliveryDrone d : outgoing) {
                 if (d.getCancelId() <= 0) {
-                    int maxId = outgoing.stream().mapToInt(de.cb.drones.drone.DeliveryDrone::getCancelId).max().orElse(0);
+                    int maxId = outgoing.stream().mapToInt(de.cb.drones.drone.DeliveryDrone::getCancelId).filter(id -> id > 0).max().orElse(0);
                     d.setCancelId(maxId + 1);
                 }
             }
