@@ -179,6 +179,8 @@ config-editor-option-config-editor-messages-name: "Editor Messages"
 config-editor-option-config-editor-messages-desc: "Show notifications when config settings change"
 not-enough-leads: "<red>You don't have enough leads for all selected animals! (<count> needed)</red>"
 compose-item-blacklisted: "<red>This item cannot be placed into the compose menu.</red>"
-w o r l d g u a r d - c a n n o t - s t a r t :  
- < r e d > H e r e   n o   d r o n e s   c a n   b e   s t a r t e d . < / r e d >  
- 
+worldguard-cannot-start: "<red>You cannot start drones here!</red>"
+worldguard-cannot-land-target: "<red>The target is in a region where drones cannot land!</red>"
+worldguard-cannot-receive: "<red>The target player is in a region where receiving drones is blocked!</red>"
+worldguard-cannot-place-socket: "<red>You cannot place delivery sockets here!</red>"
+worldguard-cannot-use-socket: "<red>You cannot use sockets in this region!</red>"

@@ -45,7 +45,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
 
     @Override
     public void onLoad() {
-        de.cb.drones.util.WorldGuardHook.onLoad();
+        de.cb.drones.util.WorldGuardHook.onLoad(getDataFolder());
     }
 
     @Override

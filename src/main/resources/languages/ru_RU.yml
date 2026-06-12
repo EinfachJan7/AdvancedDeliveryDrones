@@ -180,3 +180,8 @@ config-editor-option-config-editor-messages-name: "Сообщения редак
 config-editor-option-config-editor-messages-desc: "Показывать уведомления при изменении параметров конфигурации"
 not-enough-leads: "<red>У вас недостаточно поводков для всех выбранных животных! (нужно <count>)</red>"
 compose-item-blacklisted: "<red>Этот предмет нельзя отправить.</red>"
+worldguard-cannot-start: "<red>Вы не можете запускать дронов здесь!</red>"
+worldguard-cannot-land-target: "<red>Цель находится в регионе, где дроны не могут приземляться!</red>"
+worldguard-cannot-receive: "<red>Целевой игрок находится в регионе, где прием дронов заблокирован!</red>"
+worldguard-cannot-place-socket: "<red>Вы не можете размещать здесь розетки доставки!</red>"
+worldguard-cannot-use-socket: "<red>Вы не можете использовать розетки в этом регионе!</red>"

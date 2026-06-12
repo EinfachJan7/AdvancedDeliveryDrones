@@ -180,6 +180,8 @@ config-editor-option-config-editor-messages-name: "Messages de l'éditeur"
 config-editor-option-config-editor-messages-desc: "Afficher les notifications lors du changement des paramètres de configuration"
 not-enough-leads: "<red>Vous n'avez pas assez de laisses pour tous les animaux sélectionnés ! (<count> requises)</red>"
 compose-item-blacklisted: "<red>Cet objet ne peut pas être envoyé.</red>"
-w o r l d g u a r d - c a n n o t - s t a r t :  
- < r e d > L e s   d r o n e s   n e   p e u v e n t   p a s   � t r e   l a n c � s   d e p u i s   c e t t e   z o n e . < / r e d >  
- 
+worldguard-cannot-start: "<red>Vous ne pouvez pas démarrer de drones ici !</red>"
+worldguard-cannot-land-target: "<red>La cible se trouve dans une région où les drones ne peuvent pas atterrir !</red>"
+worldguard-cannot-receive: "<red>Le joueur cible se trouve dans une région où la réception de drones est bloquée !</red>"
+worldguard-cannot-place-socket: "<red>Vous ne pouvez pas placer de prises de livraison ici !</red>"
+worldguard-cannot-use-socket: "<red>Vous ne pouvez pas utiliser de prises dans cette région !</red>"

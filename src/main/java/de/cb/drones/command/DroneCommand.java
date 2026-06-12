@@ -660,6 +660,11 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
 
         Location loc = player.getLocation();
+        
+        if (!de.cb.drones.util.WorldGuardHook.canPlaceSocket(loc, player)) {
+            droneManager.sendMessage(player, "worldguard-cannot-place-socket");
+            return true;
+        }
         try {
             socketRepository.addSocket(player.getUniqueId(), player.getName(), socketName, loc, droneManager.maxSocketsFor(player));
         } catch (IllegalArgumentException e) {
@@ -976,6 +981,11 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 
         if (!droneManager.canSenderLaunch(player.getUniqueId())) {
             droneManager.sendMessage(player, "sender-limit-reached", "<max>", String.valueOf(droneManager.maxActiveForSender(player.getUniqueId())));
+            return true;
+        }
+
+        if (!de.cb.drones.util.WorldGuardHook.canUseSocket(targetSocket.location(), player)) {
+            droneManager.sendMessage(player, "worldguard-cannot-use-socket");
             return true;
         }
 
@@ -1988,6 +1998,15 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             deliveryInventory.clear();
         }
         Location targetLocation = holder.fixedTarget() != null ? holder.fixedTarget() : receiver.getLocation().clone();
+        
+        if (!de.cb.drones.util.WorldGuardHook.canLand(targetLocation, receiver)) {
+            droneManager.sendMessage(sender, "worldguard-cannot-land-target");
+            return false;
+        }
+        if (!de.cb.drones.util.WorldGuardHook.canReceive(targetLocation, receiver)) {
+            droneManager.sendMessage(sender, "worldguard-cannot-receive");
+            return false;
+        }
         de.cb.drones.drone.DeliveryDrone drone = droneManager.spawnDrone(
                 sender,
                 receiver,
