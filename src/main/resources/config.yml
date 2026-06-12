@@ -12,17 +12,27 @@ plugin:
 
 hooks:
   worldguard: true
+  # Pl3xMap Web-Map Integration
   pl3xmap:
+    # Set to true to enable the Pl3xMap hook. Disabling this will delete the pl3xmap icon folder.
     enabled: true
+    # The name of the layer shown in the Pl3xMap sidebar
     layer-name: "Delivery Drones"
     marker:
+      # If true, the plugin will use an image file from plugins/AdvancedDeliveryDrones/pl3xmap/
       use-custom-icon: false
+      # The filename of the image in the pl3xmap folder (e.g. drone.png)
       icon-filename: "drone.png"
+      # Fallback color (in HEX) for the drone marker if use-custom-icon is false
       color: "#FFAA00"
+      # The size of the circular marker if use-custom-icon is false
       radius: 2.0
     flight-path:
+      # If true, a line will be drawn from the drone's current position to its destination
       enabled: true
+      # The color of the flight path line (in HEX)
       color: "#FF0000"
+      # The thickness of the flight path line
       weight: 2
 
 database:
