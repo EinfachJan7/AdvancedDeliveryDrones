@@ -107,7 +107,7 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             String indexed = switch (category) {
                 case "outgoing" -> resolveOutgoingDrone(drones, player, index, field);
                 case "incoming" -> resolveIncomingDrone(drones, player, index, field);
-                case "socket" -> resolveSocket(plugin.getSocketRepository(), player, index, field);
+                case "socket" -> resolveSocket(plugin.getSocketRepository(), drones, player, index, field);
                 default -> null;
             };
             return emptyIfNull(indexed);
@@ -141,6 +141,9 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             case "incoming_count" -> String.valueOf(drones.countIncoming(id));
             case "incoming_flying_count" -> String.valueOf(drones.countIncomingFlying(id));
             case "incoming_landed_count" -> String.valueOf(drones.countIncomingLanded(id));
+            case "outgoing_flying_count" -> String.valueOf(drones.getOutgoingDrones(id).stream().filter(DeliveryDrone::isFlying).count());
+            case "outgoing_landed_count" -> String.valueOf(drones.getOutgoingDrones(id).stream().filter(DeliveryDrone::isLanded).count());
+            case "max_inventory_size" -> String.valueOf(droneSettings.inventorySize());
             case "active_outgoing", "outgoing_active" -> String.valueOf(drones.activeOutgoingCount(id));
             case "active_slots_max", "max_active" -> String.valueOf(drones.maxActiveForSender(id));
             case "can_send", "can_launch" -> bool(drones.canSenderLaunch(id));
@@ -173,6 +176,14 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             case "nearest_landed_uuid" -> formatNearestLanded(drones, player, "uuid");
             case "nearest_landed_sender" -> formatNearestLanded(drones, player, "sender");
             case "nearest_landed_sender_name" -> formatNearestLanded(drones, player, "sender");
+            case "nearest_incoming_distance" -> formatNearestIncoming(drones, player, "distance");
+            case "nearest_incoming_world" -> formatNearestIncoming(drones, player, "world");
+            case "nearest_incoming_x" -> formatNearestIncoming(drones, player, "x");
+            case "nearest_incoming_y" -> formatNearestIncoming(drones, player, "y");
+            case "nearest_incoming_z" -> formatNearestIncoming(drones, player, "z");
+            case "nearest_incoming_uuid" -> formatNearestIncoming(drones, player, "uuid");
+            case "nearest_incoming_sender" -> formatNearestIncoming(drones, player, "sender");
+            case "nearest_incoming_sender_name" -> formatNearestIncoming(drones, player, "sender");
             case "players_enabled" -> bool(droneSettings.playersEnabled());
             case "sockets_enabled" -> bool(droneSettings.socketsEnabled());
             case "glowing_enabled" -> bool(droneSettings.glowingEnabled());
@@ -183,6 +194,9 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             case "total_landed" -> String.valueOf(drones.activeDronesSnapshot().stream().filter(DeliveryDrone::isLanded).count());
             case "database_type" -> cfg.getString("database.type", "YAML");
             case "language" -> cfg.getString("language", "de_DE");
+            case "total_sockets" -> String.valueOf(plugin.getSocketRepository().getAllSockets().size());
+            case "discord_webhook_enabled" -> bool(plugin.getDiscordWebhookManager().isEnabled());
+            case "wg_hook_enabled" -> bool(de.cb.drones.util.WorldGuardHook.isEnabled());
             default -> null;
         };
     }
@@ -213,6 +227,17 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             case "launch_animation" -> bool(settings.launchAnimationEnabled());
             case "collection_animation" -> bool(settings.collectionAnimationEnabled());
             case "locate_particles" -> bool(settings.locateParticlesEnabled());
+            case "animal_return_mode" -> settings.animalReturnMode().name();
+            case "particle_count" -> String.valueOf(settings.particleCount());
+            case "particle_trail_length" -> String.valueOf(settings.particleTrailLength());
+            case "glowing_enabled" -> bool(settings.glowingEnabled());
+            case "socket_name_use_allowed_list" -> bool(settings.socketNameUseAllowedList());
+            case "mob_sending_enabled", "animal_selection_enabled" -> bool(settings.animalSelectionEnabled());
+            case "mob_sending_radius", "animal_selection_radius" -> formatDouble(settings.animalSelectionRadius());
+            case "mob_sending_leashable_only", "animal_selection_leashable_only" -> bool(settings.animalSelectionLeashableOnly());
+            case "blocked_worlds_count" -> String.valueOf(settings.blockedWorlds().size());
+            case "mob_sending_blacklist_count" -> String.valueOf(settings.mobSendingBlacklist().size());
+            case "compose_item_blacklist_count" -> String.valueOf(settings.composeItemBlacklist().size());
             default -> null;
         };
     }
@@ -251,7 +276,7 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
         return resolveDroneField(drone, field, context);
     }
 
-    private String resolveSocket(SocketRepository sockets, Player player, int index, String field) {
+    private String resolveSocket(SocketRepository sockets, DroneManager drones, Player player, int index, String field) {
         List<DeliverySocket> list = sockets.getSocketsByOwner(player.getUniqueId());
         if (index < 1 || index > list.size()) {
             return "";
@@ -272,6 +297,8 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             case "blacklist_names" -> PlaceholderPlayerNames.joinNames(socket.blacklistedPlayers());
             case "created" -> String.valueOf(socket.createdTimestamp());
             case "uuid", "id" -> socket.socketId().toString();
+            case "has_incoming" -> bool(drones.isDroneFlyingToSocket(socket.name()));
+            case "is_owner" -> bool(player.getUniqueId().equals(socket.ownerId()));
             default -> null;
         };
     }
@@ -317,6 +344,8 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             case "eta", "eta_seconds" -> String.valueOf(drone.estimatedEtaSeconds());
             case "flying", "is_flying" -> bool(drone.isFlying());
             case "landed", "is_landed" -> bool(drone.isLanded());
+            case "is_returning" -> bool(drone.isReturningToSender());
+            case "is_animating" -> bool(drone.isAnimating());
             case "opened", "was_opened" -> bool(drone.wasOpenedByReceiver());
             case "animals_only" -> bool(drone.animalsOnlyDelivery());
             case "item_count", "items" -> String.valueOf(drone.filledInventorySlots());
@@ -414,6 +443,38 @@ public final class DeliveryDronesExpansion extends PlaceholderExpansion {
             case "uuid" -> drone.droneId().toString();
             case "sender" -> PlaceholderPlayerNames.fromUuid(drone.senderId());
             case "sender_name" -> PlaceholderPlayerNames.fromUuid(drone.senderId());
+            default -> "";
+        };
+    }
+
+    private String formatNearestIncoming(DroneManager drones, Player player, String field) {
+        DeliveryDrone nearest = null;
+        double nearestSq = Double.MAX_VALUE;
+        Location playerLoc = player.getLocation();
+        for (DeliveryDrone drone : drones.getIncomingDrones(player.getUniqueId())) {
+            Location droneLoc = drone.currentLocation();
+            if (droneLoc.getWorld() == null || !droneLoc.getWorld().equals(player.getWorld())) {
+                continue;
+            }
+            double distSq = droneLoc.distanceSquared(playerLoc);
+            if (distSq < nearestSq) {
+                nearestSq = distSq;
+                nearest = drone;
+            }
+        }
+        if (nearest == null) {
+            return "";
+        }
+        Location loc = nearest.currentLocation();
+        return switch (field) {
+            case "distance" -> String.valueOf((int) Math.round(player.getLocation().distance(loc)));
+            case "world" -> loc.getWorld() == null ? "" : loc.getWorld().getName();
+            case "x" -> String.valueOf(loc.getBlockX());
+            case "y" -> String.valueOf(loc.getBlockY());
+            case "z" -> String.valueOf(loc.getBlockZ());
+            case "uuid" -> nearest.droneId().toString();
+            case "sender" -> PlaceholderPlayerNames.fromUuid(nearest.senderId());
+            case "sender_name" -> PlaceholderPlayerNames.fromUuid(nearest.senderId());
             default -> "";
         };
     }
