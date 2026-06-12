@@ -121,6 +121,16 @@ public final class DeliveryDrone {
     /** Flying back to the sender after an aborted delivery that included animals. */
     private boolean returningToSender;
     
+    private int cancelId = -1;
+
+    public int getCancelId() {
+        return cancelId;
+    }
+
+    public void setCancelId(int cancelId) {
+        this.cancelId = cancelId;
+    }
+    
     public DeliveryDrone(
             UUID droneId,
             UUID senderId,

@@ -1,7 +1,6 @@
 # Select the language file to use from the languages/ directory (without .yml extension)
 # Default is de_DE (German), en_EN, es_Es, fr_FR, ru_RU, zh_CN are also available.
 language: de_DE
-config-version: 1
 
 # Plugin settings
 plugin:

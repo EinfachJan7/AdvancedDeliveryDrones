@@ -490,17 +490,23 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return true;
         }
 
+        // Initialize missing cancel IDs
+        for (de.cb.drones.drone.DeliveryDrone d : outgoing) {
+            if (d.getCancelId() <= 0) {
+                int maxId = outgoing.stream().mapToInt(de.cb.drones.drone.DeliveryDrone::getCancelId).max().orElse(0);
+                d.setCancelId(maxId + 1);
+            }
+        }
+
         if (args.length == 1) {
             if (outgoing.size() == 1) {
                 droneManager.cancelSpecific(player, outgoing.get(0));
                 droneManager.sendMessage(player, "cancel-success", "<count>", "1");
             } else {
                 player.sendMessage(MINI_MESSAGE.deserialize("<yellow>You have multiple active drones:</yellow>"));
-                int index = 1;
                 for (de.cb.drones.drone.DeliveryDrone d : outgoing) {
                     String target = d.socketName() != null ? "Socket " + d.socketName() : "Player " + (Bukkit.getOfflinePlayer(d.receiverId()).getName() != null ? Bukkit.getOfflinePlayer(d.receiverId()).getName() : "Unknown");
-                    player.sendMessage(MINI_MESSAGE.deserialize("<gray>- Drone <yellow>" + index + "</yellow> to " + target));
-                    index++;
+                    player.sendMessage(MINI_MESSAGE.deserialize("<gray>- Drone <yellow>" + d.getCancelId() + "</yellow> to " + target));
                 }
                 player.sendMessage(MINI_MESSAGE.deserialize("<gray>Use <yellow>/drone cancel <number></yellow> to cancel a specific drone."));
             }
@@ -508,9 +514,16 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         }
 
         try {
-            int index = Integer.parseInt(args[1]) - 1;
-            if (index >= 0 && index < outgoing.size()) {
-                droneManager.cancelSpecific(player, outgoing.get(index));
+            int inputId = Integer.parseInt(args[1]);
+            de.cb.drones.drone.DeliveryDrone targetDrone = null;
+            for (de.cb.drones.drone.DeliveryDrone d : outgoing) {
+                if (d.getCancelId() == inputId) {
+                    targetDrone = d;
+                    break;
+                }
+            }
+            if (targetDrone != null) {
+                droneManager.cancelSpecific(player, targetDrone);
                 droneManager.sendMessage(player, "cancel-success", "<count>", "1");
             } else {
                 player.sendMessage(MINI_MESSAGE.deserialize("<red>Invalid drone number.</red>"));
@@ -1317,6 +1330,17 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (args.length == 2 && "send".equalsIgnoreCase(args[0]) && sender instanceof Player player) {
             if (!droneSettings.playersEnabled()) return List.of();
             return getSendableOnlinePlayerNames(player);
+        }
+        if (args.length == 2 && "cancel".equalsIgnoreCase(args[0]) && sender instanceof Player player) {
+            java.util.List<de.cb.drones.drone.DeliveryDrone> outgoing = droneManager.activeDronesSnapshot().stream()
+                    .filter(drone -> drone.senderId().equals(player.getUniqueId()))
+                    .toList();
+            if (outgoing.isEmpty()) return List.of();
+            List<String> ids = new ArrayList<>();
+            for (int i = 1; i <= outgoing.size(); i++) {
+                ids.add(String.valueOf(i));
+            }
+            return ids;
         }
         if (args.length == 2 && "socket".equalsIgnoreCase(args[0])) {
             return List.of("place", "remove", "list", "send", "manage", "rename", "trust", "untrust", "blacklist");
