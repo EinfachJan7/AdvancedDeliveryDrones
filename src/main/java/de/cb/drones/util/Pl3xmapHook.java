@@ -32,6 +32,8 @@ public class Pl3xmapHook {
     private int markerColor;
     private double markerRadius;
     
+    private String tooltipFormat;
+    
     private boolean flightPathEnabled;
     private int flightPathColor;
     private int flightPathWeight;
@@ -52,6 +54,7 @@ public class Pl3xmapHook {
             this.iconFilename = plugin.getConfig().getString("hooks.pl3xmap.marker.icon-filename", "drone.png");
             this.markerColor = parseHexColor(plugin.getConfig().getString("hooks.pl3xmap.marker.color", "#FFAA00"));
             this.markerRadius = plugin.getConfig().getDouble("hooks.pl3xmap.marker.radius", 2.0);
+            this.tooltipFormat = plugin.getConfig().getString("hooks.pl3xmap.marker.tooltip", "Drone (<status>)<br>Sender: <sender><br>Target: <receiver>");
             
             this.flightPathEnabled = plugin.getConfig().getBoolean("hooks.pl3xmap.flight-path.enabled", true);
             this.flightPathColor = parseHexColor(plugin.getConfig().getString("hooks.pl3xmap.flight-path.color", "#FF0000"));
@@ -63,6 +66,7 @@ public class Pl3xmapHook {
             this.useCustomIcon = false;
             this.markerColor = 0xFFFFAA00;
             this.markerRadius = 2.0;
+            this.tooltipFormat = "Drone (<status>)<br>Sender: <sender><br>Target: <receiver>";
             this.flightPathEnabled = true;
             this.flightPathColor = 0xFFFF0000;
             this.flightPathWeight = 2;
@@ -183,7 +187,17 @@ public class Pl3xmapHook {
                 World mapWorld = Pl3xMap.api().getWorldRegistry().get(currentLoc.getWorld().getName());
                 if (mapWorld == null) continue;
 
-                String droneName = "Drone (Sender: " + Bukkit.getOfflinePlayer(drone.senderId()).getName() + ")";
+                String senderName = Bukkit.getOfflinePlayer(drone.senderId()).getName();
+                String receiverName = Bukkit.getOfflinePlayer(drone.receiverId()).getName();
+                String socketName = drone.socketName() != null ? drone.socketName() : "None";
+                String statusName = drone.isFlying() ? "Flying" : "Landed";
+
+                String tooltip = tooltipFormat
+                        .replace("<sender>", senderName != null ? senderName : "Unknown")
+                        .replace("<receiver>", receiverName != null ? receiverName : "Unknown")
+                        .replace("<socket>", socketName)
+                        .replace("<status>", statusName);
+
                 Point dronePoint = Point.of(currentLoc.getX(), currentLoc.getZ());
                 
                 Marker<?> droneMarker;
@@ -191,13 +205,13 @@ public class Pl3xmapHook {
                     droneMarker = Marker.icon(drone.droneId().toString(), dronePoint, ICON_KEY)
                             .setOptions(net.pl3x.map.core.markers.option.Options.builder()
                                     .tooltipDirection(net.pl3x.map.core.markers.option.Tooltip.Direction.TOP)
-                                    .tooltipContent(droneName)
+                                    .tooltipContent(tooltip)
                                     .build());
                 } else {
                     droneMarker = Marker.circle(drone.droneId().toString(), dronePoint, markerRadius)
                             .setOptions(net.pl3x.map.core.markers.option.Options.builder()
                                     .tooltipDirection(net.pl3x.map.core.markers.option.Tooltip.Direction.TOP)
-                                    .tooltipContent(droneName)
+                                    .tooltipContent(tooltip)
                                     .strokeColor(markerColor)
                                     .fillColor(markerColor)
                                     .build());
