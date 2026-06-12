@@ -128,7 +128,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "convert" -> executeConvert(player, args);
             case "list" -> executeList(player);
             case "decline" -> executeDecline(player);
-            case "cancel" -> executeCancel(player);
+            case "cancel" -> executeCancel(player, args);
             case "socket" -> executeSocket(player, args);
             case "blacklist" -> executeBlacklist(player, args);
             case "config" -> executeConfig(player);
@@ -474,17 +474,50 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         return true;
     }
 
-    private boolean executeCancel(Player player) {
+    private boolean executeCancel(Player player, String[] args) {
         if (!player.hasPermission("drone.cancel")) {
             droneManager.sendMessage(player, "no-permission");
             return true;
         }
-        int cancelled = droneManager.cancelOutgoing(player);
-        if (cancelled <= 0) {
+
+        java.util.List<de.cb.drones.drone.DeliveryDrone> outgoing = droneManager.activeDronesSnapshot().stream()
+                .filter(drone -> drone.senderId().equals(player.getUniqueId()))
+                .sorted(java.util.Comparator.comparingLong(de.cb.drones.drone.DeliveryDrone::getFlightStartTick))
+                .toList();
+
+        if (outgoing.isEmpty()) {
             droneManager.sendMessage(player, "cancel-none");
             return true;
         }
-        droneManager.sendMessage(player, "cancel-success", "<count>", String.valueOf(cancelled));
+
+        if (args.length == 1) {
+            if (outgoing.size() == 1) {
+                droneManager.cancelSpecific(player, outgoing.get(0));
+                droneManager.sendMessage(player, "cancel-success", "<count>", "1");
+            } else {
+                player.sendMessage(MINI_MESSAGE.deserialize("<yellow>You have multiple active drones:</yellow>"));
+                int index = 1;
+                for (de.cb.drones.drone.DeliveryDrone d : outgoing) {
+                    String target = d.socketName() != null ? "Socket " + d.socketName() : "Player " + (Bukkit.getOfflinePlayer(d.receiverId()).getName() != null ? Bukkit.getOfflinePlayer(d.receiverId()).getName() : "Unknown");
+                    player.sendMessage(MINI_MESSAGE.deserialize("<gray>- Drone <yellow>" + index + "</yellow> to " + target));
+                    index++;
+                }
+                player.sendMessage(MINI_MESSAGE.deserialize("<gray>Use <yellow>/drone cancel <number></yellow> to cancel a specific drone."));
+            }
+            return true;
+        }
+
+        try {
+            int index = Integer.parseInt(args[1]) - 1;
+            if (index >= 0 && index < outgoing.size()) {
+                droneManager.cancelSpecific(player, outgoing.get(index));
+                droneManager.sendMessage(player, "cancel-success", "<count>", "1");
+            } else {
+                player.sendMessage(MINI_MESSAGE.deserialize("<red>Invalid drone number.</red>"));
+            }
+        } catch (NumberFormatException e) {
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Invalid drone number.</red>"));
+        }
         return true;
     }
 

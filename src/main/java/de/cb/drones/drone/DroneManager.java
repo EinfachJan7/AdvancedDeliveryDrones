@@ -606,6 +606,15 @@ public final class DroneManager {
         return outgoing.size();
     }
 
+    public boolean cancelSpecific(Player sender, DeliveryDrone drone) {
+        if (drone != null && activeDrones.containsKey(drone.droneId()) && drone.senderId().equals(sender.getUniqueId())) {
+            notifyReceiverOfCancel(sender, drone);
+            abortDelivery(drone, () -> returnItemsToSenderOnCancel(drone));
+            return true;
+        }
+        return false;
+    }
+
     public void handlePlayerUnavailable(UUID playerId, boolean dimensionChange) {
         for (DeliveryDrone drone : findDronesAffectedByPlayerUnavailable(playerId)) {
             if (drone.socketName() != null) {
