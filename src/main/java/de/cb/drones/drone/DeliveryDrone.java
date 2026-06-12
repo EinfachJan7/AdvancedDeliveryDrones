@@ -2187,7 +2187,7 @@ public final class DeliveryDrone {
             long flightStartTick, long deliveryFlightStartTick, ItemStack[] inventoryContents, List<EntityType> attachedAnimalTypes, List<String> attachedAnimalSnapshots,
             boolean animalsOnlyDelivery, boolean forceTargetChunkLoad, boolean exactSocketTarget,
             String socketName, boolean landed, boolean openedByReceiver,
-            long lastInteractionTick, boolean standParked, DroneManager manager
+            long lastInteractionTick, boolean standParked, int cancelId, DroneManager manager
     ) {
         int invSize = inventoryContents.length > 0 && inventoryContents.length % 9 == 0 ? inventoryContents.length : 27;
         Inventory inv = Bukkit.createInventory(null, invSize, manager.componentMessage("drone-inventory-title", null, null));
@@ -2199,6 +2199,7 @@ public final class DeliveryDrone {
                 inv, attachedAnimalTypes, attachedAnimalSnapshots, animalsOnlyDelivery, forceTargetChunkLoad,
                 exactSocketTarget, socketName, manager.settings(), null, flightStartTick
         );
+        drone.setCancelId(cancelId);
         
         drone.droneManager = manager;
         drone.startLocation.setX(startLocation.getX());

@@ -1334,11 +1334,20 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         if (args.length == 2 && "cancel".equalsIgnoreCase(args[0]) && sender instanceof Player player) {
             java.util.List<de.cb.drones.drone.DeliveryDrone> outgoing = droneManager.activeDronesSnapshot().stream()
                     .filter(drone -> drone.senderId().equals(player.getUniqueId()))
+                    .sorted(java.util.Comparator.comparingLong(de.cb.drones.drone.DeliveryDrone::getFlightStartTick))
                     .toList();
             if (outgoing.isEmpty()) return List.of();
+            
+            for (de.cb.drones.drone.DeliveryDrone d : outgoing) {
+                if (d.getCancelId() <= 0) {
+                    int maxId = outgoing.stream().mapToInt(de.cb.drones.drone.DeliveryDrone::getCancelId).max().orElse(0);
+                    d.setCancelId(maxId + 1);
+                }
+            }
+
             List<String> ids = new ArrayList<>();
-            for (int i = 1; i <= outgoing.size(); i++) {
-                ids.add(String.valueOf(i));
+            for (de.cb.drones.drone.DeliveryDrone d : outgoing) {
+                ids.add(String.valueOf(d.getCancelId()));
             }
             return ids;
         }

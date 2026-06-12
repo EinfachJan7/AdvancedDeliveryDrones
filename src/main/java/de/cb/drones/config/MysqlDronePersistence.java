@@ -88,6 +88,7 @@ public class MysqlDronePersistence implements DronePersistence {
                 config.set(path + ".forceTargetChunkLoad", drone.isForceTargetChunkLoad());
                 config.set(path + ".exactSocketTarget", drone.isExactSocketTarget());
                 config.set(path + ".socketName", drone.socketName());
+                config.set(path + ".cancelId", drone.getCancelId());
                 
                 config.set(path + ".landed", drone.isLanded());
                 config.set(path + ".openedByReceiver", drone.wasOpenedByReceiver());
@@ -169,6 +170,7 @@ public class MysqlDronePersistence implements DronePersistence {
                     boolean forceTargetChunkLoad = config.getBoolean(path + ".forceTargetChunkLoad");
                     boolean exactSocketTarget = config.getBoolean(path + ".exactSocketTarget");
                     String socketName = config.getString(path + ".socketName");
+                    int cancelId = config.getInt(path + ".cancelId", -1);
                     
                     boolean landed = config.getBoolean(path + ".landed");
                     boolean openedByReceiver = config.getBoolean(path + ".openedByReceiver");
@@ -184,7 +186,7 @@ public class MysqlDronePersistence implements DronePersistence {
                         droneId, senderId, receiverId, receiverName, fixedTarget, startLocation,
                         lastKnownLocation, flightStartTick, deliveryFlightStartTick, items, attachedAnimalTypes, attachedAnimalSnapshots,
                         animalsOnlyDelivery, forceTargetChunkLoad, exactSocketTarget, socketName,
-                        landed, openedByReceiver, lastInteractionTick, standParked, droneManager
+                        landed, openedByReceiver, lastInteractionTick, standParked, cancelId, droneManager
                     );
                     if (returningToSender) {
                         drone.restoreReturnFlightState(true, originalSendLocation != null ? originalSendLocation : startLocation);
