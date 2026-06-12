@@ -12,8 +12,18 @@ plugin:
 
 hooks:
   worldguard: true
-  pl3xmap: true
-  pl3xmap-layer-name: "Delivery Drones"
+  pl3xmap:
+    enabled: true
+    layer-name: "Delivery Drones"
+    marker:
+      use-custom-icon: false
+      icon-filename: "drone.png"
+      color: "#FFAA00"
+      radius: 2.0
+    flight-path:
+      enabled: true
+      color: "#FF0000"
+      weight: 2
 
 database:
   # Storage type for active Drones: "YAML" or "MYSQL"

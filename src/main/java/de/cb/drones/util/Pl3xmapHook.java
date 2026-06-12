@@ -3,34 +3,104 @@ package de.cb.drones.util;
 import de.cb.drones.AdvancedDeliveryDronesPlugin;
 import de.cb.drones.drone.DeliveryDrone;
 import net.pl3x.map.core.Pl3xMap;
+import net.pl3x.map.core.image.IconImage;
 import net.pl3x.map.core.markers.Point;
 import net.pl3x.map.core.markers.layer.Layer;
 import net.pl3x.map.core.markers.marker.Marker;
 import net.pl3x.map.core.markers.marker.Circle;
+import net.pl3x.map.core.markers.marker.Icon;
 import net.pl3x.map.core.markers.marker.Polyline;
 import net.pl3x.map.core.world.World;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class Pl3xmapHook {
     private final AdvancedDeliveryDronesPlugin plugin;
-    private final String layerName;
+    private String layerName;
     private boolean enabled;
+    
+    private boolean useCustomIcon;
+    private String iconFilename;
+    private int markerColor;
+    private double markerRadius;
+    
+    private boolean flightPathEnabled;
+    private int flightPathColor;
+    private int flightPathWeight;
+    
     private final String LAYER_KEY = "advanced_delivery_drones";
+    private final String ICON_KEY = "advanced_delivery_drones_icon";
 
     public Pl3xmapHook(AdvancedDeliveryDronesPlugin plugin) {
         this.plugin = plugin;
-        this.layerName = plugin.getConfig().getString("hooks.pl3xmap-layer-name", "Delivery Drones");
-        this.enabled = plugin.getConfig().getBoolean("hooks.pl3xmap", true);
-        
+        loadSettings();
+    }
+    
+    private void loadSettings() {
+        if (plugin.getConfig().isConfigurationSection("hooks.pl3xmap")) {
+            this.enabled = plugin.getConfig().getBoolean("hooks.pl3xmap.enabled", true);
+            this.layerName = plugin.getConfig().getString("hooks.pl3xmap.layer-name", "Delivery Drones");
+            this.useCustomIcon = plugin.getConfig().getBoolean("hooks.pl3xmap.marker.use-custom-icon", false);
+            this.iconFilename = plugin.getConfig().getString("hooks.pl3xmap.marker.icon-filename", "drone.png");
+            this.markerColor = parseHexColor(plugin.getConfig().getString("hooks.pl3xmap.marker.color", "#FFAA00"));
+            this.markerRadius = plugin.getConfig().getDouble("hooks.pl3xmap.marker.radius", 2.0);
+            
+            this.flightPathEnabled = plugin.getConfig().getBoolean("hooks.pl3xmap.flight-path.enabled", true);
+            this.flightPathColor = parseHexColor(plugin.getConfig().getString("hooks.pl3xmap.flight-path.color", "#FF0000"));
+            this.flightPathWeight = plugin.getConfig().getInt("hooks.pl3xmap.flight-path.weight", 2);
+        } else {
+            // Fallback for old config
+            this.enabled = plugin.getConfig().getBoolean("hooks.pl3xmap", true);
+            this.layerName = plugin.getConfig().getString("hooks.pl3xmap-layer-name", "Delivery Drones");
+            this.useCustomIcon = false;
+            this.markerColor = 0xFFFFAA00;
+            this.markerRadius = 2.0;
+            this.flightPathEnabled = true;
+            this.flightPathColor = 0xFFFF0000;
+            this.flightPathWeight = 2;
+        }
+
+        File pl3xmapFolder = new File(plugin.getDataFolder(), "pl3xmap");
+
         if (this.enabled && Bukkit.getPluginManager().getPlugin("Pl3xMap") != null) {
+            if (!pl3xmapFolder.exists()) {
+                pl3xmapFolder.mkdirs();
+            }
+            if (this.useCustomIcon) {
+                registerIcon(pl3xmapFolder);
+            }
             registerLayers();
         } else {
             this.enabled = false;
+            if (pl3xmapFolder.exists()) {
+                deleteDirectory(pl3xmapFolder);
+            }
+        }
+    }
+    
+    private void registerIcon(File folder) {
+        File iconFile = new File(folder, iconFilename);
+        if (iconFile.exists()) {
+            try {
+                BufferedImage image = ImageIO.read(iconFile);
+                if (image != null) {
+                    Pl3xMap.api().getIconRegistry().register(ICON_KEY, new IconImage(ICON_KEY, image, "png"));
+                }
+            } catch (IOException e) {
+                plugin.getLogger().warning("Failed to load Pl3xmap icon: " + e.getMessage());
+                this.useCustomIcon = false;
+            }
+        } else {
+            plugin.getLogger().warning("Pl3xmap custom icon enabled but file not found: " + iconFile.getPath());
+            this.useCustomIcon = false;
         }
     }
 
@@ -57,6 +127,9 @@ public class Pl3xmapHook {
                     mapWorld.getLayerRegistry().unregister(LAYER_KEY);
                 }
             }
+            if (Pl3xMap.api().getIconRegistry().has(ICON_KEY)) {
+                Pl3xMap.api().getIconRegistry().unregister(ICON_KEY);
+            }
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to unregister Pl3xMap layers: " + e.getMessage());
         }
@@ -64,19 +137,33 @@ public class Pl3xmapHook {
 
     public void reload() {
         unregisterLayers();
-        this.enabled = plugin.getConfig().getBoolean("hooks.pl3xmap", true);
-        if (this.enabled && Bukkit.getPluginManager().getPlugin("Pl3xMap") != null) {
-            registerLayers();
-        } else {
-            this.enabled = false;
+        loadSettings();
+    }
+
+    private int parseHexColor(String hex) {
+        if (hex == null || !hex.startsWith("#")) return 0xFFFFAA00;
+        try {
+            int color = Integer.parseInt(hex.substring(1), 16);
+            return 0xFF000000 | color;
+        } catch (NumberFormatException e) {
+            return 0xFFFFAA00;
         }
+    }
+
+    private void deleteDirectory(File directoryToBeDeleted) {
+        File[] allContents = directoryToBeDeleted.listFiles();
+        if (allContents != null) {
+            for (File file : allContents) {
+                deleteDirectory(file);
+            }
+        }
+        directoryToBeDeleted.delete();
     }
 
     private class DroneLayer extends Layer {
         public DroneLayer(String key, String name) {
             super(key, () -> name);
-            // Pl3xMap UI options
-            setUpdateInterval(1); // Update every 1 second
+            setUpdateInterval(1);
             setShowControls(true);
             setDefaultHidden(false);
         }
@@ -94,30 +181,40 @@ public class Pl3xmapHook {
                 if (currentLoc == null || currentLoc.getWorld() == null) continue;
                 
                 World mapWorld = Pl3xMap.api().getWorldRegistry().get(currentLoc.getWorld().getName());
-                if (mapWorld == null) {
-                    continue;
-                }
+                if (mapWorld == null) continue;
 
                 String droneName = "Drone (Sender: " + Bukkit.getOfflinePlayer(drone.senderId()).getName() + ")";
                 Point dronePoint = Point.of(currentLoc.getX(), currentLoc.getZ());
-                Circle pointMarker = Marker.circle(drone.droneId().toString(), dronePoint, 2.0)
-                        .setOptions(net.pl3x.map.core.markers.option.Options.builder()
-                                .tooltipDirection(net.pl3x.map.core.markers.option.Tooltip.Direction.TOP)
-                                .tooltipContent(droneName)
-                                .strokeColor(0xFFFFAA00) // Orange stroke
-                                .fillColor(0xFFFFAA00)
-                                .build());
-                markers.add(pointMarker);
-
-                Location targetLoc = drone.targetLocation();
-                if (targetLoc != null && drone.isFlying()) {
-                    Point targetPoint = Point.of(targetLoc.getX(), targetLoc.getZ());
-                    Polyline lineMarker = Marker.polyline(drone.droneId().toString() + "_path", dronePoint, targetPoint)
+                
+                Marker<?> droneMarker;
+                if (useCustomIcon) {
+                    droneMarker = Marker.icon(drone.droneId().toString(), dronePoint, ICON_KEY)
                             .setOptions(net.pl3x.map.core.markers.option.Options.builder()
-                                    .strokeColor(0xFFFF0000) // Red
-                                    .strokeWeight(2)
+                                    .tooltipDirection(net.pl3x.map.core.markers.option.Tooltip.Direction.TOP)
+                                    .tooltipContent(droneName)
                                     .build());
-                    markers.add(lineMarker);
+                } else {
+                    droneMarker = Marker.circle(drone.droneId().toString(), dronePoint, markerRadius)
+                            .setOptions(net.pl3x.map.core.markers.option.Options.builder()
+                                    .tooltipDirection(net.pl3x.map.core.markers.option.Tooltip.Direction.TOP)
+                                    .tooltipContent(droneName)
+                                    .strokeColor(markerColor)
+                                    .fillColor(markerColor)
+                                    .build());
+                }
+                markers.add(droneMarker);
+
+                if (flightPathEnabled && drone.isFlying()) {
+                    Location targetLoc = drone.targetLocation();
+                    if (targetLoc != null) {
+                        Point targetPoint = Point.of(targetLoc.getX(), targetLoc.getZ());
+                        Polyline lineMarker = Marker.polyline(drone.droneId().toString() + "_path", dronePoint, targetPoint)
+                                .setOptions(net.pl3x.map.core.markers.option.Options.builder()
+                                        .strokeColor(flightPathColor)
+                                        .strokeWeight(flightPathWeight)
+                                        .build());
+                        markers.add(lineMarker);
+                    }
                 }
             }
             return markers;
