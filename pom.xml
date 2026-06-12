@@ -29,6 +29,10 @@
             <id>sk89q-repo</id>
             <url>https://maven.enginehub.org/repo/</url>
         </repository>
+        <repository>
+            <id>modrinth-repo</id>
+            <url>https://api.modrinth.com/maven/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -36,6 +40,12 @@
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
             <version>1.21.11-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>maven.modrinth</groupId>
+            <artifactId>pl3xmap</artifactId>
+            <version>1.21.5-527</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

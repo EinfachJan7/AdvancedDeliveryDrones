@@ -12,6 +12,8 @@ plugin:
 
 hooks:
   worldguard: true
+  pl3xmap: true
+  pl3xmap-layer-name: "Delivery Drones"
 
 database:
   # Storage type for active Drones: "YAML" or "MYSQL"

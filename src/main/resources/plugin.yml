@@ -6,6 +6,7 @@ authors: [Baumkrieger69]
 softdepend:
   - PlaceholderAPI
   - WorldGuard
+  - Pl3xMap
   - WorldEdit
 commands:
   drone:
