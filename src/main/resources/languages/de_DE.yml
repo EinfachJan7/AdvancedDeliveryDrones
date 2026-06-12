@@ -179,3 +179,6 @@ config-editor-option-config-editor-messages-name: "Editor Messages"
 config-editor-option-config-editor-messages-desc: "Benachrichtigungen bei Config-Änderungen anzeigen"
 not-enough-leads: "<red>Du hast nicht genug Leinen für alle ausgewählten Tiere! (<count> benötigt)</red>"
 compose-item-blacklisted: "<red>Dieses Item darf nicht versendet werden.</red>"
+w o r l d g u a r d - c a n n o t - s t a r t :  
+ < r e d > H i e r   k � n n e n   k e i n e   D r o h n e n   g e s t a r t e t   w e r d e n . < / r e d >  
+ 

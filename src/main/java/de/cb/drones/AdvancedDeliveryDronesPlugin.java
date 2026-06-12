@@ -44,6 +44,11 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private ConfigEditorHandler configEditorHandler;
 
     @Override
+    public void onLoad() {
+        de.cb.drones.util.WorldGuardHook.onLoad();
+    }
+
+    @Override
     public void onEnable() {
         saveDefaultConfig();
         saveGuiConfig();
@@ -80,6 +85,8 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
                 socketPendingReturns,
                 databaseManager
         );
+        
+        de.cb.drones.util.WorldGuardHook.setEnabled(getConfig().getBoolean("hooks.worldguard", true));
         
         this.droneManager.start();
 
@@ -163,6 +170,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
             droneCommand.updateMenuHandlerSettings(droneManager.settings());
             droneCommand.reloadComposeDrafts();
         }
+        de.cb.drones.util.WorldGuardHook.setEnabled(getConfig().getBoolean("hooks.worldguard", true));
         PlaceholderHook.register(this);
     }
 

@@ -180,3 +180,6 @@ config-editor-option-config-editor-messages-name: "Mensajes del editor"
 config-editor-option-config-editor-messages-desc: "Mostrar notificaciones cuando cambien los ajustes de configuración"
 not-enough-leads: "<red>¡No tienes suficientes riendas para todos los animales seleccionados! (<count> necesarias)</red>"
 compose-item-blacklisted: "<red>Este objeto no se puede enviar.</red>"
+w o r l d g u a r d - c a n n o t - s t a r t :  
+ < r e d > N o   s e   p u e d e n   l a n z a r   d r o n e s   d e s d e   e s t a   � r e a . < / r e d >  
+ 

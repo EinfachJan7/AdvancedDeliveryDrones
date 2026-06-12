@@ -1211,10 +1211,13 @@ public final class DeliveryDrone {
                 double totalDistSq = distSq + dy * dy;
 
                 if (totalDistSq < bestDistanceSq) {
-                    bestDistanceSq = totalDistSq;
-                    bestY = y;
-                    bestX = x;
-                    bestZ = z;
+                    Location testSpot = new Location(world, x + 0.5, y + 0.1, z + 0.5);
+                    if (isLandingLocationSafe(testSpot)) {
+                        bestDistanceSq = totalDistSq;
+                        bestY = y;
+                        bestX = x;
+                        bestZ = z;
+                    }
                 }
             }
         }
@@ -1236,10 +1239,13 @@ public final class DeliveryDrone {
                         double dy = y - centerY;
                         double totalDistSq = distSq + dy * dy;
                         if (totalDistSq < bestDistanceSq) {
-                            bestDistanceSq = totalDistSq;
-                            bestY = y;
-                            bestX = x;
-                            bestZ = z;
+                            Location testSpot = new Location(world, x + 0.5, y + 0.1, z + 0.5);
+                            if (isLandingLocationSafe(testSpot)) {
+                                bestDistanceSq = totalDistSq;
+                                bestY = y;
+                                bestX = x;
+                                bestZ = z;
+                            }
                         }
                     }
                 }
@@ -1313,7 +1319,13 @@ public final class DeliveryDrone {
         int y = landing.getBlockY();
         int z = landing.getBlockZ();
         // Landing position is at/just above ground, so validate the block below as "ground"
-        return isSafeGround(world, x, y - 1, z);
+        if (!isSafeGround(world, x, y - 1, z)) {
+            return false;
+        }
+        if (!de.cb.drones.util.WorldGuardHook.canLand(landing, null)) {
+            return false;
+        }
+        return true;
     }
 
     /**

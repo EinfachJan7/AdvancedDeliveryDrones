@@ -1961,6 +1961,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean spawnDroneFromSelection(Player sender, ComposeInventoryHolder holder, Inventory deliveryInventory) {
+        if (!de.cb.drones.util.WorldGuardHook.canStart(sender.getLocation(), sender)) {
+            droneManager.sendMessage(sender, "worldguard-cannot-start");
+            return false;
+        }
         Player receiver = Bukkit.getPlayer(holder.receiverId());
         if (receiver == null || !receiver.isOnline()) {
             droneManager.sendMessage(sender, "player-offline");

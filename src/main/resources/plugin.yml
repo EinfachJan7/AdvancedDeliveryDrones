@@ -5,6 +5,8 @@ api-version: "1.21"
 authors: [Baumkrieger69]
 softdepend:
   - PlaceholderAPI
+  - WorldGuard
+  - WorldEdit
 commands:
   drone:
     description: Main command for delivery drones
