@@ -189,13 +189,12 @@ public class Pl3xmapHook {
 
                 String senderName = Bukkit.getOfflinePlayer(drone.senderId()).getName();
                 String receiverName = Bukkit.getOfflinePlayer(drone.receiverId()).getName();
-                String socketName = drone.socketName() != null ? drone.socketName() : "None";
+                String targetDisplay = drone.socketName() != null ? "Socket: " + drone.socketName() : "Player: " + (receiverName != null ? receiverName : "Unknown");
                 String statusName = drone.isFlying() ? "Flying" : "Landed";
 
                 String tooltip = tooltipFormat
                         .replace("<sender>", senderName != null ? senderName : "Unknown")
-                        .replace("<receiver>", receiverName != null ? receiverName : "Unknown")
-                        .replace("<socket>", socketName)
+                        .replace("<receiver>", targetDisplay)
                         .replace("<status>", statusName);
 
                 Point dronePoint = Point.of(currentLoc.getX(), currentLoc.getZ());

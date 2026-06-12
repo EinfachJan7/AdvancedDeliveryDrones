@@ -26,7 +26,7 @@ hooks:
       # The size of the circular marker if use-custom-icon is false
       radius: 2.0
       # The tooltip text shown when hovering or clicking the marker
-      # Available placeholders: <sender>, <receiver>, <socket>, <status>
+      # Available placeholders: <sender>, <receiver> (shows 'Socket: X' or 'Player: X'), <status>
       tooltip: "Drone (<status>)<br>Sender: <sender><br>Target: <receiver>"
     flight-path:
       # If true, a line will be drawn from the drone's current position to its destination
