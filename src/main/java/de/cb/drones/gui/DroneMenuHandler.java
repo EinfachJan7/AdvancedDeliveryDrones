@@ -642,10 +642,7 @@ public class DroneMenuHandler implements Listener {
         if (socketName != null && !socketName.isBlank()) {
             return socketName;
         }
-        if (meta.displayName() == null) {
-            return null;
-        }
-        return PlainTextComponentSerializer.plainText().serialize(meta.displayName());
+        return null;
     }
 
     @EventHandler
