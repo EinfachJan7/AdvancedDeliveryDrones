@@ -16,6 +16,7 @@ public final class LiveMapHookManager {
 
     public void init() {
         tryLoad("Pl3xMap", "de.cb.drones.util.map.pl3x.Pl3xmapLiveMapHook");
+        tryLoad("BlueMap", "de.cb.drones.util.map.bluemap.BluemapLiveMapHook");
     }
 
     private void tryLoad(String pluginName, String className) {

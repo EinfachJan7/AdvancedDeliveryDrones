@@ -34,6 +34,29 @@ hooks:
       color: "#FF0000"
       # The thickness of the flight path line
       weight: 2
+  bluemap:
+    enabled: true
+    # The name of the marker set shown in the BlueMap sidebar
+    layer-name: "Delivery Drones"
+    marker:
+      # If true, the plugin will use an image file from plugins/AdvancedDeliveryDrones/bluemap/
+      use-custom-icon: false
+      # The filename of the image in the bluemap folder (e.g. drone.png)
+      icon-filename: "drone.png"
+      # Fallback color (in HEX) for the drone marker if use-custom-icon is false
+      color: "#FFAA00"
+      # The size of the circular marker if use-custom-icon is false
+      radius: 2.0
+      # The detail text shown when clicking the marker
+      # Available placeholders: <sender>, <receiver> (shows 'Socket: X' or 'Player: X'), <status>
+      tooltip: "Drone (<status>)<br>Sender: <sender><br>Target: <receiver>"
+    flight-path:
+      # If true, a line will be drawn from the drone's current position to its destination
+      enabled: true
+      # The color of the flight path line (in HEX)
+      color: "#FF0000"
+      # The thickness of the flight path line
+      weight: 2
 
 database:
   # Storage type for active Drones: "YAML" or "MYSQL"
