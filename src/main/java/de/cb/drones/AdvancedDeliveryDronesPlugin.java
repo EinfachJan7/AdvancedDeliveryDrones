@@ -17,7 +17,7 @@ import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.socket.SocketRepository;
 import de.cb.drones.placeholder.PlaceholderHook;
 import de.cb.drones.update.UpdateNotificationListener;
-import de.cb.drones.util.Pl3xmapHook;
+import de.cb.drones.util.map.LiveMapHookManager;
 import org.bstats.bukkit.Metrics;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -43,7 +43,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private ConfigEditorService configEditorService;
     private ConfigEditorGUI configEditorGUI;
     private ConfigEditorHandler configEditorHandler;
-    private Pl3xmapHook pl3xmapHook;
+    private LiveMapHookManager liveMapHookManager;
 
     @Override
     public void onLoad() {
@@ -90,7 +90,8 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         
         de.cb.drones.util.WorldGuardHook.setEnabled(getConfig().getBoolean("hooks.worldguard", true));
         
-        this.pl3xmapHook = new Pl3xmapHook(this);
+        this.liveMapHookManager = new LiveMapHookManager(this);
+        this.liveMapHookManager.init();
         
         this.droneManager.start();
 
@@ -126,8 +127,8 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         if (droneManager != null) {
             droneManager.shutdown();
         }
-        if (pl3xmapHook != null) {
-            pl3xmapHook.unregisterLayers();
+        if (liveMapHookManager != null) {
+            liveMapHookManager.shutdown();
         }
         if (databaseManager != null) {
             databaseManager.close();
@@ -178,8 +179,8 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
             droneCommand.reloadComposeDrafts();
         }
         de.cb.drones.util.WorldGuardHook.setEnabled(getConfig().getBoolean("hooks.worldguard", true));
-        if (pl3xmapHook != null) {
-            pl3xmapHook.reload();
+        if (liveMapHookManager != null) {
+            liveMapHookManager.reload();
         }
         PlaceholderHook.register(this);
     }
