@@ -14,7 +14,30 @@ public final class GuiYamlParser {
     public static GuiItem parseItem(FileConfiguration cfg, String itemSection, GuiItem fallback) {
         int position = cfg.getInt(itemSection + ".position", fallback != null ? fallback.position() : 0);
         Material defaultMaterial = fallback != null ? fallback.material() : Material.STONE;
-        Material material = parseMaterial(cfg.getString(itemSection + ".material", defaultMaterial.name()), defaultMaterial);
+        String rawMaterial = cfg.getString(itemSection + ".material", defaultMaterial.name());
+        
+        String customModelProvider = null;
+        String customModelId = null;
+        
+        if (rawMaterial != null && (rawMaterial.contains(":") || rawMaterial.contains("-"))) {
+            String lower = rawMaterial.toLowerCase();
+            if (lower.startsWith("nexo:") || lower.startsWith("nexo-")) {
+                customModelProvider = "NEXO";
+                customModelId = rawMaterial.substring(5);
+                rawMaterial = "STONE";
+            } else if (lower.startsWith("oraxen:") || lower.startsWith("oraxen-")) {
+                customModelProvider = "ORAXEN";
+                customModelId = rawMaterial.substring(7);
+                rawMaterial = "STONE";
+            } else if (lower.startsWith("itemsadder:") || lower.startsWith("itemsadder-") || lower.startsWith("ia:") || lower.startsWith("ia-")) {
+                customModelProvider = "ITEMSADDER";
+                int prefixLen = lower.startsWith("ia") ? 3 : 11;
+                customModelId = rawMaterial.substring(prefixLen);
+                rawMaterial = "STONE";
+            }
+        }
+        
+        Material material = parseMaterial(rawMaterial, defaultMaterial);
         String name = cfg.getString(itemSection + ".name", fallback != null ? fallback.name() : "<white>Item");
         List<String> lore = cfg.getStringList(itemSection + ".lore");
         if (lore.isEmpty() && fallback != null) {
@@ -23,12 +46,10 @@ public final class GuiYamlParser {
         String headTexture = parseHeadTexture(cfg, itemSection, material);
         boolean enchanted = cfg.getBoolean(itemSection + ".enchanted", false);
         
-        String customModelProvider = null;
-        String customModelId = null;
         if (cfg.contains(itemSection + ".custom-model-provider")) {
             customModelProvider = cfg.getString(itemSection + ".custom-model-provider", "NONE");
             customModelId = cfg.getString(itemSection + ".custom-model-id");
-        } else if (fallback != null) {
+        } else if (customModelProvider == null && fallback != null) {
             customModelProvider = fallback.customModelProvider();
             customModelId = fallback.customModelId();
         }
@@ -47,14 +68,31 @@ public final class GuiYamlParser {
     public static GuiItem parseFillItem(FileConfiguration cfg, String localFillSection) {
         Material fillMaterial = Material.GRAY_STAINED_GLASS_PANE;
         String fillName = " ";
+        String customModelProvider = null;
+        String customModelId = null;
 
         String localMaterial = cfg.getString(localFillSection + ".material");
+        if (localMaterial == null || localMaterial.isBlank()) {
+            localMaterial = cfg.getString("global.fill-item.material");
+        }
+        
         if (localMaterial != null && !localMaterial.isBlank()) {
-            fillMaterial = parseMaterial(localMaterial, fillMaterial);
-        } else {
-            String globalMaterial = cfg.getString("global.fill-item.material");
-            if (globalMaterial != null && !globalMaterial.isBlank()) {
-                fillMaterial = parseMaterial(globalMaterial, fillMaterial);
+            String lower = localMaterial.toLowerCase();
+            if (lower.startsWith("nexo:") || lower.startsWith("nexo-")) {
+                customModelProvider = "NEXO";
+                customModelId = localMaterial.substring(5);
+                fillMaterial = Material.GRAY_STAINED_GLASS_PANE;
+            } else if (lower.startsWith("oraxen:") || lower.startsWith("oraxen-")) {
+                customModelProvider = "ORAXEN";
+                customModelId = localMaterial.substring(7);
+                fillMaterial = Material.GRAY_STAINED_GLASS_PANE;
+            } else if (lower.startsWith("itemsadder:") || lower.startsWith("itemsadder-") || lower.startsWith("ia:") || lower.startsWith("ia-")) {
+                customModelProvider = "ITEMSADDER";
+                int prefixLen = lower.startsWith("ia") ? 3 : 11;
+                customModelId = localMaterial.substring(prefixLen);
+                fillMaterial = Material.GRAY_STAINED_GLASS_PANE;
+            } else {
+                fillMaterial = parseMaterial(localMaterial, fillMaterial);
             }
         }
 
@@ -71,11 +109,16 @@ public final class GuiYamlParser {
             headTexture = parseHeadTexture(cfg, "global.fill-item", fillMaterial);
         }
 
-        String customModelProvider = cfg.getString(localFillSection + ".custom-model-provider");
-        String customModelId = cfg.getString(localFillSection + ".custom-model-id");
-        if (customModelProvider == null) {
-            customModelProvider = cfg.getString("global.fill-item.custom-model-provider");
-            customModelId = cfg.getString("global.fill-item.custom-model-id");
+        String cfgCustomModelProvider = cfg.getString(localFillSection + ".custom-model-provider");
+        String cfgCustomModelId = cfg.getString(localFillSection + ".custom-model-id");
+        if (cfgCustomModelProvider == null) {
+            cfgCustomModelProvider = cfg.getString("global.fill-item.custom-model-provider");
+            cfgCustomModelId = cfg.getString("global.fill-item.custom-model-id");
+        }
+        
+        if (cfgCustomModelProvider != null) {
+            customModelProvider = cfgCustomModelProvider;
+            customModelId = cfgCustomModelId;
         }
 
         return new GuiItem(-1, fillMaterial, fillName, List.of(), headTexture, false, customModelProvider, customModelId);

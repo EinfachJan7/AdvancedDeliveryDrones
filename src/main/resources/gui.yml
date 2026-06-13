@@ -6,6 +6,12 @@
 # PLAYER_HEAD items support an optional custom skull texture:
 #   material: "PLAYER_HEAD"
 #   value: "<base64-texture>"   # also accepts head-texture or texture
+# 
+# Using Custom Models (Nexo, Oraxen, ItemsAdder):
+#   You can easily use custom items by using one of these prefixes in the material string:
+#   material: "nexo:my_custom_item"
+#   material: "oraxen:my_custom_item"
+#   material: "ia:my_custom_item" (or "itemsadder:my_custom_item")
 # =============================================================================
 
 global:
