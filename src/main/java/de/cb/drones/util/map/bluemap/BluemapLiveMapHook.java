@@ -63,18 +63,19 @@ public class BluemapLiveMapHook implements LiveMapHook {
     }
 
     private void loadSettings() {
-        if (plugin.getConfig().isConfigurationSection("hooks.bluemap")) {
-            this.enabled = plugin.getConfig().getBoolean("hooks.bluemap.enabled", true);
-            this.layerName = plugin.getConfig().getString("hooks.bluemap.layer-name", "Delivery Drones");
-            this.useCustomIcon = plugin.getConfig().getBoolean("hooks.bluemap.marker.use-custom-icon", false);
-            this.iconFilename = plugin.getConfig().getString("hooks.bluemap.marker.icon-filename", "drone.png");
-            this.markerColor = parseHexColor(plugin.getConfig().getString("hooks.bluemap.marker.color", "#FFAA00"));
-            this.markerRadius = plugin.getConfig().getDouble("hooks.bluemap.marker.radius", 2.0);
-            this.tooltipFormat = plugin.getConfig().getString("hooks.bluemap.marker.tooltip", "Drone (<status>)<br>Sender: <sender><br>Target: <receiver>");
+        if (plugin.getConfig().isConfigurationSection("hooks.livemap")) {
+            this.enabled = plugin.getConfig().getBoolean("hooks.livemap.enabled", true)
+                    && "bluemap".equalsIgnoreCase(plugin.getConfig().getString("hooks.livemap.type", "bluemap"));
+            this.layerName = plugin.getConfig().getString("hooks.livemap.layer-name", "Delivery Drones");
+            this.useCustomIcon = plugin.getConfig().getBoolean("hooks.livemap.marker.use-custom-icon", false);
+            this.iconFilename = plugin.getConfig().getString("hooks.livemap.marker.icon-filename", "drone.png");
+            this.markerColor = parseHexColor(plugin.getConfig().getString("hooks.livemap.marker.color", "#FFAA00"));
+            this.markerRadius = plugin.getConfig().getDouble("hooks.livemap.marker.radius", 2.0);
+            this.tooltipFormat = plugin.getConfig().getString("hooks.livemap.marker.tooltip", "Drone (<status>)<br>Sender: <sender><br>Target: <receiver>");
 
-            this.flightPathEnabled = plugin.getConfig().getBoolean("hooks.bluemap.flight-path.enabled", true);
-            this.flightPathColor = parseHexColor(plugin.getConfig().getString("hooks.bluemap.flight-path.color", "#FF0000"));
-            this.flightPathWeight = plugin.getConfig().getInt("hooks.bluemap.flight-path.weight", 2);
+            this.flightPathEnabled = plugin.getConfig().getBoolean("hooks.livemap.flight-path.enabled", true);
+            this.flightPathColor = parseHexColor(plugin.getConfig().getString("hooks.livemap.flight-path.color", "#FF0000"));
+            this.flightPathWeight = plugin.getConfig().getInt("hooks.livemap.flight-path.weight", 2);
         } else {
             this.enabled = false;
             this.layerName = "Delivery Drones";
@@ -87,7 +88,7 @@ public class BluemapLiveMapHook implements LiveMapHook {
             this.flightPathWeight = 2;
         }
 
-        File bluemapFolder = new File(plugin.getDataFolder(), "bluemap");
+        File bluemapFolder = new File(plugin.getDataFolder(), "livemap");
 
         if (this.enabled && Bukkit.getPluginManager().getPlugin("BlueMap") != null) {
             if (!bluemapFolder.exists()) {
@@ -103,9 +104,6 @@ public class BluemapLiveMapHook implements LiveMapHook {
             this.enabled = false;
             stopUpdateTask();
             clearMarkerSets();
-            if (bluemapFolder.exists()) {
-                deleteDirectory(bluemapFolder);
-            }
         }
     }
 
@@ -149,7 +147,7 @@ public class BluemapLiveMapHook implements LiveMapHook {
     }
 
     private void registerIcon(AssetStorage storage) {
-        File iconFile = new File(new File(plugin.getDataFolder(), "bluemap"), iconFilename);
+        File iconFile = new File(new File(plugin.getDataFolder(), "livemap"), iconFilename);
         if (!iconFile.exists()) {
             plugin.getLogger().warning("BlueMap custom icon enabled but file not found: " + iconFile.getPath());
             useCustomIcon = false;

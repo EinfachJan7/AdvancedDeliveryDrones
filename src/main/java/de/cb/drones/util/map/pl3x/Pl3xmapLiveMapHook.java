@@ -46,21 +46,22 @@ public class Pl3xmapLiveMapHook implements LiveMapHook {
     }
 
     private void loadSettings() {
-        if (plugin.getConfig().isConfigurationSection("hooks.pl3xmap")) {
-            this.enabled = plugin.getConfig().getBoolean("hooks.pl3xmap.enabled", true);
-            this.layerName = plugin.getConfig().getString("hooks.pl3xmap.layer-name", "Delivery Drones");
-            this.useCustomIcon = plugin.getConfig().getBoolean("hooks.pl3xmap.marker.use-custom-icon", false);
-            this.iconFilename = plugin.getConfig().getString("hooks.pl3xmap.marker.icon-filename", "drone.png");
-            this.markerColor = parseHexColor(plugin.getConfig().getString("hooks.pl3xmap.marker.color", "#FFAA00"));
-            this.markerRadius = plugin.getConfig().getDouble("hooks.pl3xmap.marker.radius", 2.0);
-            this.tooltipFormat = plugin.getConfig().getString("hooks.pl3xmap.marker.tooltip", "Drone (<status>)<br>Sender: <sender><br>Target: <receiver>");
+        if (plugin.getConfig().isConfigurationSection("hooks.livemap")) {
+            this.enabled = plugin.getConfig().getBoolean("hooks.livemap.enabled", true)
+                    && "pl3xmap".equalsIgnoreCase(plugin.getConfig().getString("hooks.livemap.type", "pl3xmap"));
+            this.layerName = plugin.getConfig().getString("hooks.livemap.layer-name", "Delivery Drones");
+            this.useCustomIcon = plugin.getConfig().getBoolean("hooks.livemap.marker.use-custom-icon", false);
+            this.iconFilename = plugin.getConfig().getString("hooks.livemap.marker.icon-filename", "drone.png");
+            this.markerColor = parseHexColor(plugin.getConfig().getString("hooks.livemap.marker.color", "#FFAA00"));
+            this.markerRadius = plugin.getConfig().getDouble("hooks.livemap.marker.radius", 2.0);
+            this.tooltipFormat = plugin.getConfig().getString("hooks.livemap.marker.tooltip", "Drone (<status>)<br>Sender: <sender><br>Target: <receiver>");
 
-            this.flightPathEnabled = plugin.getConfig().getBoolean("hooks.pl3xmap.flight-path.enabled", true);
-            this.flightPathColor = parseHexColor(plugin.getConfig().getString("hooks.pl3xmap.flight-path.color", "#FF0000"));
-            this.flightPathWeight = plugin.getConfig().getInt("hooks.pl3xmap.flight-path.weight", 2);
+            this.flightPathEnabled = plugin.getConfig().getBoolean("hooks.livemap.flight-path.enabled", true);
+            this.flightPathColor = parseHexColor(plugin.getConfig().getString("hooks.livemap.flight-path.color", "#FF0000"));
+            this.flightPathWeight = plugin.getConfig().getInt("hooks.livemap.flight-path.weight", 2);
         } else {
-            this.enabled = plugin.getConfig().getBoolean("hooks.pl3xmap", true);
-            this.layerName = plugin.getConfig().getString("hooks.pl3xmap-layer-name", "Delivery Drones");
+            this.enabled = false;
+            this.layerName = "Delivery Drones";
             this.useCustomIcon = false;
             this.markerColor = 0xFFFFAA00;
             this.markerRadius = 2.0;
@@ -70,7 +71,7 @@ public class Pl3xmapLiveMapHook implements LiveMapHook {
             this.flightPathWeight = 2;
         }
 
-        File pl3xmapFolder = new File(plugin.getDataFolder(), "pl3xmap");
+        File pl3xmapFolder = new File(plugin.getDataFolder(), "livemap");
 
         if (this.enabled && Bukkit.getPluginManager().getPlugin("Pl3xMap") != null) {
             if (!pl3xmapFolder.exists()) {
@@ -82,9 +83,6 @@ public class Pl3xmapLiveMapHook implements LiveMapHook {
             registerLayers();
         } else {
             this.enabled = false;
-            if (pl3xmapFolder.exists()) {
-                deleteDirectory(pl3xmapFolder);
-            }
         }
     }
 
