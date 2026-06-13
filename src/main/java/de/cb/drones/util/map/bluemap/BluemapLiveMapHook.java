@@ -96,6 +96,8 @@ public class BluemapLiveMapHook implements LiveMapHook {
             if (api != null) {
                 setupMarkerSets();
                 startUpdateTask();
+            } else {
+                BlueMapAPI.getInstance().ifPresent(this::onBlueMapEnable);
             }
         } else {
             this.enabled = false;
@@ -108,18 +110,22 @@ public class BluemapLiveMapHook implements LiveMapHook {
     }
 
     private void onBlueMapEnable(BlueMapAPI blueMapApi) {
-        this.api = blueMapApi;
-        if (!enabled) {
-            return;
-        }
-        setupMarkerSets();
-        startUpdateTask();
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            this.api = blueMapApi;
+            if (!enabled) {
+                return;
+            }
+            setupMarkerSets();
+            startUpdateTask();
+        });
     }
 
     private void onBlueMapDisable(BlueMapAPI blueMapApi) {
-        stopUpdateTask();
-        clearMarkerSets();
-        this.api = null;
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            stopUpdateTask();
+            clearMarkerSets();
+            this.api = null;
+        });
     }
 
     private void setupMarkerSets() {
@@ -165,7 +171,7 @@ public class BluemapLiveMapHook implements LiveMapHook {
         if (!enabled || api == null) {
             return;
         }
-        updateTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::updateMarkers, 20L, 20L);
+        updateTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::updateMarkers, 2L, 2L);
     }
 
     private void stopUpdateTask() {
@@ -252,8 +258,12 @@ public class BluemapLiveMapHook implements LiveMapHook {
 
     private void clearMarkerSets() {
         if (api != null) {
-            for (BlueMapMap map : api.getMaps()) {
-                map.getMarkerSets().remove(MARKER_SET_KEY);
+            try {
+                for (BlueMapMap map : api.getMaps()) {
+                    map.getMarkerSets().remove(MARKER_SET_KEY);
+                }
+            } catch (Exception e) {
+                // Ignore if maps are already invalid
             }
         }
         markerSets.clear();

@@ -37,8 +37,10 @@ public final class LiveMapHookManager {
 
     public void reload() {
         for (LiveMapHook hook : hooks) {
-            hook.reload();
+            hook.shutdown();
         }
+        hooks.clear();
+        init();
     }
 
     public void shutdown() {
