@@ -22,7 +22,18 @@ public final class GuiYamlParser {
         }
         String headTexture = parseHeadTexture(cfg, itemSection, material);
         boolean enchanted = cfg.getBoolean(itemSection + ".enchanted", false);
-        return new GuiItem(position, material, name, lore, headTexture, enchanted);
+        
+        String customModelProvider = null;
+        String customModelId = null;
+        if (cfg.contains(itemSection + ".custom-model-provider")) {
+            customModelProvider = cfg.getString(itemSection + ".custom-model-provider", "NONE");
+            customModelId = cfg.getString(itemSection + ".custom-model-id");
+        } else if (fallback != null) {
+            customModelProvider = fallback.customModelProvider();
+            customModelId = fallback.customModelId();
+        }
+
+        return new GuiItem(position, material, name, lore, headTexture, enchanted, customModelProvider, customModelId);
     }
 
     public static GuiItem parseComposeHubVariant(FileConfiguration cfg, String variantSection, GuiItem base) {
@@ -60,7 +71,14 @@ public final class GuiYamlParser {
             headTexture = parseHeadTexture(cfg, "global.fill-item", fillMaterial);
         }
 
-        return new GuiItem(-1, fillMaterial, fillName, List.of(), headTexture);
+        String customModelProvider = cfg.getString(localFillSection + ".custom-model-provider");
+        String customModelId = cfg.getString(localFillSection + ".custom-model-id");
+        if (customModelProvider == null) {
+            customModelProvider = cfg.getString("global.fill-item.custom-model-provider");
+            customModelId = cfg.getString("global.fill-item.custom-model-id");
+        }
+
+        return new GuiItem(-1, fillMaterial, fillName, List.of(), headTexture, false, customModelProvider, customModelId);
     }
 
     public static String parseHeadTexture(FileConfiguration cfg, String section, Material material) {

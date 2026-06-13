@@ -6,25 +6,28 @@ import org.bukkit.inventory.ItemStack;
 public class CustomItemHook {
 
     public static ItemStack getCustomItem(DroneSettings settings) {
-        String provider = settings.customModelProvider();
+        return getCustomItem(settings.customModelProvider(), settings.customModelItemId());
+    }
+
+    public static ItemStack getCustomItem(String provider, String itemId) {
         if (provider == null || provider.isBlank() || "NONE".equalsIgnoreCase(provider)) {
-            return null; // Fallback to skull texture
+            return null; // Fallback to normal behavior
         }
 
         try {
             switch (provider.toUpperCase()) {
                 case "NEXO":
-                    return getNexoItem(settings.customModelItemId());
+                    return getNexoItem(itemId);
                 case "ORAXEN":
-                    return getOraxenItem(settings.customModelItemId());
+                    return getOraxenItem(itemId);
                 case "ITEMSADDER":
-                    return getItemsAdderItem(settings.customModelItemId());
+                    return getItemsAdderItem(itemId);
                 default:
                     Bukkit.getLogger().warning("[AdvancedDeliveryDrones] Unknown custom model provider: " + provider);
                     return null;
             }
         } catch (Exception e) {
-            Bukkit.getLogger().warning("[AdvancedDeliveryDrones] Failed to load custom item from provider " + provider + " for id " + settings.customModelItemId() + ": " + e.getMessage());
+            Bukkit.getLogger().warning("[AdvancedDeliveryDrones] Failed to load custom item from provider " + provider + " for id " + itemId + ": " + e.getMessage());
             return null;
         }
     }

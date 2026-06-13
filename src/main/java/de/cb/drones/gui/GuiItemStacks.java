@@ -26,7 +26,10 @@ public final class GuiItemStacks {
     }
 
     public static ItemStack create(GuiItem item, Consumer<ItemMeta> metaCustomizer) {
-        ItemStack stack = new ItemStack(item.material());
+        ItemStack stack = de.cb.drones.drone.CustomItemHook.getCustomItem(item.customModelProvider(), item.customModelId());
+        if (stack == null) {
+            stack = new ItemStack(item.material());
+        }
         ItemMeta meta = stack.getItemMeta();
         if (meta == null) {
             return stack;
