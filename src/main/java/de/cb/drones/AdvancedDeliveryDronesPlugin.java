@@ -14,6 +14,11 @@ import de.cb.drones.discord.DiscordWebhookManager;
 import de.cb.drones.drone.DroneInteractionListener;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
+import de.cb.drones.gui.AdminDroneMenuGUI;
+import de.cb.drones.gui.AdminDroneMenuHandler;
+import de.cb.drones.log.DroneLogger;
+
+import de.cb.drones.log.YamlDroneLogger;
 import de.cb.drones.socket.SocketRepository;
 import de.cb.drones.placeholder.PlaceholderHook;
 import de.cb.drones.update.UpdateNotificationListener;
@@ -40,9 +45,12 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private DroneCommand droneCommand;
     private LanguageManager languageManager;
     private DatabaseManager databaseManager;
+    private DroneLogger droneLogger;
     private ConfigEditorService configEditorService;
     private ConfigEditorGUI configEditorGUI;
     private ConfigEditorHandler configEditorHandler;
+    private AdminDroneMenuGUI adminDroneMenuGUI;
+    private AdminDroneMenuHandler adminDroneMenuHandler;
     private LiveMapHookManager liveMapHookManager;
 
     @Override
@@ -65,8 +73,10 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         this.languageManager.reload();
         
         this.databaseManager = new de.cb.drones.config.DatabaseManager(this);
-        if ("MYSQL".equalsIgnoreCase(getConfig().getString("database.type", "YAML"))) {
-            this.databaseManager.connect();
+        if (getConfig().getBoolean("settings.drone.logging.enabled", true)) {
+            this.droneLogger = new YamlDroneLogger(this);
+        } else {
+            this.droneLogger = null;
         }
         
         this.playerSettings = new PlayerSettingsRepository(this);
@@ -85,8 +95,13 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
                 discordWebhookManager,
                 socketRepository,
                 socketPendingReturns,
-                databaseManager
+                databaseManager,
+                droneLogger
         );
+        
+        de.cb.drones.gui.GuiConfiguration guiConfiguration = new de.cb.drones.gui.GuiConfiguration(guiConfig);
+        this.adminDroneMenuGUI = new AdminDroneMenuGUI(this, droneManager, guiConfig);
+        this.adminDroneMenuHandler = new AdminDroneMenuHandler(this, droneManager, adminDroneMenuGUI, guiConfig);
         
         de.cb.drones.util.WorldGuardHook.setEnabled(getConfig().getBoolean("hooks.worldguard", true));
         
@@ -110,6 +125,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         }
 
         getServer().getPluginManager().registerEvents(new DroneInteractionListener(droneManager, socketRepository), this);
+        getServer().getPluginManager().registerEvents(adminDroneMenuHandler, this);
 
         // Register update notification listener for player join events
         getServer().getPluginManager().registerEvents(
@@ -150,12 +166,10 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
             this.databaseManager.close();
         }
         this.databaseManager = new de.cb.drones.config.DatabaseManager(this);
-        if ("MYSQL".equalsIgnoreCase(getConfig().getString("database.type", "YAML"))) {
-            if (this.databaseManager.connect()) {
-                getLogger().info(languageManager.getString("mysql-connected", "MySQL connected!"));
-            } else {
-                getLogger().severe(languageManager.getString("mysql-connection-failed", "MySQL connection failed!"));
-            }
+        if (getConfig().getBoolean("settings.drone.logging.enabled", true)) {
+            this.droneLogger = new YamlDroneLogger(this);
+        } else {
+            this.droneLogger = null;
         }
         
         playerSettings.reload();
@@ -174,6 +188,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         }
         droneManager.updateSettings(DroneSettings.fromConfig(getConfig(), guiConfig));
         droneManager.updateDatabaseManager(databaseManager);
+        droneManager.updateLogger(droneLogger);
         if (droneCommand != null) {
             droneCommand.updateMenuHandlerSettings(droneManager.settings());
             droneCommand.reloadComposeDrafts();
@@ -268,5 +283,9 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
 
     public ConfigEditorHandler getConfigEditorHandler() {
         return configEditorHandler;
+    }
+
+    public AdminDroneMenuGUI getAdminDroneMenuGUI() {
+        return adminDroneMenuGUI;
     }
 }

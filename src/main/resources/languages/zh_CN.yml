@@ -185,3 +185,9 @@ worldguard-cannot-land-target: "<red>目标位于无人机无法降落的区域�
 worldguard-cannot-receive: "<red>目标玩家位于阻止接收无人机的区域！</red>"
 worldguard-cannot-place-socket: "<red>您不能在这里放置交付插座！</red>"
 worldguard-cannot-use-socket: "<red>您不能在该区域使用插座！</red>"
+
+admin-drone-deleted: "<green>无人机已成功删除。</green>"
+admin-drone-recalled: "<yellow>无人机已被召回给发送者。</yellow>"
+admin-drone-teleported: "<aqua>您已被传送到无人机。</aqua>"
+admin-drone-deleted-notify: "<red>管理员删除了您的无人机 (<id>)。</red>"
+admin-drone-recalled-notify: "<yellow>管理员召回了您的无人机 (<id>)。</yellow>"

@@ -184,3 +184,9 @@ worldguard-cannot-land-target: "<red>Das Ziel befindet sich in einer Region, in 
 worldguard-cannot-receive: "<red>Der Zielspieler befindet sich in einer Region, in der das Empfangen von Drohnen blockiert ist!</red>"
 worldguard-cannot-place-socket: "<red>Du kannst hier keine Sockets platzieren!</red>"
 worldguard-cannot-use-socket: "<red>Du kannst Sockets in dieser Region nicht verwenden!</red>"
+
+admin-drone-deleted: "<green>Die Drohne wurde erfolgreich gelöscht.</green>"
+admin-drone-recalled: "<yellow>Die Drohne wurde zum Absender zurückgerufen.</yellow>"
+admin-drone-teleported: "<aqua>Du wurdest zur Drohne teleportiert.</aqua>"
+admin-drone-deleted-notify: "<red>Ein Admin hat deine Drohne (<id>) gelöscht.</red>"
+admin-drone-recalled-notify: "<yellow>Ein Admin hat deine Drohne (<id>) zurückgerufen.</yellow>"

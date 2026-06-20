@@ -213,11 +213,15 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeAdmin(Player player, String[] args) {
-        if (!player.hasPermission("drone.admin.send")) {
+        if (!player.hasPermission("drone.admin")) {
             droneManager.sendMessage(player, "no-permission");
             return true;
         }
-        if (args.length < 2 || !"send".equalsIgnoreCase(args[1]) || args.length < 5) {
+        if (args.length < 2 || !"send".equalsIgnoreCase(args[1])) {
+            plugin.getAdminDroneMenuGUI().open(player, 0);
+            return true;
+        }
+        if (args.length < 5) {
             player.sendMessage(plugin.component("usage-admin"));
             return true;
         }

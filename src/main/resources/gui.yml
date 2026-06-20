@@ -746,3 +746,38 @@ mob-sending:
       lore:
         - "<!italic><gray>  ɴᴇxᴛ ᴘᴀɢᴇ"
 
+# =============================================================================
+# ADMIN DRONE MENU GUI
+# =============================================================================
+admin-menu:
+  title: "<!italic><dark_red>🛡 <red>ᴀᴅᴍɪɴ ᴄᴏɴᴛʀᴏʟ</red>"
+  size: 54
+  drone-item:
+    name-format: "<!italic><gold><bold>✈ ᴅʀᴏɴᴇ #<id></bold></gold>"
+    lore:
+      - "<!italic><gray>┌────────────────────┐"
+      - "<!italic><gray>  sᴇɴᴅᴇʀ: <white><sender>"
+      - "<!italic><gray>  ʀᴇᴄᴇɪᴠᴇʀ: <white><receiver>"
+      - "<!italic><gray>  sᴛᴀᴛᴜs: <white><status>"
+      - "<!italic><gray>  ᴅɪsᴛᴀɴᴄᴇ: <white><distance>ᴍ"
+      - "<!italic><gray>  ɪᴛᴇᴍs: <white><items>"
+      - "<!italic><gray>└────────────────────┘"
+      - "<!italic><green>⬥ <italic>L-Cʟɪᴄᴋ ᴛᴏ Tᴇʟᴇᴘᴏʀᴛ</italic>"
+      - "<!italic><yellow>⬥ <italic>R-Cʟɪᴄᴋ ᴛᴏ Rᴇᴄᴀʟʟ</italic>"
+      - "<!italic><red>⬥ <italic>Sʜɪғᴛ-R-Cʟɪᴄᴋ ᴛᴏ Dᴇʟᴇᴛᴇ</italic>"
+  content-slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44]
+  items:
+    previous-page:
+      position: 48
+      material: "ARROW"
+      name: "<!italic><yellow>◀ ᴘʀᴇᴠɪᴏᴜs</yellow>"
+      lore:
+        - "<!italic><gray>  ᴘʀᴇᴠɪᴏᴜs ᴘᴀɢᴇ"
+    next-page:
+      position: 50
+      material: "ARROW"
+      name: "<!italic><yellow>ɴᴇxᴛ ▶</yellow>"
+      lore:
+        - "<!italic><gray>  ɴᴇxᴛ ᴘᴀɢᴇ"
+
+

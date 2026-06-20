@@ -185,3 +185,9 @@ worldguard-cannot-land-target: "<red>¡El objetivo está en una región donde lo
 worldguard-cannot-receive: "<red>¡El jugador objetivo está en una región donde recibir drones está bloqueado!</red>"
 worldguard-cannot-place-socket: "<red>¡No puedes colocar enchufes de entrega aquí!</red>"
 worldguard-cannot-use-socket: "<red>¡No puedes usar enchufes en esta región!</red>"
+
+admin-drone-deleted: "<green>El dron fue eliminado con éxito.</green>"
+admin-drone-recalled: "<yellow>El dron fue retirado al remitente.</yellow>"
+admin-drone-teleported: "<aqua>Fuiste teletransportado al dron.</aqua>"
+admin-drone-deleted-notify: "<red>Un administrador ha eliminado tu dron (<id>).</red>"
+admin-drone-recalled-notify: "<yellow>Un administrador ha retirado tu dron (<id>).</yellow>"

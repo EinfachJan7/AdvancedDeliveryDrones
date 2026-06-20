@@ -185,3 +185,9 @@ worldguard-cannot-land-target: "<red>Цель находится в регион
 worldguard-cannot-receive: "<red>Целевой игрок находится в регионе, где прием дронов заблокирован!</red>"
 worldguard-cannot-place-socket: "<red>Вы не можете размещать здесь розетки доставки!</red>"
 worldguard-cannot-use-socket: "<red>Вы не можете использовать розетки в этом регионе!</red>"
+
+admin-drone-deleted: "<green>Дрон был успешно удален.</green>"
+admin-drone-recalled: "<yellow>Дрон был отозван отправителю.</yellow>"
+admin-drone-teleported: "<aqua>Вы были телепортированы к дрону.</aqua>"
+admin-drone-deleted-notify: "<red>Администратор удалил ваш дрон (<id>).</red>"
+admin-drone-recalled-notify: "<yellow>Администратор отозвал ваш дрон (<id>).</yellow>"

@@ -51,6 +51,8 @@ database:
 
 settings:
   drone:
+    logging:
+      enabled: true
     speed: 5.0
     startup-speed: 0.2
     startup-seconds: 3

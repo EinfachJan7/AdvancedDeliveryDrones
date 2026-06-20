@@ -9,6 +9,8 @@ import de.cb.drones.config.DronePersistence;
 import de.cb.drones.config.YamlDronePersistence;
 import de.cb.drones.config.MysqlDronePersistence;
 import de.cb.drones.config.DatabaseManager;
+import de.cb.drones.log.DroneLogger;
+import de.cb.drones.log.DroneLogEntry;
 import de.cb.drones.socket.DeliverySocket;
 import de.cb.drones.socket.SocketRepository;
 import java.util.logging.Level;
@@ -52,6 +54,7 @@ public final class DroneManager {
     private DroneSettings settings;
     private BukkitTask cleanupTask;
     private DronePersistence persistence;
+    private DroneLogger droneLogger;
 
     public DroneManager(
             AdvancedDeliveryDronesPlugin plugin,
@@ -59,7 +62,8 @@ public final class DroneManager {
             DiscordWebhookManager discordWebhookManager,
             SocketRepository socketRepository,
             SocketPendingReturnsRepository socketPendingReturns,
-            DatabaseManager databaseManager
+            DatabaseManager databaseManager,
+            DroneLogger droneLogger
     ) {
         this.plugin = plugin;
         this.settings = settings;
@@ -73,6 +77,7 @@ public final class DroneManager {
         } else {
             this.persistence = new YamlDronePersistence(plugin);
         }
+        this.droneLogger = droneLogger;
     }
 
     public AdvancedDeliveryDronesPlugin plugin() {
@@ -92,6 +97,10 @@ public final class DroneManager {
         } else {
             this.persistence = new YamlDronePersistence(plugin);
         }
+    }
+
+    public void updateLogger(DroneLogger logger) {
+        this.droneLogger = logger;
     }
 
     public DroneSettings settings() {
@@ -232,6 +241,19 @@ public final class DroneManager {
         incrementSenderCounter(sender.getUniqueId());
         drone.startFlight(this);
 
+        if (droneLogger != null) {
+            droneLogger.log(new DroneLogEntry(
+                    drone.droneId(),
+                    drone.senderId(),
+                    drone.senderName(),
+                    drone.receiverId(),
+                    drone.receiverName(),
+                    System.currentTimeMillis(),
+                    drone.formatItemsSummary() + " | " + drone.formatAnimalsSummary(),
+                    "SENT"
+            ));
+        }
+
         // Send Discord notification
         discordWebhookManager.sendDeliveryNotification(sender, receiver, drone);
 
@@ -266,6 +288,18 @@ public final class DroneManager {
             if (sender != null) {
                 discordWebhookManager.sendDeliveryCompleted(sender, player, drone);
             }
+            if (droneLogger != null) {
+                droneLogger.log(new DroneLogEntry(
+                        drone.droneId(),
+                        drone.senderId(),
+                        drone.senderName(),
+                        drone.receiverId(),
+                        drone.receiverName(),
+                        System.currentTimeMillis(),
+                        drone.formatItemsSummary() + " | " + drone.formatAnimalsSummary(),
+                        "DELIVERED (Items)"
+                ));
+            }
             // Only reset countdown on first opening
             drone.markInteraction(currentTick());
         }
@@ -282,6 +316,18 @@ public final class DroneManager {
             Player sender = Bukkit.getPlayer(drone.senderId());
             if (sender != null && receiver != null) {
                 discordWebhookManager.sendDeliveryCompleted(sender, receiver, drone);
+            }
+            if (droneLogger != null) {
+                droneLogger.log(new DroneLogEntry(
+                        drone.droneId(),
+                        drone.senderId(),
+                        drone.senderName(),
+                        drone.receiverId(),
+                        drone.receiverName(),
+                        System.currentTimeMillis(),
+                        drone.formatAnimalsSummary(),
+                        "DELIVERED (Animals)"
+                ));
             }
             
             // Send socket pickup notifications if this is a socket delivery
@@ -391,6 +437,18 @@ public final class DroneManager {
     }
 
     private void abortDelivery(DeliveryDrone drone, Runnable returnItemsAction) {
+        if (droneLogger != null) {
+            droneLogger.log(new DroneLogEntry(
+                    drone.droneId(),
+                    drone.senderId(),
+                    drone.senderName(),
+                    drone.receiverId(),
+                    drone.receiverName(),
+                    System.currentTimeMillis(),
+                    drone.formatItemsSummary() + " | " + drone.formatAnimalsSummary(),
+                    "ABORTED"
+            ));
+        }
         if (!shouldReturnAnimalsToSender(drone)) {
             returnItemsAction.run();
             destroyDroneAfterReturn(drone);
