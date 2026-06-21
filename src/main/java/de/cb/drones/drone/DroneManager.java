@@ -592,8 +592,20 @@ public final class DroneManager {
             // Return items based on despawn mode
             boolean shouldReturnItems = settings.despawnMode() == DroneSettings.DespawnMode.COLLECT || 
                                       (settings.despawnMode() == DroneSettings.DespawnMode.DELETE && !drone.wasOpenedByReceiver());
-            if (shouldReturnItems) {
-                List<ItemStack> items = drone.snapshotItems();
+            boolean returnDroneItem = !drone.wasOpenedByReceiver() && plugin.getDroneItemManager().isRequireItem();
+
+            if (shouldReturnItems || returnDroneItem) {
+                List<ItemStack> items = new ArrayList<>();
+                if (shouldReturnItems) {
+                    items.addAll(drone.snapshotItems());
+                }
+                if (returnDroneItem) {
+                    ItemStack droneItem = plugin.getDroneItemManager().getDroneItem();
+                    if (droneItem != null) {
+                        items.add(droneItem);
+                    }
+                }
+                
                 if (!items.isEmpty()) {
                     Player sender = Bukkit.getPlayer(drone.senderId());
                     if (sender != null && sender.isOnline()) {

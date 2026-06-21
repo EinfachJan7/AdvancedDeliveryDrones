@@ -2059,6 +2059,12 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             droneManager.sendMessage(sender, "blacklist-player-blocked", "<player>", receiver.getName());
             return false;
         }
+        
+        if (!plugin.getDroneItemManager().hasAndConsumeDroneItem(sender)) {
+            droneManager.sendMessage(sender, "missing-drone-item");
+            return false;
+        }
+
         List<LivingEntity> attachedAnimals = holder.animalsOnly()
                 ? resolveSelectedAnimals(holder.senderId(), holder.selectedAnimalIds())
                 : (holder.selectedAnimalIds().isEmpty()

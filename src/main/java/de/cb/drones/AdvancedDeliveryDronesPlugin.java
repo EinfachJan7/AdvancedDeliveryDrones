@@ -12,6 +12,7 @@ import de.cb.drones.config.PlayerSettingsRepository;
 import de.cb.drones.config.SocketPendingReturnsRepository;
 import de.cb.drones.discord.DiscordWebhookManager;
 import de.cb.drones.drone.DroneInteractionListener;
+import de.cb.drones.drone.DroneItemManager;
 import de.cb.drones.drone.DroneManager;
 import de.cb.drones.drone.DroneSettings;
 import de.cb.drones.gui.AdminDroneMenuGUI;
@@ -39,6 +40,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private PlayerBlacklistRepository blacklistRepository;
     private SocketPendingReturnsRepository socketPendingReturns;
     private DroneManager droneManager;
+    private DroneItemManager droneItemManager;
     private DiscordWebhookManager discordWebhookManager;
     private SocketRepository socketRepository;
     private FileConfiguration guiConfig;
@@ -89,6 +91,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         this.configEditorService = new ConfigEditorService(this);
         this.configEditorGUI = new ConfigEditorGUI(this, configEditorService, new ConfigEditorGuiSettings(guiConfig));
         this.configEditorHandler = new ConfigEditorHandler(this, configEditorService, configEditorGUI);
+        this.droneItemManager = new DroneItemManager(this);
         this.droneManager = new DroneManager(
                 this,
                 DroneSettings.fromConfig(getConfig(), guiConfig),
@@ -154,7 +157,11 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     public void reloadPlugin() {
         saveDefaultConfig();
         saveGuiConfig();
-        de.cb.drones.config.ConfigUpdater.update(this, "config.yml");
+        try {
+            de.cb.drones.config.ConfigUpdater.update(this, "config.yml", new java.io.File(getDataFolder(), "config.yml"), "settings.drone.drone-item.crafting.shape", "settings.drone.drone-item.crafting.ingredients");
+        } catch (java.io.IOException e) {
+            getLogger().severe("Could not update config: " + e.getMessage());
+        }
         de.cb.drones.config.ConfigUpdater.mergeMissing(this, "gui.yml");
         reloadConfig();
         if (this.languageManager == null) {
@@ -185,6 +192,9 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         }
         if (configEditorHandler != null) {
             configEditorHandler.reloadGuiSettings(new ConfigEditorGuiSettings(guiConfig));
+        }
+        if (droneItemManager != null) {
+            droneItemManager.loadConfig();
         }
         droneManager.updateSettings(DroneSettings.fromConfig(getConfig(), guiConfig));
         droneManager.updateDatabaseManager(databaseManager);
@@ -259,6 +269,10 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
 
     public PlayerBlacklistRepository getBlacklistRepository() {
         return blacklistRepository;
+    }
+
+    public DroneItemManager getDroneItemManager() {
+        return droneItemManager;
     }
 
     public DroneManager getDroneManager() {

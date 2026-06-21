@@ -12,6 +12,7 @@ sender-limit-reached: "<red>Вы уже отправили максимальн�
 cooldown-active: "<red>Вы должны подождать еще <seconds> секунд перед отправкой нового дрона.</red>"
 cannot-send-to-self-player: "<red>Вы не можете отправлять дроны самому себе.</red>"
 cannot-send-to-self-socket: "<red>Вы не можете отправлять дроны на свои собственные сокеты.</red>"
+missing-drone-item: "<red>У вас должен быть скрафченный Дрон в инвентаре, чтобы отправлять посылки!</red>"
 decline-none: "<red>Нет входящих дронов для отклонения.</red>"
 decline-success: "<green><count> дрон(ов) отклонено и возвращено назад.</green>"
 decline-sender-notify: "<yellow>Ваш дрон был отклонен игроком <white><player></white>. Предметы возвращены.</yellow>"

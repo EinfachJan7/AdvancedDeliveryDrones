@@ -12,6 +12,7 @@ sender-limit-reached: "<red>Vous avez déjà envoyé le nombre maximum de drones
 cooldown-active: "<red>Vous devez attendre <seconds> seconde(s) de plus avant d'envoyer un nouveau drone.</red>"
 cannot-send-to-self-player: "<red>Vous ne pouvez pas envoyer un drone à vous-même.</red>"
 cannot-send-to-self-socket: "<red>Vous ne pouvez pas envoyer un drone à votre propre socket.</red>"
+missing-drone-item: "<red>Vous devez avoir un Drone fabriqué dans votre inventaire pour envoyer des colis !</red>"
 decline-none: "<red>Aucun drone entrant à refuser.</red>"
 decline-success: "<green><count> drone(s) ont été refusé(s) et renvoyé(s).</green>"
 decline-sender-notify: "<yellow>Votre drone a été refusé par <white><player></white>. Les objets ont été retournés.</yellow>"

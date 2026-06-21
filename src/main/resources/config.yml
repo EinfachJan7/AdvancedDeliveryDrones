@@ -51,6 +51,27 @@ database:
 
 settings:
   drone:
+    drone-item:
+      # If true, players must have a drone item in their inventory to send a delivery.
+      # The drone item will be consumed upon sending, and returned upon cancellation/failure.
+      require-item: false
+      item:
+        material: "ELYTRA"
+        name: "<yellow>Delivery Drone"
+        lore:
+          - "<gray>A fast delivery drone."
+          - "<gray>Use <yellow>/drone</yellow> to send packages."
+        custom-model-data: 0
+      crafting:
+        enabled: true
+        # The crafting recipe. Spaces indicate empty slots.
+        shape:
+          - " I "
+          - "IRI"
+          - " I "
+        ingredients:
+          I: "IRON_INGOT"
+          R: "REDSTONE"
     logging:
       enabled: true
     speed: 5.0
