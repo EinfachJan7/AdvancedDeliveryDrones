@@ -600,47 +600,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     }
 
     private boolean executeDataBackup(Player player) {
-        File backupDir = new File(plugin.getDataFolder(), "backups");
-        if (!backupDir.exists()) backupDir.mkdirs();
-        
-        String fileName = "backup_" + System.currentTimeMillis() + ".backup";
-        File backupFile = new File(backupDir, fileName);
-        
-        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            try {
-                org.bukkit.configuration.file.YamlConfiguration backupConfig = new org.bukkit.configuration.file.YamlConfiguration();
-                
-                // Read all data files
-                String[] allFiles = {"config.yml", "gui.yml", "players.yml", "blacklists.yml", "socket-pending-returns.yml", "sockets.yml", "compose-drafts.yml", "drones.yml", "drone-persistence.yml"};
-                for (String name : allFiles) {
-                    File f = new File(plugin.getDataFolder(), name);
-                    if (f.exists()) {
-                        backupConfig.set("files." + name.replace(".", "_"), java.nio.file.Files.readString(f.toPath()));
-                    }
-                }
-                
-                // If using MySQL, fetch data from there instead for data keys
-                if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML"))) {
-                    de.cb.drones.config.DatabaseManager db = plugin.getDatabaseManager();
-                    if (db != null && db.isConnected()) {
-                        String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
-                        String[] ymlNames = {"players_yml", "blacklists_yml", "socket-pending-returns_yml", "sockets_yml", "compose-drafts_yml"};
-                        for (int i = 0; i < dbKeys.length; i++) {
-                            String data = db.loadConfig(dbKeys[i]);
-                            if (data != null) {
-                                backupConfig.set("files." + ymlNames[i], data);
-                            }
-                        }
-                    }
-                }
-                
-                backupConfig.save(backupFile);
-                player.sendMessage(MINI_MESSAGE.deserialize("<green>Backup created: <yellow>" + fileName + "</yellow></green>"));
-            } catch (Exception e) {
-                player.sendMessage(MINI_MESSAGE.deserialize("<red>Failed to create backup: " + e.getMessage() + "</red>"));
-                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Backup failed", e);
-            }
-        });
+        plugin.executeDataBackup(player);
         return true;
     }
 

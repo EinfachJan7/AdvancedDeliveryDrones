@@ -196,4 +196,4 @@ admin-drone-recalled-notify: "<yellow>Un administrador ha retirado tu dron (<id>
 convert-start: "<yellow>Iniciando conversión asincrónica de datos. La recarga finalizará cuando termine.</yellow>"
 convert-abort-mysql: "<red>Error al conectar a MySQL. Conversión abortada. Volviendo a YAML.</red>"
 convert-abort-yaml: "<red>La conexión antigua de MySQL está cerrada. No se puede convertir a YAML. Volviendo a MYSQL.</red>"
-convert-finish: "<green>Conversión de datos finalizada con éxito.</green>"
+

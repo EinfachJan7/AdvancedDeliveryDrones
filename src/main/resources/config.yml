@@ -76,6 +76,9 @@ settings:
           R: "REDSTONE"
     logging:
       enabled: true
+    auto-backup:
+      enabled: false
+      interval-minutes: 60
     speed: 5.0
     startup-speed: 0.2
     startup-seconds: 3

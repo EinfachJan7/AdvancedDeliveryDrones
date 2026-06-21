@@ -54,6 +54,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     private AdminDroneMenuGUI adminDroneMenuGUI;
     private AdminDroneMenuHandler adminDroneMenuHandler;
     private LiveMapHookManager liveMapHookManager;
+    private org.bukkit.scheduler.BukkitTask autoBackupTask;
 
     @Override
     public void onLoad() {
@@ -139,6 +140,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         );
 
         PlaceholderHook.register(this);
+        startAutoBackupTask();
     }
 
     @Override
@@ -155,6 +157,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         if (databaseManager != null) {
             databaseManager.close();
         }
+        stopAutoBackupTask();
     }
 
     public void reloadPlugin() {
@@ -210,7 +213,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
                 final boolean finalSuccess = success;
                 org.bukkit.Bukkit.getScheduler().runTask(this, () -> {
                     if (finalSuccess) {
-                        sender.sendMessage(component("convert-finish"));
+                        sender.sendMessage(component("convert-success"));
                     }
                     finalizeReload();
                 });
@@ -270,6 +273,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
             liveMapHookManager.reload();
         }
         PlaceholderHook.register(this);
+        startAutoBackupTask();
     }
 
     private void saveGuiConfig() {
@@ -363,5 +367,75 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
 
     public AdminDroneMenuGUI getAdminDroneMenuGUI() {
         return adminDroneMenuGUI;
+    }
+
+    public void executeDataBackup(org.bukkit.command.CommandSender sender) {
+        File backupDir = new File(getDataFolder(), "backups");
+        if (!backupDir.exists()) backupDir.mkdirs();
+        
+        String fileName = "backup_" + System.currentTimeMillis() + ".backup";
+        File backupFile = new File(backupDir, fileName);
+        
+        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+            try {
+                org.bukkit.configuration.file.YamlConfiguration backupConfig = new org.bukkit.configuration.file.YamlConfiguration();
+                
+                // Read all data files
+                String[] allFiles = {"config.yml", "gui.yml", "players.yml", "blacklists.yml", "socket-pending-returns.yml", "sockets.yml", "compose-drafts.yml", "drones.yml", "drone-persistence.yml"};
+                for (String name : allFiles) {
+                    File f = new File(getDataFolder(), name);
+                    if (f.exists()) {
+                        backupConfig.set("files." + name.replace(".", "_"), java.nio.file.Files.readString(f.toPath()));
+                    }
+                }
+                
+                // If using MySQL, fetch data from there instead for data keys
+                if ("MYSQL".equalsIgnoreCase(getConfig().getString("database.type", "YAML"))) {
+                    de.cb.drones.config.DatabaseManager db = getDatabaseManager();
+                    if (db != null && db.isConnected()) {
+                        String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
+                        String[] ymlNames = {"players_yml", "blacklists_yml", "socket-pending-returns_yml", "sockets_yml", "compose-drafts_yml"};
+                        for (int i = 0; i < dbKeys.length; i++) {
+                            String data = db.loadConfig(dbKeys[i]);
+                            if (data != null) {
+                                backupConfig.set("files." + ymlNames[i], data);
+                            }
+                        }
+                    }
+                }
+                
+                backupConfig.save(backupFile);
+                if (sender != null) {
+                    sender.sendMessage(miniMessage.deserialize("<green>Backup created: <yellow>" + fileName + "</yellow></green>"));
+                } else {
+                    getLogger().info("Automatic backup created: " + fileName);
+                }
+            } catch (Exception e) {
+                if (sender != null) {
+                    sender.sendMessage(miniMessage.deserialize("<red>Failed to create backup: " + e.getMessage() + "</red>"));
+                }
+                getLogger().log(java.util.logging.Level.SEVERE, "Backup failed", e);
+            }
+        });
+    }
+
+    private void startAutoBackupTask() {
+        stopAutoBackupTask();
+        if (getConfig().getBoolean("settings.drone.auto-backup.enabled", false)) {
+            int minutes = getConfig().getInt("settings.drone.auto-backup.interval-minutes", 60);
+            if (minutes > 0) {
+                long ticks = minutes * 60L * 20L;
+                this.autoBackupTask = org.bukkit.Bukkit.getScheduler().runTaskTimer(this, () -> {
+                    executeDataBackup(null);
+                }, ticks, ticks);
+            }
+        }
+    }
+
+    private void stopAutoBackupTask() {
+        if (this.autoBackupTask != null) {
+            this.autoBackupTask.cancel();
+            this.autoBackupTask = null;
+        }
     }
 }
