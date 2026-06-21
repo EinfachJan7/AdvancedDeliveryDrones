@@ -9,6 +9,44 @@ import java.io.File;
 
 public class DataConverter {
 
+    public static void convertYamlToMysqlAsync(AdvancedDeliveryDronesPlugin plugin, DatabaseManager tempDb, CommandSender sender) {
+        String[] fileNames = {"players", "blacklists", "socket-pending-returns", "sockets", "compose-drafts"};
+        String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
+
+        for (int i = 0; i < fileNames.length; i++) {
+            java.io.File f = new java.io.File(plugin.getDataFolder(), fileNames[i] + ".yml");
+            if (f.exists()) {
+                YamlConfiguration conf = YamlConfiguration.loadConfiguration(f);
+                tempDb.saveConfig(dbKeys[i], conf.saveToString());
+            }
+        }
+        sender.sendMessage(plugin.component("convert-success"));
+    }
+
+    public static void convertMysqlToYamlAsync(AdvancedDeliveryDronesPlugin plugin, DatabaseManager oldDb, CommandSender sender) {
+        String[] fileNames = {"players", "blacklists", "socket-pending-returns", "sockets", "compose-drafts"};
+        String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
+
+        for (int i = 0; i < fileNames.length; i++) {
+            String data = oldDb.loadConfig(dbKeys[i]);
+            if (data != null) {
+                java.io.File f = new java.io.File(plugin.getDataFolder(), fileNames[i] + ".yml");
+                try {
+                    if (!f.exists()) {
+                        f.getParentFile().mkdirs();
+                        f.createNewFile();
+                    }
+                    YamlConfiguration conf = new YamlConfiguration();
+                    conf.loadFromString(data);
+                    conf.save(f);
+                } catch (Exception e) {
+                    plugin.getLogger().severe("Failed to convert " + dbKeys[i]);
+                }
+            }
+        }
+        sender.sendMessage(plugin.component("convert-success"));
+    }
+
     public static void convertYamlToMysql(AdvancedDeliveryDronesPlugin plugin, CommandSender sender) {
         DatabaseManager db = plugin.getDatabaseManager();
         if (db == null || !db.isConnected()) {
@@ -26,11 +64,10 @@ public class DataConverter {
         String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
 
         for (int i = 0; i < fileNames.length; i++) {
-            File f = new File(plugin.getDataFolder(), fileNames[i] + ".yml");
+            java.io.File f = new java.io.File(plugin.getDataFolder(), fileNames[i] + ".yml");
             if (f.exists()) {
                 YamlConfiguration conf = YamlConfiguration.loadConfiguration(f);
                 db.saveConfig(dbKeys[i], conf.saveToString());
-                // The file will be deleted by the repository reload()
             }
         }
 
@@ -40,28 +77,20 @@ public class DataConverter {
         sender.sendMessage(plugin.component("convert-success"));
     }
 
-    public static void convertYamlToMysqlAsync(AdvancedDeliveryDronesPlugin plugin, DatabaseManager tempDb, CommandSender sender) {
-        String[] fileNames = {"players", "blacklists", "socket-pending-returns", "sockets", "compose-drafts"};
-        String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
-
-        for (int i = 0; i < fileNames.length; i++) {
-            File f = new File(plugin.getDataFolder(), fileNames[i] + ".yml");
-            if (f.exists()) {
-                YamlConfiguration conf = YamlConfiguration.loadConfiguration(f);
-                tempDb.saveConfig(dbKeys[i], conf.saveToString());
-            }
+    public static void convertMysqlToYaml(AdvancedDeliveryDronesPlugin plugin, CommandSender sender) {
+        DatabaseManager db = plugin.getDatabaseManager();
+        if (db == null || !db.isConnected()) {
+            sender.sendMessage(plugin.componentMessage("convert-error", "<error>", "MySQL is not connected."));
+            return;
         }
-        sender.sendMessage(plugin.component("convert-success"));
-    }
 
-    public static void convertMysqlToYamlAsync(AdvancedDeliveryDronesPlugin plugin, DatabaseManager oldDb, CommandSender sender) {
         String[] fileNames = {"players", "blacklists", "socket-pending-returns", "sockets", "compose-drafts"};
         String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
 
         for (int i = 0; i < fileNames.length; i++) {
-            String data = oldDb.loadConfig(dbKeys[i]);
+            String data = db.loadConfig(dbKeys[i]);
             if (data != null) {
-                File f = new File(plugin.getDataFolder(), fileNames[i] + ".yml");
+                java.io.File f = new java.io.File(plugin.getDataFolder(), fileNames[i] + ".yml");
                 try {
                     if (!f.exists()) {
                         f.getParentFile().mkdirs();
@@ -75,6 +104,10 @@ public class DataConverter {
                 }
             }
         }
+
+        plugin.getConfig().set("database.type", "YAML");
+        plugin.saveConfig();
+        plugin.reloadPlugin();
         sender.sendMessage(plugin.component("convert-success"));
     }
 }
