@@ -158,7 +158,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         saveDefaultConfig();
         saveGuiConfig();
         try {
-            de.cb.drones.config.ConfigUpdater.update(this, "config.yml", new java.io.File(getDataFolder(), "config.yml"), "settings.drone.drone-item.crafting.shape", "settings.drone.drone-item.crafting.ingredients");
+            de.cb.drones.config.ConfigUpdater.update(this, "config.yml", new java.io.File(getDataFolder(), "config.yml"), "settings.drone.drone-item.crafting");
         } catch (java.io.IOException e) {
             getLogger().severe("Could not update config: " + e.getMessage());
         }
