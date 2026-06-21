@@ -40,18 +40,26 @@ public class DataConverter {
         sender.sendMessage(plugin.component("convert-success"));
     }
 
-    public static void convertMysqlToYaml(AdvancedDeliveryDronesPlugin plugin, CommandSender sender) {
-        DatabaseManager db = plugin.getDatabaseManager();
-        if (db == null || !db.isConnected()) {
-            sender.sendMessage(plugin.componentMessage("convert-error", "<error>", "MySQL is not connected."));
-            return;
-        }
-
+    public static void convertYamlToMysqlAsync(AdvancedDeliveryDronesPlugin plugin, DatabaseManager tempDb, CommandSender sender) {
         String[] fileNames = {"players", "blacklists", "socket-pending-returns", "sockets", "compose-drafts"};
         String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
 
         for (int i = 0; i < fileNames.length; i++) {
-            String data = db.loadConfig(dbKeys[i]);
+            File f = new File(plugin.getDataFolder(), fileNames[i] + ".yml");
+            if (f.exists()) {
+                YamlConfiguration conf = YamlConfiguration.loadConfiguration(f);
+                tempDb.saveConfig(dbKeys[i], conf.saveToString());
+            }
+        }
+        sender.sendMessage(plugin.component("convert-success"));
+    }
+
+    public static void convertMysqlToYamlAsync(AdvancedDeliveryDronesPlugin plugin, DatabaseManager oldDb, CommandSender sender) {
+        String[] fileNames = {"players", "blacklists", "socket-pending-returns", "sockets", "compose-drafts"};
+        String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
+
+        for (int i = 0; i < fileNames.length; i++) {
+            String data = oldDb.loadConfig(dbKeys[i]);
             if (data != null) {
                 File f = new File(plugin.getDataFolder(), fileNames[i] + ".yml");
                 try {
@@ -67,10 +75,6 @@ public class DataConverter {
                 }
             }
         }
-
-        plugin.getConfig().set("database.type", "YAML");
-        plugin.saveConfig();
-        plugin.reloadPlugin();
         sender.sendMessage(plugin.component("convert-success"));
     }
 }

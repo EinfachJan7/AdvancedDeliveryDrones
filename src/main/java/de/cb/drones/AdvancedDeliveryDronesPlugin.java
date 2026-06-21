@@ -155,6 +155,8 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     }
 
     public void reloadPlugin() {
+        String oldDbType = getConfig().getString("database.type", "YAML").toUpperCase();
+
         saveDefaultConfig();
         saveGuiConfig();
         try {
@@ -164,6 +166,54 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         }
         de.cb.drones.config.ConfigUpdater.mergeMissing(this, "gui.yml");
         reloadConfig();
+        
+        String newDbType = getConfig().getString("database.type", "YAML").toUpperCase();
+        
+        if (!oldDbType.equals(newDbType)) {
+            getLogger().info("Database type change detected: " + oldDbType + " -> " + newDbType);
+            getLogger().info("Starting asynchronous data conversion. The reload will complete when conversion is finished.");
+            
+            DatabaseManager oldDb = this.databaseManager;
+            
+            org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+                boolean success = false;
+                if (oldDbType.equals("YAML") && newDbType.equals("MYSQL")) {
+                    DatabaseManager tempDb = new de.cb.drones.config.DatabaseManager(this);
+                    if (tempDb.isConnected()) {
+                        de.cb.drones.command.DataConverter.convertYamlToMysqlAsync(this, tempDb, org.bukkit.Bukkit.getConsoleSender());
+                        tempDb.close();
+                        success = true;
+                    } else {
+                        getLogger().severe("Failed to connect to MySQL. Conversion aborted. Reverting to YAML.");
+                        getConfig().set("database.type", "YAML");
+                        saveConfig();
+                    }
+                } else if (oldDbType.equals("MYSQL") && newDbType.equals("YAML")) {
+                    if (oldDb != null && oldDb.isConnected()) {
+                        de.cb.drones.command.DataConverter.convertMysqlToYamlAsync(this, oldDb, org.bukkit.Bukkit.getConsoleSender());
+                        success = true;
+                    } else {
+                        getLogger().severe("Old MySQL connection is closed. Cannot convert to YAML. Reverting to MYSQL.");
+                        getConfig().set("database.type", "MYSQL");
+                        saveConfig();
+                    }
+                }
+                
+                final boolean finalSuccess = success;
+                org.bukkit.Bukkit.getScheduler().runTask(this, () -> {
+                    if (finalSuccess) {
+                        getLogger().info("Data conversion finished successfully.");
+                    }
+                    finalizeReload();
+                });
+            });
+            return;
+        }
+
+        finalizeReload();
+    }
+
+    private void finalizeReload() {
         if (this.languageManager == null) {
             this.languageManager = new LanguageManager(this);
         }
