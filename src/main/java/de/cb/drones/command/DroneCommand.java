@@ -132,6 +132,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             case "socket" -> executeSocket(player, args);
             case "blacklist" -> executeBlacklist(player, args);
             case "config" -> executeConfig(player);
+            case "data" -> executeData(player, args);
             case "locate" -> {
                 if (!droneSettings.locateParticlesEnabled()) {
                     player.sendMessage(plugin.component("usage-main"));
@@ -535,6 +536,159 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         } catch (NumberFormatException e) {
             player.sendMessage(MINI_MESSAGE.deserialize("<red>Invalid drone number.</red>"));
         }
+        return true;
+    }
+
+    private java.util.Map<UUID, Long> dataClearConfirms = new java.util.HashMap<>();
+
+    private boolean executeData(Player player, String[] args) {
+        if (!player.hasPermission("drone.admin.data")) {
+            droneManager.sendMessage(player, "no-permission");
+            return true;
+        }
+        if (args.length < 2) {
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Usage: /drone data <clear|backup|load></red>"));
+            return true;
+        }
+        String action = args[1].toLowerCase(Locale.ROOT);
+        return switch (action) {
+            case "clear" -> executeDataClear(player, args);
+            case "confirm" -> executeDataConfirm(player);
+            case "backup" -> executeDataBackup(player);
+            case "load" -> executeDataLoad(player, args);
+            default -> {
+                player.sendMessage(MINI_MESSAGE.deserialize("<red>Usage: /drone data <clear|backup|load></red>"));
+                yield true;
+            }
+        };
+    }
+
+    private boolean executeDataClear(Player player, String[] args) {
+        dataClearConfirms.put(player.getUniqueId(), System.currentTimeMillis());
+        player.sendMessage(MINI_MESSAGE.deserialize("<red>WARNING: This will delete ALL drone data (players, sockets, blacklists, active drones).</red>"));
+        player.sendMessage(MINI_MESSAGE.deserialize("<red>To confirm, type: </red><yellow>/drone data confirm</yellow>"));
+        return true;
+    }
+
+    private boolean executeDataConfirm(Player player) {
+        Long time = dataClearConfirms.remove(player.getUniqueId());
+        if (time == null || System.currentTimeMillis() - time > 30000) {
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>No pending clear confirmation or it expired.</red>"));
+            return true;
+        }
+        // Delete all data files except config.yml and gui.yml
+        String[] dataFiles = {"players.yml", "blacklists.yml", "socket-pending-returns.yml", "sockets.yml", "compose-drafts.yml", "drones.yml", "drone-persistence.yml"};
+        for (String fileName : dataFiles) {
+            File f = new File(plugin.getDataFolder(), fileName);
+            if (f.exists()) f.delete();
+        }
+        // Also clear database if MySQL
+        if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML"))) {
+            de.cb.drones.config.DatabaseManager db = plugin.getDatabaseManager();
+            if (db != null && db.isConnected()) {
+                db.saveConfig("player_settings", "{}");
+                db.saveConfig("blacklists", "{}");
+                db.saveConfig("socket_pending_returns", "{}");
+                db.saveConfig("sockets", "{}");
+                db.saveConfig("compose_drafts", "{}");
+            }
+        }
+        plugin.reloadPlugin();
+        player.sendMessage(MINI_MESSAGE.deserialize("<green>All drone data cleared successfully.</green>"));
+        return true;
+    }
+
+    private boolean executeDataBackup(Player player) {
+        File backupDir = new File(plugin.getDataFolder(), "backups");
+        if (!backupDir.exists()) backupDir.mkdirs();
+        
+        String fileName = "backup_" + System.currentTimeMillis() + ".backup";
+        File backupFile = new File(backupDir, fileName);
+        
+        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                org.bukkit.configuration.file.YamlConfiguration backupConfig = new org.bukkit.configuration.file.YamlConfiguration();
+                
+                // Read all data files
+                String[] allFiles = {"config.yml", "gui.yml", "players.yml", "blacklists.yml", "socket-pending-returns.yml", "sockets.yml", "compose-drafts.yml", "drones.yml", "drone-persistence.yml"};
+                for (String name : allFiles) {
+                    File f = new File(plugin.getDataFolder(), name);
+                    if (f.exists()) {
+                        backupConfig.set("files." + name.replace(".", "_"), java.nio.file.Files.readString(f.toPath()));
+                    }
+                }
+                
+                // If using MySQL, fetch data from there instead for data keys
+                if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML"))) {
+                    de.cb.drones.config.DatabaseManager db = plugin.getDatabaseManager();
+                    if (db != null && db.isConnected()) {
+                        String[] dbKeys = {"player_settings", "blacklists", "socket_pending_returns", "sockets", "compose_drafts"};
+                        String[] ymlNames = {"players_yml", "blacklists_yml", "socket-pending-returns_yml", "sockets_yml", "compose-drafts_yml"};
+                        for (int i = 0; i < dbKeys.length; i++) {
+                            String data = db.loadConfig(dbKeys[i]);
+                            if (data != null) {
+                                backupConfig.set("files." + ymlNames[i], data);
+                            }
+                        }
+                    }
+                }
+                
+                backupConfig.save(backupFile);
+                player.sendMessage(MINI_MESSAGE.deserialize("<green>Backup created: <yellow>" + fileName + "</yellow></green>"));
+            } catch (Exception e) {
+                player.sendMessage(MINI_MESSAGE.deserialize("<red>Failed to create backup: " + e.getMessage() + "</red>"));
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Backup failed", e);
+            }
+        });
+        return true;
+    }
+
+    private boolean executeDataLoad(Player player, String[] args) {
+        if (args.length < 3) {
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Usage: /drone data load <filename></red>"));
+            return true;
+        }
+        String fileName = args[2];
+        File backupFile = new File(new File(plugin.getDataFolder(), "backups"), fileName);
+        if (!backupFile.exists()) {
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Backup file not found.</red>"));
+            return true;
+        }
+        
+        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                org.bukkit.configuration.file.YamlConfiguration backupConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(backupFile);
+                org.bukkit.configuration.ConfigurationSection files = backupConfig.getConfigurationSection("files");
+                if (files != null) {
+                    for (String key : files.getKeys(false)) {
+                        String originalName = key.replace("_yml", ".yml");
+                        String content = files.getString(key);
+                        if (content != null) {
+                            java.nio.file.Files.writeString(new File(plugin.getDataFolder(), originalName).toPath(), content);
+                        }
+                    }
+                    
+                    // Also restore to MySQL if currently using it
+                    if ("MYSQL".equalsIgnoreCase(plugin.getConfig().getString("database.type", "YAML"))) {
+                        de.cb.drones.config.DatabaseManager db = plugin.getDatabaseManager();
+                        if (db != null && db.isConnected()) {
+                            if (files.contains("players_yml")) db.saveConfig("player_settings", files.getString("players_yml"));
+                            if (files.contains("blacklists_yml")) db.saveConfig("blacklists", files.getString("blacklists_yml"));
+                            if (files.contains("socket-pending-returns_yml")) db.saveConfig("socket_pending_returns", files.getString("socket-pending-returns_yml"));
+                            if (files.contains("sockets_yml")) db.saveConfig("sockets", files.getString("sockets_yml"));
+                            if (files.contains("compose-drafts_yml")) db.saveConfig("compose_drafts", files.getString("compose-drafts_yml"));
+                        }
+                    }
+                }
+                org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+                    plugin.reloadPlugin();
+                    player.sendMessage(MINI_MESSAGE.deserialize("<green>Backup loaded successfully.</green>"));
+                });
+            } catch (Exception e) {
+                player.sendMessage(MINI_MESSAGE.deserialize("<red>Failed to load backup: " + e.getMessage() + "</red>"));
+                plugin.getLogger().log(java.util.logging.Level.SEVERE, "Backup load failed", e);
+            }
+        });
         return true;
     }
 
@@ -1281,7 +1435,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
-            List<String> commands = new ArrayList<>(List.of("admin", "preview", "toggle", "reload", "list", "decline", "cancel", "convert", "config"));
+            List<String> commands = new ArrayList<>(List.of("admin", "preview", "toggle", "reload", "list", "decline", "cancel", "convert", "config", "data"));
             if (droneSettings.playersEnabled()) {
                 commands.add("send");
                 commands.add("blacklist");
@@ -1293,6 +1447,20 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 commands.add("locate");
             }
             return commands;
+        }
+        if (args.length == 2 && "data".equalsIgnoreCase(args[0])) {
+            return List.of("clear", "backup", "load");
+        }
+        if (args.length == 3 && "data".equalsIgnoreCase(args[0]) && "load".equalsIgnoreCase(args[1])) {
+            File backupDir = new File(plugin.getDataFolder(), "backups");
+            if (!backupDir.exists()) return List.of();
+            File[] files = backupDir.listFiles((dir, name) -> name.endsWith(".backup"));
+            if (files == null) return List.of();
+            List<String> fileNames = new ArrayList<>();
+            for (File f : files) {
+                fileNames.add(f.getName());
+            }
+            return fileNames;
         }
         if (args.length == 2 && "convert".equalsIgnoreCase(args[0])) {
             return List.of("yaml-to-mysql", "mysql-to-yaml");
