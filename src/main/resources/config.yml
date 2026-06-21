@@ -62,6 +62,8 @@ settings:
           - "<gray>A fast delivery drone."
           - "<gray>Use <yellow>/drone</yellow> to send packages."
         custom-model-data: 0
+        # If the material is PLAYER_HEAD, you can set a Base64 skin texture here
+        head-texture: ""
       crafting:
         enabled: true
         # The crafting recipe. Spaces indicate empty slots.

@@ -66,6 +66,13 @@ public class DroneItemManager {
                 meta.setCustomModelData(customModelData);
             }
 
+            if (material == Material.PLAYER_HEAD && meta instanceof org.bukkit.inventory.meta.SkullMeta skullMeta) {
+                String headTexture = section.getString("item.head-texture", "");
+                if (headTexture != null && !headTexture.trim().isEmpty()) {
+                    de.cb.drones.util.SkullTextureUtils.applyTexture(skullMeta, headTexture.trim());
+                }
+            }
+
             // Mark the item so we can identify it securely
             meta.getPersistentDataContainer().set(itemMarkerKey, org.bukkit.persistence.PersistentDataType.BYTE, (byte) 1);
             
