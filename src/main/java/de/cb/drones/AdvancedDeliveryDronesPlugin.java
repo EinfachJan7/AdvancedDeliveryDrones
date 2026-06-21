@@ -75,6 +75,9 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         this.languageManager.reload();
         
         this.databaseManager = new de.cb.drones.config.DatabaseManager(this);
+        if ("MYSQL".equalsIgnoreCase(getConfig().getString("database.type", "YAML"))) {
+            this.databaseManager.connect();
+        }
         if (getConfig().getBoolean("settings.drone.logging.enabled", true)) {
             this.droneLogger = new YamlDroneLogger(this);
         } else {
@@ -155,6 +158,10 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
     }
 
     public void reloadPlugin() {
+        reloadPlugin(org.bukkit.Bukkit.getConsoleSender());
+    }
+
+    public void reloadPlugin(org.bukkit.command.CommandSender sender) {
         String oldDbType = getConfig().getString("database.type", "YAML").toUpperCase();
 
         saveDefaultConfig();
@@ -171,7 +178,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         
         if (!oldDbType.equals(newDbType)) {
             getLogger().info("Database type change detected: " + oldDbType + " -> " + newDbType);
-            getLogger().info("Starting asynchronous data conversion. The reload will complete when conversion is finished.");
+            sender.sendMessage(component("convert-start"));
             
             DatabaseManager oldDb = this.databaseManager;
             
@@ -179,21 +186,22 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
                 boolean success = false;
                 if (oldDbType.equals("YAML") && newDbType.equals("MYSQL")) {
                     DatabaseManager tempDb = new de.cb.drones.config.DatabaseManager(this);
+                    tempDb.connect();
                     if (tempDb.isConnected()) {
-                        de.cb.drones.command.DataConverter.convertYamlToMysqlAsync(this, tempDb, org.bukkit.Bukkit.getConsoleSender());
+                        de.cb.drones.command.DataConverter.convertYamlToMysqlAsync(this, tempDb, sender);
                         tempDb.close();
                         success = true;
                     } else {
-                        getLogger().severe("Failed to connect to MySQL. Conversion aborted. Reverting to YAML.");
+                        sender.sendMessage(component("convert-abort-mysql"));
                         getConfig().set("database.type", "YAML");
                         saveConfig();
                     }
                 } else if (oldDbType.equals("MYSQL") && newDbType.equals("YAML")) {
                     if (oldDb != null && oldDb.isConnected()) {
-                        de.cb.drones.command.DataConverter.convertMysqlToYamlAsync(this, oldDb, org.bukkit.Bukkit.getConsoleSender());
+                        de.cb.drones.command.DataConverter.convertMysqlToYamlAsync(this, oldDb, sender);
                         success = true;
                     } else {
-                        getLogger().severe("Old MySQL connection is closed. Cannot convert to YAML. Reverting to MYSQL.");
+                        sender.sendMessage(component("convert-abort-yaml"));
                         getConfig().set("database.type", "MYSQL");
                         saveConfig();
                     }
@@ -202,7 +210,7 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
                 final boolean finalSuccess = success;
                 org.bukkit.Bukkit.getScheduler().runTask(this, () -> {
                     if (finalSuccess) {
-                        getLogger().info("Data conversion finished successfully.");
+                        sender.sendMessage(component("convert-finish"));
                     }
                     finalizeReload();
                 });
@@ -223,11 +231,15 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
             this.databaseManager.close();
         }
         this.databaseManager = new de.cb.drones.config.DatabaseManager(this);
+        if ("MYSQL".equalsIgnoreCase(getConfig().getString("database.type", "YAML"))) {
+            this.databaseManager.connect();
+        }
         if (getConfig().getBoolean("settings.drone.logging.enabled", true)) {
             this.droneLogger = new YamlDroneLogger(this);
         } else {
             this.droneLogger = null;
         }
+
         
         playerSettings.reload();
         blacklistRepository.reload();

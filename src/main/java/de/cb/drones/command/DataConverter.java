@@ -52,7 +52,7 @@ public class DataConverter {
         if (db == null || !db.isConnected()) {
             plugin.getConfig().set("database.type", "MYSQL");
             plugin.saveConfig();
-            plugin.reloadPlugin();
+            plugin.reloadPlugin(sender);
             db = plugin.getDatabaseManager();
             if (db == null || !db.isConnected()) {
                 sender.sendMessage(plugin.componentMessage("convert-error", "<error>", "MySQL could not be connected."));
@@ -73,7 +73,7 @@ public class DataConverter {
 
         plugin.getConfig().set("database.type", "MYSQL");
         plugin.saveConfig();
-        plugin.reloadPlugin();
+        plugin.reloadPlugin(sender);
         sender.sendMessage(plugin.component("convert-success"));
     }
 
@@ -107,7 +107,7 @@ public class DataConverter {
 
         plugin.getConfig().set("database.type", "YAML");
         plugin.saveConfig();
-        plugin.reloadPlugin();
+        plugin.reloadPlugin(sender);
         sender.sendMessage(plugin.component("convert-success"));
     }
 }

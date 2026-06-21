@@ -275,7 +275,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             droneManager.sendMessage(player, "no-permission");
             return true;
         }
-        plugin.reloadPlugin();
+        plugin.reloadPlugin(player);
         menuHandler.updateSettings(droneManager.settings());
         droneManager.sendMessage(player, "reload");
         return true;
@@ -594,7 +594,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                 db.saveConfig("compose_drafts", "{}");
             }
         }
-        plugin.reloadPlugin();
+        plugin.reloadPlugin(player);
         player.sendMessage(MINI_MESSAGE.deserialize("<green>All drone data cleared successfully.</green>"));
         return true;
     }
@@ -682,7 +682,7 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
                     }
                 }
                 org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
-                    plugin.reloadPlugin();
+                    plugin.reloadPlugin(player);
                     player.sendMessage(MINI_MESSAGE.deserialize("<green>Backup loaded successfully.</green>"));
                 });
             } catch (Exception e) {

@@ -81,8 +81,8 @@ public final class ConfigEditorService {
         return true;
     }
 
-    public void reloadRuntime() {
-        plugin.reloadPlugin();
+    public void reloadRuntime(org.bukkit.command.CommandSender sender) {
+        plugin.reloadPlugin(sender);
     }
 
     public DroneSettings currentSettings() {

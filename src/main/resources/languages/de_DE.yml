@@ -191,3 +191,8 @@ admin-drone-recalled: "<yellow>Die Drohne wurde zum Absender zurückgerufen.</ye
 admin-drone-teleported: "<aqua>Du wurdest zur Drohne teleportiert.</aqua>"
 admin-drone-deleted-notify: "<red>Ein Admin hat deine Drohne (<id>) gelöscht.</red>"
 admin-drone-recalled-notify: "<yellow>Ein Admin hat deine Drohne (<id>) zurückgerufen.</yellow>"
+
+convert-start: "<yellow>Starte asynchrone Datenkonvertierung. Der Reload wird abgeschlossen, wenn die Konvertierung fertig ist.</yellow>"
+convert-abort-mysql: "<red>Verbindung zu MySQL fehlgeschlagen. Konvertierung abgebrochen. Zurück zu YAML.</red>"
+convert-abort-yaml: "<red>Alte MySQL-Verbindung ist geschlossen. Konvertierung zu YAML nicht möglich. Zurück zu MYSQL.</red>"
+convert-finish: "<green>Datenkonvertierung erfolgreich abgeschlossen.</green>"

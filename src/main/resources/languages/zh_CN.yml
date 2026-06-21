@@ -192,3 +192,8 @@ admin-drone-recalled: "<yellow>无人机已被召回给发送者。</yellow>"
 admin-drone-teleported: "<aqua>您已被传送到无人机。</aqua>"
 admin-drone-deleted-notify: "<red>管理员删除了您的无人机 (<id>)。</red>"
 admin-drone-recalled-notify: "<yellow>管理员召回了您的无人机 (<id>)。</yellow>"
+
+convert-start: "<yellow>开始异步数据转换。转换完成后重载将完成。</yellow>"
+convert-abort-mysql: "<red>连接MySQL失败。转换已中止，恢复为YAML。</red>"
+convert-abort-yaml: "<red>旧的MySQL连接已关闭。无法转换为YAML。恢复为MYSQL。</red>"
+convert-finish: "<green>数据转换成功完成。</green>"
