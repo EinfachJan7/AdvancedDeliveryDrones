@@ -555,10 +555,9 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         return switch (action) {
             case "clear" -> executeDataClear(player, args);
             case "confirm" -> executeDataConfirm(player);
-            case "backup" -> executeDataBackup(player);
-            case "load" -> executeDataLoad(player, args);
+            case "backup" -> executeDataBackup(player, args);
             default -> {
-                player.sendMessage(MINI_MESSAGE.deserialize("<red>Usage: /drone data <clear|backup|load></red>"));
+                player.sendMessage(MINI_MESSAGE.deserialize("<red>Usage: /drone data <clear|backup></red>"));
                 yield true;
             }
         };
@@ -599,23 +598,54 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         return true;
     }
 
-    private boolean executeDataBackup(Player player) {
-        plugin.executeDataBackup(player);
-        return true;
-    }
-
-    private boolean executeDataLoad(Player player, String[] args) {
-        if (args.length < 3) {
-            player.sendMessage(MINI_MESSAGE.deserialize("<red>Usage: /drone data load <filename></red>"));
+    private boolean executeDataBackup(Player player, String[] args) {
+        if (args.length == 2) {
+            plugin.executeDataBackup(player);
             return true;
         }
-        String fileName = args[2];
+        String subAction = args[2].toLowerCase(Locale.ROOT);
+        if (subAction.equals("load")) {
+            return executeDataLoad(player, args);
+        } else if (subAction.equals("delete")) {
+            return executeDataDelete(player, args);
+        } else {
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Usage: /drone data backup [load|delete] <id></red>"));
+            return true;
+        }
+    }
+
+    private boolean executeDataDelete(Player player, String[] args) {
+        if (args.length < 4) {
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Usage: /drone data backup delete <id></red>"));
+            return true;
+        }
+        String id = args[3];
+        String fileName = "backup_" + id + ".backup";
         File backupFile = new File(new File(plugin.getDataFolder(), "backups"), fileName);
         if (!backupFile.exists()) {
             player.sendMessage(MINI_MESSAGE.deserialize("<red>Backup file not found.</red>"));
             return true;
         }
-        
+        if (backupFile.delete()) {
+            player.sendMessage(MINI_MESSAGE.deserialize("<green>Backup deleted successfully.</green>"));
+        } else {
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Failed to delete backup.</red>"));
+        }
+        return true;
+    }
+
+    private boolean executeDataLoad(Player player, String[] args) {
+        if (args.length < 4) {
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Usage: /drone data backup load <id></red>"));
+            return true;
+        }
+        String id = args[3];
+        String fileName = "backup_" + id + ".backup";
+        File backupFile = new File(new File(plugin.getDataFolder(), "backups"), fileName);
+        if (!backupFile.exists()) {
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Backup file not found.</red>"));
+            return true;
+        }
         org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             try {
                 org.bukkit.configuration.file.YamlConfiguration backupConfig = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(backupFile);
@@ -1410,16 +1440,23 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             return commands;
         }
         if (args.length == 2 && "data".equalsIgnoreCase(args[0])) {
-            return List.of("clear", "backup", "load");
+            return List.of("clear", "backup");
         }
-        if (args.length == 3 && "data".equalsIgnoreCase(args[0]) && "load".equalsIgnoreCase(args[1])) {
+        if (args.length == 3 && "data".equalsIgnoreCase(args[0]) && "backup".equalsIgnoreCase(args[1])) {
+            return List.of("load", "delete");
+        }
+        if (args.length == 4 && "data".equalsIgnoreCase(args[0]) && "backup".equalsIgnoreCase(args[1]) && ("load".equalsIgnoreCase(args[2]) || "delete".equalsIgnoreCase(args[2]))) {
             File backupDir = new File(plugin.getDataFolder(), "backups");
             if (!backupDir.exists()) return List.of();
-            File[] files = backupDir.listFiles((dir, name) -> name.endsWith(".backup"));
+            File[] files = backupDir.listFiles((dir, name) -> name.startsWith("backup_") && name.endsWith(".backup"));
             if (files == null) return List.of();
             List<String> fileNames = new ArrayList<>();
             for (File f : files) {
-                fileNames.add(f.getName());
+                String n = f.getName();
+                try {
+                    int id = Integer.parseInt(n.substring(7, n.length() - 7));
+                    fileNames.add(String.valueOf(id));
+                } catch (NumberFormatException ignored) {}
             }
             return fileNames;
         }
