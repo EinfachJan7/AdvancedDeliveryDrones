@@ -123,10 +123,14 @@ public class DroneItemManager {
                             
                             if (charInShape) {
                                 String ingMatName = ingredients.getString(key);
-                                Material ingMat = Material.matchMaterial(ingMatName != null ? ingMatName : "AIR");
-                                if (ingMat != null && ingMat != Material.AIR) {
-                                    recipe.setIngredient(ingredientChar, ingMat);
-                                    hasIngredients = true;
+                                if (ingMatName != null) {
+                                    Material ingMat = Material.matchMaterial(ingMatName.trim().toUpperCase());
+                                    if (ingMat != null && ingMat != Material.AIR) {
+                                        recipe.setIngredient(ingredientChar, ingMat);
+                                        hasIngredients = true;
+                                    } else {
+                                        plugin.getLogger().warning("Invalid material '" + ingMatName + "' for ingredient '" + ingredientChar + "'!");
+                                    }
                                 }
                             }
                         }
@@ -136,7 +140,7 @@ public class DroneItemManager {
                         try {
                             Bukkit.addRecipe(recipe);
                         } catch (Exception e) {
-                            plugin.getLogger().warning("Failed to register drone item crafting recipe! Check your shape/ingredients in config.yml.");
+                            plugin.getLogger().warning("Failed to register drone item crafting recipe! Check your shape/ingredients in config.yml. Error: " + e.getMessage());
                         }
                     } else {
                         plugin.getLogger().warning("No valid ingredients found for drone item crafting! Crafting disabled.");
