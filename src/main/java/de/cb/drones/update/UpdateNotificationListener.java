@@ -65,33 +65,43 @@ public final class UpdateNotificationListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        if (!updateAvailable || !event.getPlayer().hasPermission("drone.admin.update-notify")) {
+        if (!plugin.getConfig().getBoolean("plugin.check-updates", true)) {
+            return;
+        }
+        
+        if (!event.getPlayer().hasPermission("drone.admin.update-notify") && !event.getPlayer().isOp()) {
             return;
         }
 
         // Delay message sending by 1 tick to ensure player is fully loaded
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             try {
-                // Get language strings and replace placeholders
-                String prefixStr = languageManager.getString("prefix", "<gold><bold>DRONE</bold></gold> <dark_gray>»</dark_gray> ");
-                String updateAvailableStr = languageManager.getString("update-available", "<gold><bold>Update available!</bold></gold>");
-                String currentVersionStr = languageManager.getString("update-current-version", "<gray>Current: <white><current></white></gray>")
-                        .replace("<current>", currentVersion);
-                String latestVersionStr = languageManager.getString("update-latest-version", "<gray>Latest: <white><latest></white></gray>")
-                        .replace("<latest>", latestVersion);
-                String downloadStr = languageManager.getString("update-download", "<gold>Download: <click:open_url:'<link>'><aqua><link></aqua></click></gold>")
-                        .replace("<link>", MODRINTH_LINK);
+                if (updateAvailable) {
+                    // Get language strings and replace placeholders
+                    String prefixStr = languageManager.getString("prefix", "<gold><bold>DRONE</bold></gold> <dark_gray>»</dark_gray> ");
+                    String updateAvailableStr = languageManager.getString("update-available", "<gold><bold>Update available!</bold></gold>");
+                    String currentVersionStr = languageManager.getString("update-current-version", "<gray>Current: <white><current></white></gray>")
+                            .replace("<current>", currentVersion);
+                    String latestVersionStr = languageManager.getString("update-latest-version", "<gray>Latest: <white><latest></white></gray>")
+                            .replace("<latest>", latestVersion);
+                    String downloadStr = languageManager.getString("update-download", "<gold>Download: <click:open_url:'<link>'><aqua><link></aqua></click></gold>")
+                            .replace("<link>", MODRINTH_LINK);
 
-                // Send each line separately with proper formatting
-                Component titleMessage = miniMessage.deserialize(prefixStr + updateAvailableStr);
-                Component currentVersionMessage = miniMessage.deserialize(prefixStr + currentVersionStr);
-                Component latestVersionMessage = miniMessage.deserialize(prefixStr + latestVersionStr);
-                Component downloadMessage = miniMessage.deserialize(prefixStr + downloadStr);
+                    // Send each line separately with proper formatting
+                    Component titleMessage = miniMessage.deserialize(prefixStr + updateAvailableStr);
+                    Component currentVersionMessage = miniMessage.deserialize(prefixStr + currentVersionStr);
+                    Component latestVersionMessage = miniMessage.deserialize(prefixStr + latestVersionStr);
+                    Component downloadMessage = miniMessage.deserialize(prefixStr + downloadStr);
 
-                event.getPlayer().sendMessage(titleMessage);
-                event.getPlayer().sendMessage(currentVersionMessage);
-                event.getPlayer().sendMessage(latestVersionMessage);
-                event.getPlayer().sendMessage(downloadMessage);
+                    event.getPlayer().sendMessage(titleMessage);
+                    event.getPlayer().sendMessage(currentVersionMessage);
+                    event.getPlayer().sendMessage(latestVersionMessage);
+                    event.getPlayer().sendMessage(downloadMessage);
+                } else {
+                    String prefixStr = languageManager.getString("prefix", "<gold><bold>DRONE</bold></gold> <dark_gray>»</dark_gray> ");
+                    String upToDateStr = "<green>AdvancedDeliveryDrones is up to date! (Version: <current>)</green>".replace("<current>", currentVersion);
+                    event.getPlayer().sendMessage(miniMessage.deserialize(prefixStr + upToDateStr));
+                }
             } catch (Exception e) {
                 plugin.getLogger().warning("Error sending update notification to player: " + e.getMessage());
             }
