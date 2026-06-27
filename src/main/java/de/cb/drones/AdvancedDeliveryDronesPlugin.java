@@ -373,7 +373,20 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
         File backupDir = new File(getDataFolder(), "backups");
         if (!backupDir.exists()) backupDir.mkdirs();
         
-        String fileName = "backup_" + System.currentTimeMillis() + ".backup";
+        int nextId = 1;
+        File[] files = backupDir.listFiles((dir, name) -> name.startsWith("backup_") && name.endsWith(".backup"));
+        if (files != null) {
+            for (File f : files) {
+                String n = f.getName();
+                try {
+                    int id = Integer.parseInt(n.substring(7, n.length() - 7));
+                    if (id >= nextId) {
+                        nextId = id + 1;
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        String fileName = "backup_" + nextId + ".backup";
         File backupFile = new File(backupDir, fileName);
         
         org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
