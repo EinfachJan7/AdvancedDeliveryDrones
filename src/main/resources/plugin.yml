@@ -1,6 +1,6 @@
 name: AdvancedDeliveryDrones
 main: de.cb.drones.AdvancedDeliveryDronesPlugin
-version: 1.1.4
+version: 1.1.5
 api-version: "1.21"
 authors: [Baumkrieger69]
 softdepend:
