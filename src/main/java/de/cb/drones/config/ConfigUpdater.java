@@ -348,7 +348,11 @@ public class ConfigUpdater {
         if (comment != null)
             ignoredBuilder.append(addIndentation(comment, indents)).append("\n");
 
-        ignoredBuilder.append(addIndentation(key, indents)).append(":");
+        String dumpedKey = yaml.dump(originalKey);
+        if (dumpedKey.endsWith("\n")) {
+            dumpedKey = dumpedKey.substring(0, dumpedKey.length() - 1);
+        }
+        ignoredBuilder.append(addIndentation(dumpedKey, indents)).append(":");
         Object obj = ymlMap.get(originalKey);
 
         if (obj instanceof Map) {
@@ -467,6 +471,12 @@ public class ConfigUpdater {
             if (sectionContext.containsKey(longKey))
                 return longKey;
         } catch (NumberFormatException ignored) {}
+
+        if (key.equalsIgnoreCase("true") || key.equalsIgnoreCase("false")) {
+            Boolean boolKey = Boolean.parseBoolean(key);
+            if (sectionContext.containsKey(boolKey))
+                return boolKey;
+        }
 
         return null;
     }
