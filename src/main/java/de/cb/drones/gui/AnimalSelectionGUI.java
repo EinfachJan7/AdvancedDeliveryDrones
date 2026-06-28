@@ -89,6 +89,24 @@ public class AnimalSelectionGUI implements Listener {
             }
             availableAnimals.add(living);
         }
+
+        for (Map.Entry<UUID, Boolean> entry : selectedAnimals.entrySet()) {
+            if (entry.getValue()) {
+                boolean found = false;
+                for (LivingEntity le : availableAnimals) {
+                    if (le.getUniqueId().equals(entry.getKey())) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    Entity entity = Bukkit.getEntity(entry.getKey());
+                    if (entity instanceof LivingEntity living && !living.isDead()) {
+                        availableAnimals.add(living);
+                    }
+                }
+            }
+        }
     }
 
     public void openSelectionMenu() {
