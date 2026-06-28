@@ -72,6 +72,7 @@ public final class ComposeDraftRepository {
         List<UUID> animalIds = config.getStringList(path + ".selectedAnimalIds").stream()
                 .map(UUID::fromString)
                 .toList();
+        List<String> selectedAnimalSnapshots = config.getStringList(path + ".selectedAnimalSnapshots");
         ItemStack[] contents = readInventory(path + ".inventory");
         return Optional.of(new StoredComposeDraft(
                 receiverId,
@@ -80,6 +81,7 @@ public final class ComposeDraftRepository {
                 exactSocketTarget,
                 socketName,
                 animalIds,
+                selectedAnimalSnapshots,
                 animalsOnlyMode,
                 contents
         ));
@@ -98,6 +100,11 @@ public final class ComposeDraftRepository {
         config.set(path + ".socketName", draft.socketName());
         config.set(path + ".animalsOnlyMode", draft.animalsOnlyMode());
         config.set(path + ".selectedAnimalIds", draft.selectedAnimalIds().stream().map(UUID::toString).toList());
+        if (draft.selectedAnimalSnapshots() != null && !draft.selectedAnimalSnapshots().isEmpty()) {
+            config.set(path + ".selectedAnimalSnapshots", draft.selectedAnimalSnapshots());
+        } else {
+            config.set(path + ".selectedAnimalSnapshots", null);
+        }
         config.set(path + ".inventory", draft.contents());
         persist();
     }
@@ -167,11 +174,13 @@ public final class ComposeDraftRepository {
             boolean exactSocketTarget,
             String socketName,
             List<UUID> selectedAnimalIds,
+            List<String> selectedAnimalSnapshots,
             boolean animalsOnlyMode,
             ItemStack[] contents
     ) {
         public StoredComposeDraft {
             selectedAnimalIds = selectedAnimalIds == null ? List.of() : List.copyOf(selectedAnimalIds);
+            selectedAnimalSnapshots = selectedAnimalSnapshots == null ? List.of() : List.copyOf(selectedAnimalSnapshots);
             contents = contents == null ? new ItemStack[0] : contents;
         }
 
