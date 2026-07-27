@@ -1794,12 +1794,20 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
     public void finishAnimalSelectionLaunch(Player sender, ComposeHubInventoryHolder hubHolder, List<UUID> finalSelection) {
         boolean hasSelectedAnimals = !finalSelection.isEmpty();
         List<String> finalSnapshots = new ArrayList<>();
+        List<String> oldSnapshots = composeHubAnimalSnapshots.get(sender.getUniqueId());
         for (UUID animalId : finalSelection) {
             org.bukkit.entity.Entity animal = org.bukkit.Bukkit.getEntity(animalId);
             if (animal instanceof org.bukkit.entity.LivingEntity living && !living.isDead()) {
                 org.bukkit.entity.EntitySnapshot snapshot = living.createSnapshot();
                 if (snapshot != null) {
                     finalSnapshots.add(snapshot.getAsString());
+                }
+            } else {
+                if (oldSnapshots != null && hubHolder.selectedAnimalIds() != null) {
+                    int oldIndex = hubHolder.selectedAnimalIds().indexOf(animalId);
+                    if (oldIndex >= 0 && oldIndex < oldSnapshots.size()) {
+                        finalSnapshots.add(oldSnapshots.get(oldIndex));
+                    }
                 }
             }
         }
@@ -1909,6 +1917,10 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
             }
         }
         restoreComposeDraftIfMatching(sender, receiver, fixedTarget, exactSocketTarget, socketName);
+        PendingSendDraft draft = sendDrafts.get(sender.getUniqueId());
+        if (draft != null && draft.selectedAnimalIds() != null && !draft.selectedAnimalIds().isEmpty()) {
+            leashedAnimalIds = draft.selectedAnimalIds();
+        }
         boolean animalsOnly = composeHubAnimalsOnly.getOrDefault(sender.getUniqueId(), false);
         openComposeHub(sender, receiver, fixedTarget, exactSocketTarget, socketName, leashedAnimalIds, animalsOnly);
     }
