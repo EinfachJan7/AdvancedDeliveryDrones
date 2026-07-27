@@ -90,7 +90,10 @@ public class AnimalSelectionGUI implements Listener {
             availableAnimals.add(living);
         }
 
-        for (Map.Entry<UUID, Boolean> entry : selectedAnimals.entrySet()) {
+        boolean deselectedAny = false;
+        java.util.Iterator<Map.Entry<UUID, Boolean>> iterator = selectedAnimals.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<UUID, Boolean> entry = iterator.next();
             if (entry.getValue()) {
                 boolean found = false;
                 for (LivingEntity le : availableAnimals) {
@@ -102,10 +105,18 @@ public class AnimalSelectionGUI implements Listener {
                 if (!found) {
                     Entity entity = Bukkit.getEntity(entry.getKey());
                     if (entity instanceof LivingEntity living && !living.isDead()) {
-                        availableAnimals.add(living);
+                        if (living.getLocation().distance(sender.getLocation()) <= radius) {
+                            availableAnimals.add(living);
+                        } else {
+                            iterator.remove();
+                            deselectedAny = true;
+                        }
                     }
                 }
             }
+        }
+        if (deselectedAny) {
+            droneManager.sendMessage(sender, "animal-deselected-out-of-range");
         }
     }
 

@@ -197,3 +197,5 @@ convert-start: "<yellow>Начинается асинхронное преобр
 convert-abort-mysql: "<red>Не удалось подключиться к MySQL. Преобразование прервано. Возврат к YAML.</red>"
 convert-abort-yaml: "<red>Старое соединение MySQL закрыто. Невозможно преобразовать в YAML. Возврат к MYSQL.</red>"
 
+
+animal-deselected-out-of-range: "<red>Животное было отменено, так как оно больше не находится в радиусе действия.</red>"

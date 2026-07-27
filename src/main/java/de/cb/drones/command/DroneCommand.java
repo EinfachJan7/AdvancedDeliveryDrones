@@ -1919,6 +1919,34 @@ public final class DroneCommand implements CommandExecutor, TabCompleter, Listen
         restoreComposeDraftIfMatching(sender, receiver, fixedTarget, exactSocketTarget, socketName);
         PendingSendDraft draft = sendDrafts.get(sender.getUniqueId());
         if (draft != null && draft.selectedAnimalIds() != null && !draft.selectedAnimalIds().isEmpty()) {
+            double radius = droneManager.settings().animalSelectionRadius();
+            List<UUID> validAnimals = new ArrayList<>();
+            boolean deselectedAny = false;
+            for (UUID id : draft.selectedAnimalIds()) {
+                Entity entity = Bukkit.getEntity(id);
+                if (entity != null) {
+                    if (entity.getLocation().distance(sender.getLocation()) > radius) {
+                        deselectedAny = true;
+                        continue;
+                    }
+                }
+                validAnimals.add(id);
+            }
+            if (deselectedAny) {
+                droneManager.sendMessage(sender, "animal-deselected-out-of-range");
+                draft = new PendingSendDraft(
+                        draft.senderId(),
+                        draft.receiverId(),
+                        draft.fixedTarget(),
+                        draft.adminSend(),
+                        validAnimals,
+                        draft.exactSocketTarget(),
+                        draft.socketName(),
+                        draft.contents(),
+                        draft.animalsOnlyMode()
+                );
+                sendDrafts.put(sender.getUniqueId(), draft);
+            }
             leashedAnimalIds = draft.selectedAnimalIds();
         }
         boolean animalsOnly = composeHubAnimalsOnly.getOrDefault(sender.getUniqueId(), false);

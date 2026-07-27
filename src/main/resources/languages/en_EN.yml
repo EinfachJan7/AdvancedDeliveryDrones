@@ -196,3 +196,5 @@ convert-start: "<yellow>Starting asynchronous data conversion. Reload will compl
 convert-abort-mysql: "<red>Failed to connect to MySQL. Conversion aborted. Reverting to YAML.</red>"
 convert-abort-yaml: "<red>Old MySQL connection is closed. Cannot convert to YAML. Switched to YAML.</red>"
 
+
+animal-deselected-out-of-range: "<red>An animal was deselected because it is no longer in range.</red>"

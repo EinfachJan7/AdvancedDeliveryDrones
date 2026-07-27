@@ -197,3 +197,5 @@ convert-start: "<yellow>开始异步数据转换。转换完成后重载将完�
 convert-abort-mysql: "<red>连接MySQL失败。转换已中止，恢复为YAML。</red>"
 convert-abort-yaml: "<red>旧的MySQL连接已关闭。无法转换为YAML。恢复为MYSQL。</red>"
 
+
+animal-deselected-out-of-range: "<red>由于动物不再范围内，已取消选择。</red>"
