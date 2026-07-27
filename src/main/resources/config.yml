@@ -10,9 +10,9 @@ plugin:
   config-editor-messages-enabled: true
 
 hooks:
-  worldguard: true
+  worldguard: false
   livemap:
-    enabled: true
+    enabled: false
     # Which livemap to use? (pl3xmap, bluemap)
     type: "pl3xmap"
     # The name of the layer shown in the map sidebar
