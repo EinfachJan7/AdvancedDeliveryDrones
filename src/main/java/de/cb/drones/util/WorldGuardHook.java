@@ -11,19 +11,8 @@ public class WorldGuardHook {
     private static IWorldGuardHook impl;
 
     public static void onLoad(File dataFolder) {
-        // Read config directly to check if hook is enabled
-        File configFile = new File(dataFolder, "config.yml");
-        if (configFile.exists()) {
-            YamlConfiguration config = YamlConfiguration.loadConfiguration(configFile);
-            enabled = config.getBoolean("hooks.worldguard", true);
-        } else {
-            enabled = true; // Default if not found
-        }
-
-        if (!enabled) {
-            return; // Don't register flags if disabled
-        }
-
+        // We MUST ALWAYS register flags in onLoad() because WorldGuard locks the registry afterwards.
+        // The actual enabling/disabling is handled via setEnabled().
         try {
             Class.forName("com.sk89q.worldguard.WorldGuard");
             impl = (IWorldGuardHook) Class.forName("de.cb.drones.util.WorldGuardHookImpl").getDeclaredConstructor().newInstance();

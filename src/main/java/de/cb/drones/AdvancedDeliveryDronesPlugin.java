@@ -205,8 +205,6 @@ public final class AdvancedDeliveryDronesPlugin extends JavaPlugin {
                         success = true;
                     } else {
                         sender.sendMessage(component("convert-abort-yaml"));
-                        getConfig().set("database.type", "MYSQL");
-                        saveConfig();
                     }
                 }
                 
